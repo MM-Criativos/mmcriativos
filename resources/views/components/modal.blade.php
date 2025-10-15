@@ -182,13 +182,7 @@
 <div id="holoModal" class="holo-modal">
     <div class="holo-backdrop" onclick="closeHoloModal()"></div>
     <canvas id="holoParticles"></canvas>
-    <div class="holo-content"> <!-- 🔹 Canvas das partículas -->
-        <div class="scanline"></div>
-        <button class="close-btn" onclick="closeHoloModal()">
-            <span>×</span>
-        </button>
-
-        <h2 class="holo-title">Interface Ativada</h2>
+    <div class="holo-content"> <!-- painel hologr�fico -->`r`n        <div class="scanline"></div>`r`n        <button class="close-btn" onclick="closeHoloModal()">`r`n            <span>?-</span>`r`n        </button>`r`n`r`n        <h2 class="holo-title">Interface Ativada</h2>
         <p class="holo-text">
             Este é o novo modal holográfico da <strong>MM Criativos</strong> —
             construído em camadas de luz, energia e código. Um painel digital que surge do circuito,
@@ -196,4 +190,5 @@
         </p>
     </div>
 </div>
+
 

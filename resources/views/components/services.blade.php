@@ -72,11 +72,11 @@
                             <i class="fa-light fa-window-flip"></i>
                         </div><!-- /.service-icon -->
                         <h3 class="service-two__item__title">
-                            <a href="web-designing.html">Site Single Page</a>
+                            <a href="javascript:void(0)" onclick="openServiceModal('single')">Site Single Page</a>
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Tudo em uma única página, direto ao ponto, com design
                             impactante.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="web-designing.html"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('single')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -93,11 +93,11 @@
                             <i class="fa-light fa-browsers"></i>
                         </div><!-- /.service-icon -->
                         <h3 class="service-two__item__title">
-                            <a href="web-development.html">Site Multipage</a>
+                            <a href="javascript:void(0)" onclick="openServiceModal('multi')">Site Multipage</a>
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Estrutura completa para apresentar sua marca com
                             profundidade.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="web-development.html"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('multi')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -114,11 +114,11 @@
                             <i class="fa-light fa-network-wired"></i>
                         </div><!-- /.service-icon -->
                         <h3 class="service-two__item__title">
-                            <a href="web-application.html">Plataforma Web</a>
+                            <a href="javascript:void(0)" onclick="openServiceModal('plataforma')">Plataforma Web</a>
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Soluções sob medida para portais com
                             gerenciamento online.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="web-application.html"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('plataforma')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -135,11 +135,11 @@
                             <i class="fa-light fa-pen-paintbrush"></i>
                         </div><!-- /.service-icon -->
                         <h3 class="service-two__item__title">
-                            <a href="web-application.html">Sistema Personalizado</a>
+                            <a href="javascript:void(0)" onclick="openServiceModal('sistema')">Sistema Personalizado</a>
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Desenvolvemos sistemas únicos, feitos para o fluxo do
                             seu negócio.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="web-application.html"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('sistema')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -156,11 +156,11 @@
                             <i class="fa-light fa-chart-network"></i>
                         </div><!-- /.service-icon -->
                         <h3 class="service-two__item__title">
-                            <a href="web-application.html">SaaS e Integrações</a>
+                            <a href="javascript:void(0)" onclick="openServiceModal('saas')">SaaS e Integra��es</a>
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Conectamos automações e serviços em um
                             ecossistema inteligente.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="web-application.html"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('saas')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -168,3 +168,5 @@
         </div>
     </div>
 </section>
+
+

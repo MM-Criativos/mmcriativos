@@ -147,5 +147,5 @@
     </a>
     <!-- back-to-top-end -->
 
-    @include('components.modal')
+    @include('components.holo-modal')
 @endsection

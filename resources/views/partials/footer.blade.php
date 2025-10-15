@@ -22,7 +22,7 @@
 
 <!-- Template JS -->
 <script src="{{ asset('assets/js/ogency.js') }}"></script>
-@include('partials.scripts')
+@include('partials.scripts2')
 
 </body>
 
