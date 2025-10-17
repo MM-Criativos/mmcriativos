@@ -132,7 +132,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const resp = await fetch(`/modal-content/${type}/${slug}`);
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const html = await resp.text();
-      if (dynamicSlot) dynamicSlot.innerHTML = html;
+      if (dynamicSlot) {
+        dynamicSlot.innerHTML = html;
+        initDynamicEffects(dynamicSlot);
+      }
     } catch (err) {
       if (dynamicSlot) dynamicSlot.innerHTML = '<p style="color:#ff6;">Não foi possível carregar o conteúdo.</p>';
     }
@@ -148,6 +151,46 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   let currentType = 'services';
   let currentSlug = '';
+
+  // Initialize Owl Carousel inside a container
+  function initDynamicCarousels(root) {
+    const $root = $(root || document);
+    const $carousels = $root.find('.ogency-owl__carousel');
+    if (!$carousels.length) return;
+    $carousels.each(function () {
+      const $elm = $(this);
+      if ($elm.hasClass('owl-loaded')) {
+        try { $elm.trigger('destroy.owl.carousel'); } catch (e) {}
+      }
+      let options = $elm.data('owl-options');
+      try { options = (typeof options === 'object') ? options : JSON.parse(options); } catch(e) { options = {}; }
+      $elm.owlCarousel(options);
+    });
+  }
+
+  // Attach pause/resume hover handlers for carousels inside a container
+  function attachCarouselHover(root) {
+    const $root = $(root || document);
+    $root.find('.ogency-owl__carousel')
+      .off('mouseenter.mm pause mouseleave.mm resume')
+      .on('mouseenter.mm', function(){ $(this).trigger('stop.owl.autoplay'); })
+      .on('mouseleave.mm', function(){ $(this).trigger('play.owl.autoplay', [3000]); });
+  }
+
+  // WOW + Owl + helpers for dynamically injected fragments
+  function initDynamicEffects(root) {
+    // 1) WOW.js — reinit usando o container do modal
+    if (window.WOW) {
+      try { new WOW({ live: false, scrollContainer: '.holo-body' }).init(); } catch (e) {}
+    } else {
+      (root.querySelectorAll ? root.querySelectorAll('.wow') : []).forEach(el => {
+        el.style.visibility = 'visible';
+      });
+    }
+    // 2) Owl dentro do fragmento
+    initDynamicCarousels(root);
+    attachCarouselHover(root);
+  }
 
   function populateSelect(type, slug) {
     if (!holoSelect) return;
@@ -191,4 +234,3 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-

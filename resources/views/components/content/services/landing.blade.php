@@ -3,347 +3,271 @@
 </div><!-- /.stricky-header -->
 <section class="page-header">
     <div class="page-header__bg__landing-page"></div>
-    <!-- /.page-header__bg -->
     <div class="page-header__overlay"></div>
-    <!-- /.page-header__bg -->
     <div class="container">
-        <ul class="page-header__breadcrumb list-unstyled">
-            <li><a href="index.html">Home</a></li>
-            <li><span>About</span></li>
-        </ul><!-- /.page-breadcrumb list-unstyled -->
-        <h2 class="page-header__title">About</h2><!-- /.page-title -->
-    </div><!-- /.container -->
-</section><!-- /.page-header -->
+        <h2 class="page-header__title">Landing Page</h2>
+    </div>
+</section>
 <!-- About Start -->
-<section class="about-three">
+<!-- Services Details Start -->
+<!-- Services Details Start -->
+<section class="services-details">
     <div class="container">
         <div class="row">
-            <div class="col-lg-6">
-                <div class="about-three__thumb">
-                    <!-- about thumb start -->
-                    <div class="about-three__thumb--one wow fadeInLeft animated" data-wow-delay="300ms">
-                        <img src="assets/images/resources/about-3-1.jpg" alt="ogency">
-                    </div>
-                    <div class="about-three__thumb--two wow fadeInLeft animated" data-wow-delay="200ms">
-                        <img src="assets/images/resources/about-3-2.jpg" alt="ogency">
-                    </div>
-                </div><!-- about thumb end -->
-            </div>
-            <div class="col-lg-6">
-                <div class="about-three__content">
-                    <!-- about content start-->
-                    <div class="section-title">
-                        <h5 class="section-title__tagline section-title__tagline--has-dots">about agency</h5>
-                        <h2 class="section-title__title">Get to know about ogency</h2>
-                    </div><!-- section-title -->
-                    <h4 class="about-three__content__heading">Proin est lacus, sagittis lobortis iaculise get.</h4>
-                    <p class="about-three__content__text">
-                        There are many variations of simply free text passages of available but the majority have
-                        suffered alteration in some form,
-                        by injected hum randomised words which don't slightly.
-                    </p>
-                    <div class="about-three__author">
-                        <div class="about-three__author__thumb"><img src="assets/images/resources/about-3-3.jpg"
-                                alt="ogency"></div>
-                        <img src="assets/images/resources/about-sign.png" alt="ogency" width="223">
-                        <p class="about-three__author__meta">Michales - Co Founder</p>
-                    </div>
-                </div><!-- about content end-->
-            </div>
-        </div>
-    </div>
-</section>
-<!-- About End -->
-<!-- Sliding Text Start-->
-<section class="slider-text-one">
-    <div class="slider-text-one__animate-text">
-        <span>Our satisfied <span>&</span> happy clients&nbsp;</span>
-        <span>Our satisfied <span>&</span> happy clients&nbsp;</span>
-    </div>
-</section>
-<!-- Sliding Text Start-->
-<!--Testimonial Start-->
-<section class="testimonial-three">
-    <div class="container">
-        <div class="section-title">
-            <h5 class="section-title__tagline section-title__tagline--has-dots">our clients feedback</h5>
-            <h2 class="section-title__title">What they’re talking<br> about us</h2>
-        </div><!-- section-title -->
-        <div class="testimonial-three__carousel ogency-owl__carousel owl-theme owl-carousel"
-            data-owl-options='{
-            "items": 2,
-            "margin": 30,
-            "smartSpeed": 700,
-            "loop":true,
-            "autoplay": true,
-            "nav":true,
-            "dots":false,
-            "navText": ["<span class=\"icon-left-arrow\"></span>","<span class=\"icon-right-arrow\"></span>"],
-            "responsive":{
-                "0":{
-                    "items":1,
-                    "margin": 0
-                },
-                "992":{
-                    "items": 2
-                }
-            }
-            }'>
-            <!-- Testimonial Item -->
-            <div class="testimonial-three__item">
-                <div class="testimonial-three__item__border"></div><!-- border -->
-                <h3 class="testimonial-three__item__name">Donald hardson</h3><!-- testimonial-name -->
-                <div class="testimonial-three__item__quote">
-                    Leverage agile frameworks to provide a robust synopsis for high level overviews.
-                    Iterative approaches to corporate strategy data foster to collaborative thinking.
-                </div><!-- testimonial-quote -->
-                <div class="testimonial-three__item__meta">
-                    <div class="testimonial-three__item__meta__thumb">
-                        <img src="assets/images/resources/testimonial-3-1.jpg" alt="ogency">
-                    </div><!-- testimonial-author-thumb -->
-                    <div class="testimonial-three__item__meta__ratings">
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                    </div><!-- testimonial-ratings-icon -->
-                    <div class="testimonial-three__item__meta__reviews">4.9 Reviews</div>
-                    <!-- testimonial-ratings-reviwes -->
-                </div><!-- testimonial-meta -->
-            </div>
-            <!-- Testimonial Item -->
-            <!-- Testimonial Item -->
-            <div class="testimonial-three__item">
-                <div class="testimonial-three__item__border"></div><!-- border -->
-                <h3 class="testimonial-three__item__name">Aleesha brown</h3><!-- testimonial-name -->
-                <div class="testimonial-three__item__quote">
-                    Leverage agile frameworks to provide a robust synopsis for high level overviews.
-                    Iterative approaches to corporate strategy data foster to collaborative thinking.
-                </div><!-- testimonial-quote -->
-                <div class="testimonial-three__item__meta">
-                    <div class="testimonial-three__item__meta__thumb">
-                        <img src="assets/images/resources/testimonial-3-2.jpg" alt="ogency">
-                    </div><!-- testimonial-author-thumb -->
-                    <div class="testimonial-three__item__meta__ratings">
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                    </div><!-- testimonial-ratings-icon -->
-                    <div class="testimonial-three__item__meta__reviews">4.9 Reviews</div>
-                    <!-- testimonial-ratings-reviwes -->
-                </div><!-- testimonial-meta -->
-            </div>
-            <!-- Testimonial Item -->
-            <!-- Testimonial Item -->
-            <div class="testimonial-three__item">
-                <div class="testimonial-three__item__border"></div><!-- border -->
-                <h3 class="testimonial-three__item__name">Donald hardson</h3><!-- testimonial-name -->
-                <div class="testimonial-three__item__quote">
-                    Leverage agile frameworks to provide a robust synopsis for high level overviews.
-                    Iterative approaches to corporate strategy data foster to collaborative thinking.
-                </div><!-- testimonial-quote -->
-                <div class="testimonial-three__item__meta">
-                    <div class="testimonial-three__item__meta__thumb">
-                        <img src="assets/images/resources/testimonial-3-1.jpg" alt="ogency">
-                    </div><!-- testimonial-author-thumb -->
-                    <div class="testimonial-three__item__meta__ratings">
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                    </div><!-- testimonial-ratings-icon -->
-                    <div class="testimonial-three__item__meta__reviews">4.9 Reviews</div>
-                    <!-- testimonial-ratings-reviwes -->
-                </div><!-- testimonial-meta -->
-            </div>
-            <!-- Testimonial Item -->
-            <!-- Testimonial Item -->
-            <div class="testimonial-three__item">
-                <div class="testimonial-three__item__border"></div><!-- border -->
-                <h3 class="testimonial-three__item__name">Aleesha brown</h3><!-- testimonial-name -->
-                <div class="testimonial-three__item__quote">
-                    Leverage agile frameworks to provide a robust synopsis for high level overviews.
-                    Iterative approaches to corporate strategy data foster to collaborative thinking.
-                </div><!-- testimonial-quote -->
-                <div class="testimonial-three__item__meta">
-                    <div class="testimonial-three__item__meta__thumb">
-                        <img src="assets/images/resources/testimonial-3-2.jpg" alt="ogency">
-                    </div><!-- testimonial-author-thumb -->
-                    <div class="testimonial-three__item__meta__ratings">
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                        <span class="fa fa-star"></span>
-                    </div><!-- testimonial-ratings-icon -->
-                    <div class="testimonial-three__item__meta__reviews">4.9 Reviews</div>
-                    <!-- testimonial-ratings-reviwes -->
-                </div><!-- testimonial-meta -->
-            </div>
-            <!-- Testimonial Item -->
-        </div>
-    </div>
-</section>
-<!--Testimonial End-->
-<!-- Team Start -->
-<section class="team-one team-two">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="section-title text-center">
-                    <h5 class="section-title__tagline section-title__tagline--has-dots">our professional team</h5>
-                    <h2 class="section-title__title">Meet the team behind the<br> agency success</h2>
-                </div><!-- section-title -->
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="100ms">
-                <div class="team-one__item">
-                    <div class="team-one__item__image">
-                        <img src="assets/images/team/team-1-1.jpg" alt="ogency">
-                    </div><!-- /.team-image -->
-                    <div class="team-one__item__content">
-                        <span class="team-one__item__designation">Senior Developer</span><!-- /.team-designation -->
-                        <h3 class="team-one__item__title">
-                            <a href="team-details.html">Mike hardson</a>
-                        </h3><!-- /.team-name -->
-                        <div class="team-one__item__social-wrapper">
-                            <a class="team-one__item__links" href="#"><span
-                                    class="fas fa-share-alt"></span></a><!-- /.social-more -->
-                            <div class="team-one__item__social">
-                                <a href="https://twitter.com/"><i class="fab fa-twitter"></i></a>
-                                <a href="https://www.facebook.com/"><i class="fab fa-facebook"></i></a>
-                                <a href="https://www.pinterest.com/"><i class="fab fa-pinterest-p"></i></a>
-                                <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i></a>
-                            </div><!-- /.team-social -->
+            <div class="col-xl-12 col-lg-12 wow fadeInUp animated" data-wow-delay="400ms">
+                <div class="services-details__content">
+                    <div class="why-choose-two">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-lg-6 wow fadeInLeft animated" data-wow-delay="200ms">
+                                    <div class="why-choose-two__left">
+                                        <div class="section-title">
+                                            <h5 class="section-title__tagline section-title__tagline--has-dots">
+                                                transforme cliques em resultados</h5>
+                                            <h2 class="section-title__title">Por que investir em uma Landing Page?</h2>
+
+                                        </div><!-- section-title -->
+                                        <p class="why-choose-two__left--text">
+                                            Uma Landing Page é o formato ideal para quem precisa gerar resultado rápido
+                                            e mensurável, seja captar leads, divulgar um produto ou validar uma ideia.
+
+                                            Diferente de um site institucional, ela é direta, estratégica e centrada em
+                                            conversão.
+                                            Cada detalhe é pensado para conduzir o visitante até a ação que importa:
+                                            clicar, preencher, comprar ou entrar em contato.
+
+                                            Se o seu objetivo é vender mais, captar contatos ou dar destaque a uma
+                                            campanha, esse é o serviço certo.
+                                            A Landing Page da MM Criativos combina design de impacto, copy estratégica e
+                                            performance técnica, tudo voltado para o que realmente interessa: converter
+                                            visitantes em clientes.
+                                        </p>
+                                        <div class="row">
+                                            <div class="service-page__carousel-modal">
+                                                <div class="container">
+                                                    <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                                                        data-owl-options='{
+                                                        "items": 4,
+                                                        "margin": 30,
+                                                        "smartSpeed": 1200,
+                                                        "loop":true,
+                                                        "autoplay": true,
+                                                        "nav":false,
+                                                        "dots":true,
+                                                        "navText": ["<span class=\"icon-left-arrow\"></span>","<span class=\"icon-right-arrow\"></span>"],
+                                                        "responsive":{
+                                                            "0":{
+                                                                "items":1,
+                                                                "margin": 0
+                                                            },
+                                                            "600":{
+                                                                "items": 2
+                                                            },
+                                                            "992":{
+                                                                "items": 2
+                                                            }
+                                                        }
+                                                        }'>
+                                                        <div class="item">
+                                                            <div class="service-one__item-modal">
+                                                                <h3 class="service-one__item-modal__title">
+                                                                    <a href="#">Alta<br> Conversão</a>
+                                                                </h3>
+                                                                <p class="service-one__item-modal__text">
+                                                                    Estrutura pensada para transformar cliques em
+                                                                    resultados reais.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="item">
+                                                            <div class="service-one__item-modal">
+                                                                <h3 class="service-one__item-modal__title">
+                                                                    <a href="#">Design Estratégico</a>
+                                                                </h3>
+                                                                <p class="service-one__item-modal__text">
+                                                                    Visual moderno criado para guiar o usuário até a
+                                                                    ação principal.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="item">
+                                                            <div class="service-one__item-modal">
+                                                                <h3 class="service-one__item-modal__title">
+                                                                    <a href="#">Performance Rápida</a>
+                                                                </h3>
+                                                                <p class="service-one__item-modal__text">
+                                                                    Carregamento rapido para maior retenção do usuário.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="item">
+                                                            <div class="service-one__item-modal">
+                                                                <h3 class="service-one__item-modal__title">
+                                                                    <a href="#">Experiência Clara</a>
+                                                                </h3>
+                                                                <p class="service-one__item-modal__text">
+                                                                    Navegação intuitiva e conteúdo direto ao ponto.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 wow fadeInRight animated" data-wow-delay="200ms"
+                                    style="margin-top: 50px;">
+                                    <div class="why-choose__box">
+                                        <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
+                                        <h3 class="why-choose__box__title">Desempenho otimizado</h3>
+                                        <p class="why-choose__box__text">
+                                            Velocidade e estabilidade em todas as telas, garantindo navegação fluida e
+                                            sem travamentos.
+                                        </p>
+                                    </div>
+
+                                    <div class="why-choose__box">
+                                        <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
+                                        <h3 class="why-choose__box__title">Storytelling de conversão</h3>
+                                        <p class="why-choose__box__text">
+                                            Cada seção da página é planejada como uma narrativa visual que conduz o
+                                            visitante à ação.
+                                        </p>
+                                    </div>
+
+                                    <div class="why-choose__box">
+                                        <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
+                                        <h3 class="why-choose__box__title">Integrações inteligentes</h3>
+                                        <p class="why-choose__box__text">
+                                            Conecte com Google Analytics, Meta Pixel, WhatsApp e automações para medir
+                                            resultados reais.
+                                        </p>
+                                    </div>
+
+                                    <div class="why-choose__box">
+                                        <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
+                                        <h3 class="why-choose__box__title">Pronta para campanhas</h3>
+                                        <p class="why-choose__box__text">
+                                            Implantação rápida e ideal para lançamentos, captações e campanhas
+                                            temporárias.
+                                        </p>
+                                    </div>
+
+                                    <div class="why-choose__box">
+                                        <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
+                                        <h3 class="why-choose__box__title">Otimização continua</h3>
+                                        <p class="why-choose__box__text">
+                                            Aprimoramento continuo com base em métricas reais, garantindo que ela
+                                            performe mesmo após o lançamento
+                                        </p>
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
-                    </div><!-- /.team-content -->
-                </div><!-- /.team-one -->
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="200ms">
-                <div class="team-one__item">
-                    <div class="team-one__item__image">
-                        <img src="assets/images/team/team-1-2.jpg" alt="ogency">
-                    </div><!-- /.team-image -->
-                    <div class="team-one__item__content">
-                        <span class="team-one__item__designation">Content Writer</span><!-- /.team-designation -->
-                        <h3 class="team-one__item__title">
-                            <a href="team-details.html">Aleesha brown</a>
-                        </h3><!-- /.team-name -->
-                        <div class="team-one__item__social-wrapper">
-                            <a class="team-one__item__links" href="#"><span
-                                    class="fas fa-share-alt"></span></a><!-- /.social-more -->
-                            <div class="team-one__item__social">
-                                <a href="https://twitter.com/"><i class="fab fa-twitter"></i></a>
-                                <a href="https://www.facebook.com/"><i class="fab fa-facebook"></i></a>
-                                <a href="https://www.pinterest.com/"><i class="fab fa-pinterest-p"></i></a>
-                                <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i></a>
-                            </div><!-- /.team-social -->
+                    </div>
+                    <div class="work-process-one">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="section-title text-center">
+                                        <h5 class="section-title__tagline section-title__tagline--has-dots">
+                                            nosso processo criativo
+                                        </h5>
+                                        <h2 class="section-title__title">
+                                            Como transformamos ideias em páginas que convertem
+                                        </h2>
+                                    </div><!-- /.section-title -->
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-12 wow fadeInUp animated" data-wow-delay="500ms">
+                                    <div class="work-process-one__border"></div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Etapa 1 -->
+                                <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="200ms">
+                                    <div class="work-process-one__item text-center">
+                                        <div class="work-process-one__item__thumb">
+                                            <img src="assets/images/resources/work-process-1.jpg" alt="ogency">
+                                            <div class="work-process-one__item__thumb__number">01</div>
+                                        </div>
+                                        <h4 class="work-process-one__item__title">Imersão Estratégica</h4>
+                                        <p class="work-process-one__item__text">
+                                            Entendemos o seu produto, público e objetivos para definir uma direção clara
+                                            e eficaz de comunicação.
+                                        </p>
+                                    </div><!-- /.work-process-item -->
+                                </div>
+
+                                <!-- Etapa 2 -->
+                                <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="300ms">
+                                    <div class="work-process-one__item text-center">
+                                        <div class="work-process-one__item__thumb">
+                                            <img src="assets/images/resources/work-process-2.jpg" alt="ogency">
+                                            <div class="work-process-one__item__thumb__number">02</div>
+                                        </div>
+                                        <h4 class="work-process-one__item__title">Direção Visual</h4>
+                                        <p class="work-process-one__item__text">
+                                            Criamos um conceito visual único, alinhado à sua identidade e voltado à
+                                            conversão do visitante em ação.
+                                        </p>
+                                    </div><!-- /.work-process-item -->
+                                </div>
+
+                                <!-- Etapa 3 -->
+                                <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="400ms">
+                                    <div class="work-process-one__item text-center">
+                                        <div class="work-process-one__item__thumb">
+                                            <img src="assets/images/resources/work-process-3.jpg" alt="ogency">
+                                            <div class="work-process-one__item__thumb__number">03</div>
+                                        </div>
+                                        <h4 class="work-process-one__item__title">Lançamento e Performance</h4>
+                                        <p class="work-process-one__item__text">
+                                            Publicamos, configuramos as integrações e otimizamos a página para garantir
+                                            resultados desde o primeiro dia.
+                                        </p>
+                                    </div><!-- /.work-process-item -->
+                                </div>
+                            </div>
                         </div>
-                    </div><!-- /.team-content -->
-                </div><!-- /.team-one -->
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="300ms">
-                <div class="team-one__item">
-                    <div class="team-one__item__image">
-                        <img src="assets/images/team/team-1-3.jpg" alt="ogency">
-                    </div><!-- /.team-image -->
-                    <div class="team-one__item__content">
-                        <span class="team-one__item__designation">Junior Developer</span><!-- /.team-designation -->
-                        <h3 class="team-one__item__title">
-                            <a href="team-details.html">Kevin martin</a>
-                        </h3><!-- /.team-name -->
-                        <div class="team-one__item__social-wrapper">
-                            <a class="team-one__item__links" href="#"><span
-                                    class="fas fa-share-alt"></span></a><!-- /.social-more -->
-                            <div class="team-one__item__social">
-                                <a href="https://twitter.com/"><i class="fab fa-twitter"></i></a>
-                                <a href="https://www.facebook.com/"><i class="fab fa-facebook"></i></a>
-                                <a href="https://www.pinterest.com/"><i class="fab fa-pinterest-p"></i></a>
-                                <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i></a>
-                            </div><!-- /.team-social -->
+                    </div>
+                    <!-- /.work-process-one -->
+                    <!-- Call To Action Start -->
+                    <div class="cta-one">
+                        <div class="container text-center wow fadeInUp animated" data-wow-delay="200ms">
+                            <div class="cta-one__author">
+                                <div class="cta-one__author--wrap">
+                                    <img src="assets/images/resources/cta-1-1.jpg" alt="MM Criativos">
+                                </div>
+                                <a href="https://wa.me/5599999999999?text=Olá%2C+gostaria+de+criar+minha+Landing+Page+com+a+MM+Criativos!"
+                                    target="_blank" class="cta-one__icon">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                </a>
+                            </div><!-- /.cta-author -->
+
+                            <div class="section-title">
+                                <h5 class="section-title__tagline section-title__tagline--has-dots">vamos tirar sua
+                                    ideia do papel</h5>
+                                <h2 class="section-title__title">
+                                    Pronto para lançar sua Landing Page?<br>
+                                    Fale agora com nossa equipe no WhatsApp!
+                                </h2>
+                            </div><!-- /.section-title -->
                         </div>
-                    </div><!-- /.team-content -->
-                </div><!-- /.team-one -->
+                    </div>
+                    <!-- Call To Action End -->
+                </div>
             </div>
         </div>
     </div>
 </section>
-<!-- Team Start -->
-<div class="client-carousel client-carousel--about">
-    <div class="container">
-        <h5 class="client-carousel__tilte"><span>1K+ Brands Trust Us</span></h5><!-- section-title -->
-        <div class="client-carousel__one ogency-owl__carousel owl-theme owl-carousel"
-            data-owl-options='{
-            "items": 5,
-            "margin": 120,
-            "smartSpeed": 700,
-            "loop":true,
-            "autoplay": 6000,
-            "nav":false,
-            "dots":false,
-            "navText": ["<span class=\"fa fa-angle-left\"></span>","<span class=\"fa fa-angle-right\"></span>"],
-            "responsive":{
-                "0":{
-                    "items":1,
-                    "margin": 0
-                },
-                "360":{
-                    "items":2,
-                    "margin": 0
-                },
-                "575":{
-                    "items":3,
-                    "margin": 0
-                },
-                "768":{
-                    "items":4,
-                    "margin": 0
-                },
-                "992":{
-                    "items": 5,
-                    "margin": 0
-                },
-                "1200":{
-                    "items": 5,
-                    "margin": 120
-                }
-            }
-            }'>
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-            <div class="client-carousel__one__item">
-                <img src="assets/images/resources/brand-1-1.png" alt="ogency">
-            </div><!-- /.owl-slide-item-->
-        </div><!-- /.thm-owl__slider -->
-    </div><!-- /.container -->
-</div><!-- /.client-carousel -->
+<!-- Services Details End -->
