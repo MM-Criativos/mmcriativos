@@ -83,7 +83,7 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Design Estratégico</a>
+                                                                    <a href="#">Design<br> Estratégico</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
                                                                     Visual moderno criado para guiar o usuário até a
@@ -95,7 +95,7 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Performance Rápida</a>
+                                                                    <a href="#">Performance<br> Rápida</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
                                                                     Carregamento rapido para maior retenção do usuário.
@@ -106,7 +106,7 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Experiência Clara</a>
+                                                                    <a href="#">Experiência<br> Clara</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
                                                                     Navegação intuitiva e conteúdo direto ao ponto.
