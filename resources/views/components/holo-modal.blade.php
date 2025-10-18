@@ -13,6 +13,7 @@
         isolation: isolate;
         contain: layout paint;
         pointer-events: none;
+        overflow-x: hidden; /* evita scroll horizontal no overlay */
     }
 
     .holo-modal.active {
@@ -102,6 +103,10 @@
         position: relative;
         flex: 1 1 auto;
         overflow-y: auto;
+        overflow-x: hidden; /* somente scroll vertical dentro do modal */
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
     }
 
     .holo-text {
@@ -113,6 +118,13 @@
         color: #e8e8e8;
         line-height: 1.6;
         margin-bottom: .5rem;
+    }
+    /* Evita que conteúdos injetados estourem a largura */
+    .holo-body img,
+    .holo-body video,
+    .holo-body canvas {
+        max-width: 100%;
+        height: auto;
     }
     /* Garante visibilidade de elementos com WOW dentro do modal */
     .holo-content .wow { visibility: visible !important; }
@@ -127,6 +139,31 @@
         animation: particleDrift 8s linear infinite;
         mix-blend-mode: screen;
         opacity: 0.25;
+    }
+
+    /* Ajustes do hero dentro do modal (mantém visual original) */
+    .holo-content .page-header {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .holo-content .page-header__bg__landing-page {
+        background-size: cover; /* preencher toda a largura do painel */
+        background-position: center top;
+        min-height: 520px;
+        height: 100%;
+    }
+    .holo-content .page-header .container {
+        min-height: 520px;            /* altura do bloco para centralizar o título */
+        display: flex;
+        align-items: center;          /* título na altura do centro da imagem */
+        justify-content: flex-start;  /* alinhado à esquerda */
+        padding-bottom: 0;            /* sem empurrar para baixo */
+        text-align: left;
+    }
+    @media (max-width: 767px) {
+        .holo-content .page-header__bg__landing-page { min-height: 420px; }
+        .holo-content .page-header .container { min-height: 420px; }
     }
 
     @keyframes particleDrift {

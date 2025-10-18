@@ -8,7 +8,7 @@
     <div class="page-header__bg__landing-page"></div>
     <div class="page-header__overlay"></div>
     <div class="container">
-        <h2 class="page-header__title">Site Multipage</h2>
+        <h2 class="page-header__title">Portal</h2>
     </div>
 </section>
 
@@ -26,23 +26,24 @@
                                             <h5 class="section-title__tagline section-title__tagline--has-dots">
                                                 presença completa e expansível
                                             </h5>
-                                            <h2 class="section-title__title">Por que escolher um Site Multipage?</h2>
+                                            <h2 class="section-title__title">Por que escolher um Portal?</h2>
                                         </div>
 
                                         <p class="why-choose-two__left--text">
-                                            Um Site Multipage é a escolha ideal para marcas e empresas que precisam de
-                                            uma presença digital robusta, com páginas dedicadas a cada parte da sua
-                                            comunicação — produtos, serviços, equipe, contato e muito mais.
+                                            Um <strong>Portal</strong> é o formato ideal para quem precisa de um
+                                            site com estrutura profissional e liberdade para atualizar o conteúdo sempre
+                                            que quiser.
                                             <br><br>
-                                            Diferente da Multipage, ele permite aprofundar informações, trabalhar
-                                            estratégias de SEO com mais precisão e criar jornadas de navegação
-                                            detalhadas, conduzindo o usuário por diferentes seções de forma lógica e
-                                            envolvente.
+                                            Ela une o design e a experiência de um site tradicional com o poder de um
+                                            painel administrativo, permitindo que você adicione novos produtos,
+                                            projetos, artigos ou coleções com facilidade — sem depender de suporte
+                                            técnico.
                                             <br><br>
-                                            É o formato indicado para negócios em crescimento, que buscam consolidar
-                                            autoridade, melhorar posicionamento no Google e oferecer uma experiência
-                                            completa a seus visitantes.
+                                            Diferente de um sistema corporativo, é leve, intuitiva e feita sob medida
+                                            para negócios criativos, lojas especializadas, estúdios e profissionais que
+                                            desejam autonomia, performance e crescimento contínuo.
                                         </p>
+
 
                                         <div class="row">
                                             <div class="service-page__carousel-modal">
@@ -76,8 +77,8 @@
                                                                     <a href="#">Presença Estruturada</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
-                                                                    Organiza suas informações em páginas dedicadas,
-                                                                    aprofunde sua história.
+                                                                    Organização clara do conteúdo em páginas únicas que
+                                                                    reforçam a credibilidade da sua marca.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -88,8 +89,8 @@
                                                                     <a href="#">Expansão Contínua</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
-                                                                    Estrutura flexível que cresce junto com o seu
-                                                                    negócio, pronta para novos conteúdos e seções.
+                                                                    Estrutura adaptável que permite adicionar novas
+                                                                    seções, categorias e funcionalidades.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -97,11 +98,11 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Autoridade Digital</a>
+                                                                    <a href="#">Autonomia Total</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
-                                                                    Aprofunda sua comunicação, fortalecendo o
-                                                                    posicionamento da marca no mercado.
+                                                                    Painel administrativo intuitivo para cadastrar,
+                                                                    editar e atualizar conteúdos.
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -112,11 +113,12 @@
                                                                     <a href="#">Experiência Completa</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
-                                                                    Melhor maneira de apresentar sua marca e seus
-                                                                    produtos ao público.
+                                                                    Oferece ao visitante uma jornada imersiva, com
+                                                                    páginas que se conectam.
                                                                 </p>
                                                             </div>
                                                         </div>
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -131,8 +133,8 @@
                                         <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
                                         <h3 class="why-choose__box__title">Arquitetura Modular</h3>
                                         <p class="why-choose__box__text">
-                                            Cada página tem função própria, criando um ecossistema digital coeso e fácil
-                                            de navegar.
+                                            Cada página tem função própria, criando um ecossistema digital organizado,
+                                            intuitivo e escalável.
                                         </p>
                                     </div>
 
@@ -140,8 +142,8 @@
                                         <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
                                         <h3 class="why-choose__box__title">SEO Avançado</h3>
                                         <p class="why-choose__box__text">
-                                            Estrutura otimizada para buscadores, com páginas indexáveis e conteúdo
-                                            estratégico para ranqueamento.
+                                            Estrutura otimizada para buscadores, com URLs amigáveis, metadados e
+                                            hierarquia de conteúdo.
                                         </p>
                                     </div>
 
@@ -149,8 +151,8 @@
                                         <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
                                         <h3 class="why-choose__box__title">Gestão Escalável</h3>
                                         <p class="why-choose__box__text">
-                                            Permite incluir novos produtos, serviços e áreas do site sem comprometer
-                                            performance ou design.
+                                            Painel administrativo leve e adaptável que cresce junto com o volume de
+                                            dados e conteúdos do site.
                                         </p>
                                     </div>
 
@@ -158,8 +160,8 @@
                                         <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
                                         <h3 class="why-choose__box__title">Conteúdo Profundo</h3>
                                         <p class="why-choose__box__text">
-                                            Espaço para explorar detalhes sobre sua empresa, cases e diferenciais com
-                                            clareza e propósito.
+                                            Permite explorar detalhes, projetos e histórias da marca com maior densidade
+                                            e narrativa envolvente.
                                         </p>
                                     </div>
 
@@ -167,11 +169,10 @@
                                         <div class="why-choose__box__icon"><span class="icon-tick"></span></div>
                                         <h3 class="why-choose__box__title">Integração Total</h3>
                                         <p class="why-choose__box__text">
-                                            Suporte a ferramentas de automação, análise e contato, criando um fluxo
-                                            completo de comunicação digital.
+                                            Conecte formulários, automações, analytics e APIs externas para centralizar
+                                            a gestão digital.
                                         </p>
                                     </div>
-
 
                                 </div>
                             </div>
@@ -183,100 +184,125 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="section-title text-center">
-                                        <h5 class="section-title__tagline section-title__tagline--has-dots">nosso
-                                            processo de desenvolvimento</h5>
-                                        <h2 class="section-title__title">Como transformamos planejamento e design em um
-                                            site completo</h2>
+                                        <h5 class="section-title__tagline section-title__tagline--has-dots">
+                                            nosso processo de desenvolvimento
+                                        </h5>
+                                        <h2 class="section-title__title">
+                                            Como transformamos ideias em Portias funcionais e escaláveis
+                                        </h2>
                                     </div>
                                 </div>
                             </div>
+
                             <div class="row">
                                 <div class="col-lg-12 wow fadeInUp animated" data-wow-delay="300ms">
                                     <div class="work-process-one__border"></div>
                                 </div>
                             </div>
+
                             <div class="row">
                                 <div class="col-12">
                                     <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
                                         data-owl-options='{
-                                        "items": 3,
-                                        "margin": 30,
-                                        "smartSpeed": 800,
-                                        "loop": false,
-                                        "autoplay": false,
-                                        "dots": true,
-                                        "navText": ["<span class=\"icon-left-arrow\"></span>","<span class=\"icon-right-arrow\"></span>"],
-                                        "responsive": {
-                                          "0": {"items":1, "margin":16},
-                                          "600": {"items":2},
-                                          "992": {"items":3},
-                                          "1200": {"items":3}
-                                        }
+                                            "items": 3,
+                                            "margin": 30,
+                                            "smartSpeed": 800,
+                                            "loop": false,
+                                            "autoplay": false,
+                                            "dots": true,
+                                            "nav": false,
+                                            "navText": ["<span class=\"icon-left-arrow\"></span>","<span class=\"icon-right-arrow\"></span>"],
+                                            "responsive": {
+                                              "0": {"items":1, "margin":16},
+                                              "600": {"items":2},
+                                              "992": {"items":3},
+                                              "1200": {"items":3}
+                                            }
                                         }'>
 
-                                        <!-- Item 1 -->
+                                        <!-- Etapa 1 -->
                                         <div class="item">
                                             <div class="work-process-one__item text-center">
                                                 <div class="work-process-one__item__thumb">
                                                     <img src="assets/images/resources/work-process-1.jpg"
-                                                        alt="Diagnóstico e Planejamento">
+                                                        alt="Mapeamento de Necessidades">
                                                     <div class="work-process-one__item__thumb__number">01</div>
                                                 </div>
-                                                <h4 class="work-process-one__item__title">Diagnóstico e Planejamento
+                                                <h4 class="work-process-one__item__title">Mapeamento de Necessidades
                                                 </h4>
                                                 <p class="work-process-one__item__text">
-                                                    Analisamos marca, público e objetivos para definir estrutura e
-                                                    propósito de cada página.
+                                                    Identificamos o que sua marca precisa gerenciar e como cada parte do
+                                                    conteúdo se conecta.
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <!-- Item 2 -->
+                                        <!-- Etapa 2 -->
                                         <div class="item">
                                             <div class="work-process-one__item text-center">
                                                 <div class="work-process-one__item__thumb">
                                                     <img src="assets/images/resources/work-process-2.jpg"
-                                                        alt="Arquitetura e Conteúdo">
+                                                        alt="Arquitetura do Portal">
                                                     <div class="work-process-one__item__thumb__number">02</div>
                                                 </div>
-                                                <h4 class="work-process-one__item__title">Arquitetura e Conteúdo</h4>
+                                                <h4 class="work-process-one__item__title">Arquitetura do Portal
+                                                </h4>
                                                 <p class="work-process-one__item__text">
-                                                    Mapa do site, organização de seções e profundidade de comunicação.
+                                                    Estruturamos o painel administrativo, definindo fluxos, áreas e
+                                                    cadastros essenciais.
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <!-- Item 3 -->
+                                        <!-- Etapa 3 -->
                                         <div class="item">
                                             <div class="work-process-one__item text-center">
                                                 <div class="work-process-one__item__thumb">
                                                     <img src="assets/images/resources/work-process-3.jpg"
-                                                        alt="Design e Desenvolvimento">
+                                                        alt="Design de Interface">
                                                     <div class="work-process-one__item__thumb__number">03</div>
                                                 </div>
-                                                <h4 class="work-process-one__item__title">Design e Desenvolvimento</h4>
+                                                <h4 class="work-process-one__item__title">Design de Interface</h4>
                                                 <p class="work-process-one__item__text">
-                                                    Interfaces únicas com tecnologias atuais para navegação fluida e
-                                                    responsiva.
+                                                    Criamos o visual do portal, garantindo harmonia entre estética,
+                                                    clareza e usabilidade.
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <!-- Item 4 -->
+                                        <!-- Etapa 4 -->
                                         <div class="item">
                                             <div class="work-process-one__item text-center">
                                                 <div class="work-process-one__item__thumb">
                                                     <img src="assets/images/resources/work-process-3.jpg"
-                                                        alt="Publicação e Otimização">
+                                                        alt="Desenvolvimento Funcional">
                                                     <div class="work-process-one__item__thumb__number">04</div>
                                                 </div>
-                                                <h4 class="work-process-one__item__title">Publicação e Otimização</h4>
+                                                <h4 class="work-process-one__item__title">Desenvolvimento Funcional
+                                                </h4>
                                                 <p class="work-process-one__item__text">
-                                                    SEO avançado, integrações e acompanhamento técnico de performance.
+                                                    Implementamos os recursos dinâmicos, integrações e cadastros do
+                                                    painel administrativo.
                                                 </p>
                                             </div>
                                         </div>
 
+                                        <!-- Etapa 5 -->
+                                        <div class="item">
+                                            <div class="work-process-one__item text-center">
+                                                <div class="work-process-one__item__thumb">
+                                                    <img src="assets/images/resources/work-process-3.jpg"
+                                                        alt="Implantação e Treinamento">
+                                                    <div class="work-process-one__item__thumb__number">05</div>
+                                                </div>
+                                                <h4 class="work-process-one__item__title">Implantação e Treinamento
+                                                </h4>
+                                                <p class="work-process-one__item__text">
+                                                    Publicamos o portal, configuramos integrações e treinamos você
+                                                    para total autonomia.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

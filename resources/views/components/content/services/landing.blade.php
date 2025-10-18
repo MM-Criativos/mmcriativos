@@ -30,12 +30,12 @@
                                         <p class="why-choose-two__left--text">
                                             Uma Landing Page é o formato ideal para quem precisa gerar resultado rápido
                                             e mensurável, seja captar leads, divulgar um produto ou validar uma ideia.
-
+                                            <br><br>
                                             Diferente de um site institucional, ela é direta, estratégica e centrada em
                                             conversão.
                                             Cada detalhe é pensado para conduzir o visitante até a ação que importa:
                                             clicar, preencher, comprar ou entrar em contato.
-
+                                            <br><br>
                                             Se o seu objetivo é vender mais, captar contatos ou dar destaque a uma
                                             campanha, esse é o serviço certo.
                                             A Landing Page da MM Criativos combina design de impacto, copy estratégica e
@@ -71,7 +71,7 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Alta<br> Conversão</a>
+                                                                    <a href="#">Alta Conversão</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
                                                                     Estrutura pensada para transformar cliques em
@@ -83,7 +83,7 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Design<br> Estratégico</a>
+                                                                    <a href="#">Design Estratégico</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
                                                                     Visual moderno criado para guiar o usuário até a
@@ -95,7 +95,7 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Performance<br> Rápida</a>
+                                                                    <a href="#">Performance Rápida</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
                                                                     Carregamento rapido para maior retenção do usuário.
@@ -106,7 +106,7 @@
                                                         <div class="item">
                                                             <div class="service-one__item-modal">
                                                                 <h3 class="service-one__item-modal__title">
-                                                                    <a href="#">Experiência<br> Clara</a>
+                                                                    <a href="#">Experiência Clara</a>
                                                                 </h3>
                                                                 <p class="service-one__item-modal__text">
                                                                     Navegação intuitiva e conteúdo direto ao ponto.
@@ -248,7 +248,7 @@
                                 <div class="cta-one__author--wrap">
                                     <img src="assets/images/resources/cta-1-1.jpg" alt="MM Criativos">
                                 </div>
-                                <a href="https://wa.me/5599999999999?text=Olá%2C+gostaria+de+criar+minha+Landing+Page+com+a+MM+Criativos!"
+                                <a href="https://wa.me/5511958469546?text=Olá%2C+gostaria+de+criar+minha+Landing+Page+com+a+MM+Criativos!"
                                     target="_blank" class="cta-one__icon">
                                     <i class="fa-brands fa-whatsapp"></i>
                                 </a>

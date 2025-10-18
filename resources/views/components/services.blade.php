@@ -76,7 +76,8 @@
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Tudo em uma única página, direto ao ponto, com design
                             impactante.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('single')"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)"
+                            onclick="openServiceModal('single')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -97,7 +98,8 @@
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Estrutura completa para apresentar sua marca com
                             profundidade.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('multi')"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)"
+                            onclick="openServiceModal('multi')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -114,11 +116,12 @@
                             <i class="fa-light fa-network-wired"></i>
                         </div><!-- /.service-icon -->
                         <h3 class="service-two__item__title">
-                            <a href="javascript:void(0)" onclick="openServiceModal('plataforma')">Plataforma Web</a>
+                            <a href="javascript:void(0)" onclick="openServiceModal('portal')">Portal</a>
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Soluções sob medida para portais com
                             gerenciamento online.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('plataforma')"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)"
+                            onclick="openServiceModal('portal')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -139,7 +142,8 @@
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Desenvolvemos sistemas únicos, feitos para o fluxo do
                             seu negócio.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('sistema')"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)"
+                            onclick="openServiceModal('sistema')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -156,11 +160,12 @@
                             <i class="fa-light fa-chart-network"></i>
                         </div><!-- /.service-icon -->
                         <h3 class="service-two__item__title">
-                            <a href="javascript:void(0)" onclick="openServiceModal('saas')">SaaS e Integra��es</a>
+                            <a href="javascript:void(0)" onclick="openServiceModal('saas')">SaaS e Integrações</a>
                         </h3><!-- /.service-title -->
                         <p class="service-two__item__text">Conectamos automações e serviços em um
                             ecossistema inteligente.</p><!-- /.service-content -->
-                        <a class="service-two__item__btn" href="javascript:void(0)" onclick="openServiceModal('saas')"><span
+                        <a class="service-two__item__btn" href="javascript:void(0)"
+                            onclick="openServiceModal('saas')"><span
                                 class="icon-right-arrow"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-innner -->
                 </div><!-- /.service-card-two -->
@@ -168,5 +173,3 @@
         </div>
     </div>
 </section>
-
-
