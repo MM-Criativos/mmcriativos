@@ -1,194 +1,78 @@
-<style>
-    /* 🔹 Estrutura isolada do modal */
-    .holo-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        isolation: isolate;
-        contain: layout paint;
-        pointer-events: none;
-    }
+@props([
+    'name',
+    'show' => false,
+    'maxWidth' => '2xl'
+])
 
-    .holo-modal.active {
-        display: flex;
-        pointer-events: all;
-    }
+@php
+$maxWidth = [
+    'sm' => 'sm:max-w-sm',
+    'md' => 'sm:max-w-md',
+    'lg' => 'sm:max-w-lg',
+    'xl' => 'sm:max-w-xl',
+    '2xl' => 'sm:max-w-2xl',
+][$maxWidth];
+@endphp
 
-    .holo-backdrop {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(6px) brightness(0.8);
-    }
-
-    /* 🔸 Painel holográfico principal */
-    .holo-content {
-        position: relative;
-        width: 600px;
-        max-width: 90%;
-        padding: 2rem;
-        border-radius: 16px;
-        overflow: hidden;
-        z-index: 2;
-        color: #fff;
-        transform-origin: center;
-        backdrop-filter: blur(10px) saturate(160%);
-        background: rgba(15, 15, 15, 0.4);
-        border: 1px solid rgba(255, 136, 0, 0.35);
-        box-shadow:
-            0 0 25px rgba(255, 136, 0, 0.5),
-            inset 0 0 30px rgba(255, 136, 0, 0.15);
-        animation: hologramPulse 4s ease-in-out infinite;
-    }
-
-    /* 🔶 Simulação de partículas */
-    .holo-content::before,
-    .holo-content::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background-image:
-            radial-gradient(rgba(255, 136, 0, 0.4) 1px, transparent 1px),
-            radial-gradient(rgba(0, 200, 255, 0.2) 1px, transparent 1px);
-        background-size: 3px 3px, 5px 5px;
-        animation: particleDrift 8s linear infinite;
-        mix-blend-mode: screen;
-        opacity: 0.3;
-    }
-
-    @keyframes particleDrift {
-        0% {
-            background-position: 0 0, 0 0;
-            opacity: 0.2;
+<div
+    x-data="{
+        show: @js($show),
+        focusables() {
+            // All focusable element types...
+            let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])'
+            return [...$el.querySelectorAll(selector)]
+                // All non-disabled elements...
+                .filter(el => ! el.hasAttribute('disabled'))
+        },
+        firstFocusable() { return this.focusables()[0] },
+        lastFocusable() { return this.focusables().slice(-1)[0] },
+        nextFocusable() { return this.focusables()[this.nextFocusableIndex()] || this.firstFocusable() },
+        prevFocusable() { return this.focusables()[this.prevFocusableIndex()] || this.lastFocusable() },
+        nextFocusableIndex() { return (this.focusables().indexOf(document.activeElement) + 1) % (this.focusables().length + 1) },
+        prevFocusableIndex() { return Math.max(0, this.focusables().indexOf(document.activeElement)) -1 },
+    }"
+    x-init="$watch('show', value => {
+        if (value) {
+            document.body.classList.add('overflow-y-hidden');
+            {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
+        } else {
+            document.body.classList.remove('overflow-y-hidden');
         }
+    })"
+    x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
+    x-on:close-modal.window="$event.detail == '{{ $name }}' ? show = false : null"
+    x-on:close.stop="show = false"
+    x-on:keydown.escape.window="show = false"
+    x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
+    x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
+    x-show="show"
+    class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
+    style="display: {{ $show ? 'block' : 'none' }};"
+>
+    <div
+        x-show="show"
+        class="fixed inset-0 transform transition-all"
+        x-on:click="show = false"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    >
+        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+    </div>
 
-        50% {
-            background-position: 50px 100px, -60px 80px;
-            opacity: 0.5;
-        }
-
-        100% {
-            background-position: 0 0, 0 0;
-            opacity: 0.2;
-        }
-    }
-
-    /* 🔸 Movimento holográfico lateral */
-    .holo-content::before {
-        background-image: linear-gradient(90deg,
-                transparent 0%, rgba(255, 136, 0, 0.15) 50%, transparent 100%);
-        opacity: 0.4;
-        animation: holoSweep 3.5s linear infinite;
-    }
-
-    @keyframes holoSweep {
-        0% {
-            transform: translateX(-100%);
-        }
-
-        100% {
-            transform: translateX(100%);
-        }
-    }
-
-    /* 🔸 Escaneamento vertical */
-    .scanline {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: rgba(255, 136, 0, 0.5);
-        box-shadow: 0 0 10px rgba(255, 136, 0, 0.7);
-        animation: scanMove 3s linear infinite;
-    }
-
-    @keyframes scanMove {
-        0% {
-            top: 0;
-            opacity: 0.1;
-        }
-
-        50% {
-            top: 100%;
-            opacity: 1;
-        }
-
-        100% {
-            top: 0;
-            opacity: 0.1;
-        }
-    }
-
-    /* 🔸 Pulso energético */
-    @keyframes hologramPulse {
-
-        0%,
-        100% {
-            box-shadow: 0 0 25px rgba(255, 136, 0, 0.5), inset 0 0 30px rgba(255, 136, 0, 0.15);
-        }
-
-        50% {
-            box-shadow: 0 0 50px rgba(255, 136, 0, 0.8), inset 0 0 40px rgba(255, 136, 0, 0.25);
-        }
-    }
-
-    /* 🔸 Título e texto */
-    .holo-title {
-        font-size: 1.8rem;
-        color: #ff8800;
-        text-shadow: 0 0 12px rgba(255, 136, 0, 0.7);
-        margin-bottom: 1rem;
-    }
-
-    .holo-text {
-        color: #dddddd;
-        line-height: 1.7;
-    }
-
-    /* 🔸 Botão de fechamento */
-    .close-btn {
-        position: absolute;
-        top: 10px;
-        right: 14px;
-        background: none;
-        border: none;
-        color: #ff8800;
-        font-size: 1.8rem;
-        cursor: pointer;
-        transition: 0.2s;
-        z-index: 10;
-    }
-
-    .close-btn:hover {
-        color: #00ffff;
-    }
-
-    #holoParticles {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
-        pointer-events: none;
-        filter: blur(0.4px) brightness(1.3);
-    }
-</style>
-
-<div id="holoModal" class="holo-modal">
-    <div class="holo-backdrop" onclick="closeHoloModal()"></div>
-    <canvas id="holoParticles"></canvas>
-    <div class="holo-content"> <!-- painel hologr�fico -->`r`n        <div class="scanline"></div>`r`n        <button class="close-btn" onclick="closeHoloModal()">`r`n            <span>?-</span>`r`n        </button>`r`n`r`n        <h2 class="holo-title">Interface Ativada</h2>
-        <p class="holo-text">
-            Este é o novo modal holográfico da <strong>MM Criativos</strong> —
-            construído em camadas de luz, energia e código. Um painel digital que surge do circuito,
-            vibra com glitchs e retorna ao éter quando encerrado.
-        </p>
+    <div
+        x-show="show"
+        class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+    >
+        {{ $slot }}
     </div>
 </div>
-
-

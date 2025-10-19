@@ -8908,11 +8908,11 @@ h6 {
 .gallery-page {
   background-color: var(--ogency-black);
   position: relative;
-  padding: 120px 0 110px;
+  padding: 40px 0 110px;
 }
 
 .gallery-page__padding {
-  padding-bottom: 120px;
+  padding-bottom: 40px;
 }
 
 @media (max-width: 767px) {
@@ -9964,7 +9964,7 @@ h6 {
 .project-details {
   background-color: var(--ogency-black);
   position: relative;
-  padding: 120px 0 90px;
+  padding: 20px 0 90px;
 }
 
 @media (max-width: 767px) {

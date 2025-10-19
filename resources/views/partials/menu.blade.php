@@ -30,9 +30,9 @@
                 <a href="#" class="main-menu__toggler mobile-nav__toggler">
                     <i class="fa fa-bars"></i>
                 </a><!-- /.mobile menu btn -->
-                {{-- <a href="#" class="main-menu__search search-toggler">
-                    <i class="icon-magnifying-glass"></i>
-                </a> --}}<!-- /.search btn -->
+                <a href="{{ route('login') }}" class="main-menu__search" aria-label="Login">
+                    <i class="fa-light fa-user"></i>
+                </a><!-- /.login btn -->
             </div><!-- /.main-menu__right -->
         </div><!-- /.container -->
     </nav>

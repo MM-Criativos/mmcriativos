@@ -36,7 +36,7 @@
                 <div class="project-two__item__content">
                     <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
                             href="projects.html">Agency</a></p><!-- /.project-category -->
-                    <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
+                    <h3 class="project-two__item__content__title"><a href="javascript:void(0)" onclick="openProjectModal('project','Asus marketing')">Asus
                             marketing</a></h3><!-- /.project-title -->
                 </div>
             </div><!-- /.project-item-two -->
@@ -46,7 +46,7 @@
                 <div class="project-two__item__content">
                     <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
                             href="projects.html">Agency</a></p><!-- /.project-category -->
-                    <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
+                    <h3 class="project-two__item__content__title"><a href="javascript:void(0)" onclick="openProjectModal('project','Asus marketing')">Asus
                             marketing</a></h3><!-- /.project-title -->
                 </div>
             </div><!-- /.project-item-two -->
@@ -56,7 +56,7 @@
                 <div class="project-two__item__content">
                     <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
                             href="projects.html">Agency</a></p><!-- /.project-category -->
-                    <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
+                    <h3 class="project-two__item__content__title"><a href="javascript:void(0)" onclick="openProjectModal('project','Asus marketing')">Asus
                             marketing</a></h3><!-- /.project-title -->
                 </div>
             </div><!-- /.project-item-two -->
@@ -66,7 +66,7 @@
                 <div class="project-two__item__content">
                     <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
                             href="projects.html">Agency</a></p><!-- /.project-category -->
-                    <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
+                    <h3 class="project-two__item__content__title"><a href="javascript:void(0)" onclick="openProjectModal('project','Asus marketing')">Asus
                             marketing</a></h3><!-- /.project-title -->
                 </div>
             </div><!-- /.project-item-two -->
@@ -76,7 +76,7 @@
                 <div class="project-two__item__content">
                     <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
                             href="projects.html">Agency</a></p><!-- /.project-category -->
-                    <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
+                    <h3 class="project-two__item__content__title"><a href="javascript:void(0)" onclick="openProjectModal('project','Asus marketing')">Asus
                             marketing</a></h3><!-- /.project-title -->
                 </div>
             </div><!-- /.project-item-two -->

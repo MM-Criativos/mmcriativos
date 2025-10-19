@@ -33,13 +33,13 @@
                     </div><!-- /.service-normal-content -->
                     <div class="service-three__item__hover">
                         <h3 class="service-three__item__hover__title">
-                            <a href="website-development.html">Layout e Interface</a>
+                            <a href="javascript:void(0)" onclick="openSkillModal('frontend')">Layout e Interface</a>
                         </h3><!-- /.service-title -->
                         <p class="service-three__item__hover__text">Criamos interfaces modernas e responsivas, que
                             destacam sua marca e encantam o usuário.
                             Cada detalhe é pensado para transmitir profissionalismo e identidade visual.</p>
                         <!-- /.service-content -->
-                        <a class="service-three__item__hover__btn" href="website-development.html">Read More<span
+                        <a class="service-three__item__hover__btn" href="javascript:void(0)" onclick="openSkillModal('frontend')">Read More<span
                                 class="icon-down-right"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-hover-content -->
                 </div><!-- /.service-card-three -->
@@ -54,13 +54,13 @@
                     </div><!-- /.service-normal-content -->
                     <div class="service-three__item__hover">
                         <h3 class="service-three__item__hover__title">
-                            <a href="graphic-designing.html">Estrutura e Lógica</a>
+                            <a href="javascript:void(0)" onclick="openSkillModal('backend')">Estrutura e Lógica</a>
                         </h3><!-- /.service-title -->
                         <p class="service-three__item__hover__text">Desenvolvemos códigos limpos e estáveis, garantindo
                             performance, segurança e fácil manutenção.
                             A base sólida que sustenta seu site para crescer sem limitações.</p>
                         <!-- /.service-content -->
-                        <a class="service-three__item__hover__btn" href="graphic-designing.html">Read More<span
+                        <a class="service-three__item__hover__btn" href="javascript:void(0)" onclick="openSkillModal('backend')">Read More<span
                                 class="icon-down-right"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-hover-content -->
                 </div><!-- /.service-card-three -->
@@ -75,13 +75,13 @@
                     </div><!-- /.service-normal-content -->
                     <div class="service-three__item__hover">
                         <h3 class="service-three__item__hover__title">
-                            <a href="web-application.html">Experiência do Usuário</a>
+                            <a href="javascript:void(0)" onclick="openSkillModal('uxui')">Experiência do Usuário</a>
                         </h3><!-- /.service-title -->
                         <p class="service-three__item__hover__text">Unimos estética e funcionalidade para criar
                             navegações fluidas e intuitivas.
                             A experiência é projetada para engajar e converter com naturalidade.</p>
                         <!-- /.service-content -->
-                        <a class="service-three__item__hover__btn" href="web-application.html">Read More<span
+                        <a class="service-three__item__hover__btn" href="javascript:void(0)" onclick="openSkillModal('uxui')">Read More<span
                                 class="icon-down-right"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-hover-content -->
                 </div><!-- /.service-card-three -->
@@ -96,12 +96,12 @@
                     </div><!-- /.service-normal-content -->
                     <div class="service-three__item__hover">
                         <h3 class="service-three__item__hover__title">
-                            <a href="digital-marketing.html">SEO e Desempenho</a>
+                            <a href="javascript:void(0)" onclick="openSkillModal('seo')">SEO e Desempenho</a>
                         </h3><!-- /.service-title -->
                         <p class="service-three__item__hover__text">Otimizamos seu site para aparecer no Google e
                             carregar em segundos.
                             Mais visibilidade, mais resultados, menos tempo de espera.</p><!-- /.service-content -->
-                        <a class="service-three__item__hover__btn" href="digital-marketing.html">Read More<span
+                        <a class="service-three__item__hover__btn" href="javascript:void(0)" onclick="openSkillModal('seo')">Read More<span
                                 class="icon-down-right"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-hover-content -->
                 </div><!-- /.service-card-three -->
@@ -116,13 +116,13 @@
                     </div><!-- /.service-normal-content -->
                     <div class="service-three__item__hover">
                         <h3 class="service-three__item__hover__title">
-                            <a href="digital-marketing.html">Automação e Integração</a>
+                            <a href="javascript:void(0)" onclick="openSkillModal('automacao')">Automação e Integração</a>
                         </h3><!-- /.service-title -->
                         <p class="service-three__item__hover__text">Conectamos ferramentas e serviços para simplificar
                             rotinas e ampliar resultados.
                             Automação inteligente que economiza tempo e potencializa o digital.</p>
                         <!-- /.service-content -->
-                        <a class="service-three__item__hover__btn" href="digital-marketing.html">Read More<span
+                        <a class="service-three__item__hover__btn" href="javascript:void(0)" onclick="openSkillModal('automacao')">Read More<span
                                 class="icon-down-right"></span></a><!-- /.service-read-more -->
                     </div><!-- /.service-hover-content -->
                 </div><!-- /.service-card-three -->

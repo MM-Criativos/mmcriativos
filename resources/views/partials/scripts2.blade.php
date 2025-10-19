@@ -253,6 +253,15 @@
             sistema: 'Sistema Empresarial',
             saas: 'SaaS e Integrações'
         };
+        const SKILL_TITLES = {
+            frontend: 'Layout e Interface',
+            backend: 'Estrutura e Lógica',
+            uxui: 'Experiência do Usuário',
+            seo: 'SEO e Desempenho',
+            automacao: 'Automação e Integração'
+        };
+        // Se quiser exibir opções para projetos no select, adicione aqui
+        // const PROJECT_TITLES = { project: 'Projeto' };
         let currentType = 'services';
         let currentSlug = '';
 
@@ -291,9 +300,9 @@
                 });
         }
 
-        // WOW + Owl + helpers for dynamically injected fragments
+        // WOW + Owl + Curved Circle + Video popup for dynamically injected fragments
         function initDynamicEffects(root) {
-            // 1) WOW.js — reinit usando o container do modal
+            // 1) WOW.js – reinit usando o container do modal
             if (window.WOW) {
                 try {
                     new WOW({
@@ -309,12 +318,46 @@
             // 2) Owl dentro do fragmento
             initDynamicCarousels(root);
             attachCarouselHover(root);
+
+            // 3) Curved circle text (CircleType) re-init inside the fragment
+            try {
+                const $root = window.jQuery ? window.jQuery(root) : null;
+                if ($root && $.fn && $.fn.circleType) {
+                    const safeInit = (selector, options) => {
+                        $root.find(selector).each(function() {
+                            const $el = $(this);
+                            if ($el.data('ct-init')) return; // avoid double init
+                            $el.circleType(options);
+                            $el.data('ct-init', true);
+                        });
+                    };
+                    safeInit('.curved-circle--item', { radius: 70, forceHeight: true, forceWidth: true });
+                    safeInit('.curved-circle-item', { radius: 90, forceHeight: true, forceWidth: true });
+                    safeInit('.curved-circle---item', { radius: 75, forceHeight: true, forceWidth: true });
+                }
+            } catch (e) {}
+
+            // 4) Video popup (magnific) for dynamically injected links
+            try {
+                const $root = window.jQuery ? window.jQuery(root) : null;
+                if ($root && $.fn && $.fn.magnificPopup) {
+                    $root.find('.video-popup').magnificPopup({
+                        type: 'iframe',
+                        mainClass: 'mfp-fade',
+                        removalDelay: 160,
+                        preloader: true,
+                        fixedContentPos: false
+                    });
+                }
+            } catch (e) {}
         }
 
         function populateSelect(type, slug) {
             if (!holoSelect) return;
             const maps = {
-                services: SERVICE_TITLES
+                services: SERVICE_TITLES,
+                skills: SKILL_TITLES
+                // ,projects: PROJECT_TITLES
             };
             const map = maps[type];
             if (!map) {
@@ -346,6 +389,15 @@
         window.openServiceModal = function(service) {
             const heading = SERVICE_TITLES[service] || 'Serviço Digital';
             window.openContentModal('services', service, heading);
+        };
+        window.openSkillModal = function(skill) {
+            const heading = SKILL_TITLES[skill] || 'Habilidade';
+            window.openContentModal('skills', skill, heading);
+        };
+        window.openProjectModal = function(slug, heading) {
+            const safeSlug = slug || 'project';
+            const safeHeading = heading || 'Projeto';
+            window.openContentModal('projects', safeSlug, safeHeading);
         };
     });
 </script>
