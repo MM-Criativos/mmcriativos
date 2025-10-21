@@ -4401,6 +4401,8 @@ h6 {
   color: var(--ogency-white);
   font-size: 14px;
   text-transform: capitalize;
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .feature-one__item__hover-content__btn span {
@@ -8494,6 +8496,23 @@ h6 {
   z-index: 1;
 }
 
+.page-header__bg__services {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  background-repeat: no-repeat;
+  background-size: cover;          /* Melhor que contain aqui para cobrir o hero */
+  background-position: center top; /* Ajuste fino do enquadramento */
+  opacity: 0.85;
+  z-index: 1;
+}
+
+/* Controle de exibição das variações */
+.page-header__bg__services--desktop { display: block; }
+.page-header__bg__services--mobile { display: none; }
+
 /* Overlay ajustado – sobe um pouco e cobre parte do título */
 .page-header__overlay {
   position: absolute;
@@ -8533,6 +8552,9 @@ h6 {
     background-position: top center;
     min-height: 420px;
   }
+
+  .page-header__bg__services--desktop { display: none; }
+  .page-header__bg__services--mobile  { display: block; }
 
   .page-header__overlay {
     height: 180px;

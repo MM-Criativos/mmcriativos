@@ -258,7 +258,7 @@
                                 <h5 class="section-title__tagline section-title__tagline--has-dots">vamos tirar sua
                                     ideia do papel</h5>
                                 <h2 class="section-title__title">
-                                    Pronto para lançar sua Landing Page?<br>
+                                    Pronto para lançar sua Landing Page?
                                     Fale agora com nossa equipe no WhatsApp!
                                 </h2>
                             </div><!-- /.section-title -->

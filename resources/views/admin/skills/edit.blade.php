@@ -1,0 +1,169 @@
+﻿<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Skill</h2>
+            <a href="{{ route('admin.skills.index') }}" class="text-gray-600 hover:underline">Voltar</a>
+        </div>
+    </x-slot>
+
+    <div class="py-6">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+            @if (session('status'))
+                <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('status') }}</div>
+            @endif
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <form method="POST" action="{{ route('admin.skills.update', $skill) }}"
+                        enctype="multipart/form-data" class="space-y-6">
+                        @csrf
+                        @method('PUT')
+
+                        <h3 class="text-lg font-semibold mb-2">Informações Gerais</h3>
+
+                        {{-- Nome e Slug --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Nome</label>
+                                <input type="text" name="name" value="{{ old('name', $skill->name) }}"
+                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Slug</label>
+                                <input type="text" name="slug" value="{{ old('slug', $skill->slug) }}"
+                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                            </div>
+                        </div>
+
+                        {{-- Ícone e Descrição --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Ícone (classe FA)</label>
+                                <input type="text" name="icon" value="{{ old('icon', $skill->icon) }}"
+                                    class="mt-1 block w-full border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Descrição</label>
+                                <textarea name="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('description', $skill->description) }}</textarea>
+                            </div>
+                        </div>
+
+                        {{-- Thumb e Cover --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Thumb</label>
+                                <input type="file" name="thumb" accept="image/*"
+                                    class="mt-1 block w-full border-gray-300 rounded-md"
+                                    onchange="previewImg(event, '#thumbPreview')">
+                                @if ($skill->thumb)
+                                    <img id="thumbPreview" src="{{ asset($skill->thumb) }}"
+                                        class="mt-2 h-32 rounded object-cover" alt="thumb">
+                                @else
+                                    <img id="thumbPreview" class="mt-2 h-32 rounded object-cover hidden" alt="thumb">
+                                @endif
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Cover</label>
+                                <input type="file" name="cover" accept="image/*"
+                                    class="mt-1 block w-full border-gray-300 rounded-md"
+                                    onchange="previewImg(event, '#coverPreview')">
+                                @if ($skill->cover)
+                                    <img id="coverPreview" src="{{ asset($skill->cover) }}"
+                                        class="mt-2 h-32 rounded object-cover" alt="cover">
+                                @else
+                                    <img id="coverPreview" class="mt-2 h-32 rounded object-cover hidden" alt="cover">
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Botão --}}
+                        <div class="flex justify-center mt-10">
+                            <button type="submit"
+                                class="inline-flex items-center px-6 py-4 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700">
+                                Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+
+                    <script>
+                        function previewImg(event, selector) {
+                            const reader = new FileReader();
+                            reader.onload = function() {
+                                const img = document.querySelector(selector);
+                                img.src = reader.result;
+                                img.classList.remove('hidden');
+                            };
+                            reader.readAsDataURL(event.target.files[0]);
+                        }
+                    </script>
+
+
+                    <hr class="my-8">
+
+                    <h3 class="text-lg font-semibold mb-2">Competências</h3>
+
+                    <div id="competenciesDnd" class="space-y-3">
+                        {{-- Competências existentes --}}
+                        @foreach ($skill->competencies as $comp)
+                            <div class="dnd-item" draggable="true" data-id="{{ $comp->id }}">
+                                <form method="POST" action="{{ route('admin.competencies.update', $comp) }}"
+                                    class="grid grid-cols-12 gap-3 items-end bg-white p-4 rounded shadow-sm border border-gray-100">
+                                    @csrf @method('PUT')
+
+                                    <div class="col-span-10">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Competência</label>
+                                        <input type="text" name="competency" value="{{ $comp->competency }}"
+                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            placeholder="Competência" required>
+                                    </div>
+
+                                    <div class="col-span-2 flex gap-2 justify-end">
+                                        <button
+                                            class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
+                                            <i class="fa-solid fa-rotate-right"></i>
+                                        </button>
+
+                                        <form method="POST" action="{{ route('admin.competencies.destroy', $comp) }}"
+                                            onsubmit="return confirm('Remover competência?');" class="inline-block">
+                                            @csrf @method('DELETE')
+                                            <button
+                                                class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-red-600 text-white rounded hover:bg-red-700 transition">
+                                                <i class="fa-regular fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </form>
+                            </div>
+                        @endforeach
+
+                        {{-- Adicionar nova competência --}}
+                        <h3 class="text-md font-semibold mb-2">Adicionar nova competência</h3>
+
+                        <form method="POST" action="{{ route('admin.skills.competencies.store', $skill) }}"
+                            class="bg-white p-4 rounded shadow-sm border border-gray-100 mt-4">
+                            @csrf
+                            <h4 class="font-medium text-gray-800 mb-3">Adicionar nova competência</h4>
+
+                            <div class="grid grid-cols-12 gap-3 items-end">
+                                <div class="col-span-10">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Competência</label>
+                                    <input type="text" name="competency"
+                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                        placeholder="Nova competência" required>
+                                </div>
+
+                                <div class="col-span-2 flex items-end">
+                                    <button type="submit"
+                                        class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>

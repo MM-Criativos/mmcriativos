@@ -350,6 +350,96 @@
                     });
                 }
             } catch (e) {}
+
+            // 5) Process Modal inside dynamic content (modal dentro do holo-modal)
+            try {
+                const processModal = root.querySelector('#processModal');
+                if (processModal && !processModal.dataset.bound) {
+                    const overlay = processModal.querySelector('.process-modal__overlay');
+                    const closeBtn = processModal.querySelector('.process-modal__close');
+                    const titleEl = processModal.querySelector('#processModalTitle');
+                    const etapaEl = processModal.querySelector('#processModalEtapa');
+                    const descEl = processModal.querySelector('#processModalDescricao');
+                    
+                    const projectEl = processModal.querySelector('#processModalProject');
+
+                    // Open handlers scoped to the same root
+                    const triggers = root.querySelectorAll('.open-process-modal');
+                    triggers.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const categoria = e.currentTarget.getAttribute('data-category') || '';
+                            const src = 'assets/images/feature/feature-1.jpg';
+                            if (titleEl) titleEl.textContent = (categoria === 'wireframes') ? 'Wireframe da Home' : 'Detalhes do Processo';
+                            if (etapaEl) etapaEl.textContent = 'Etapa: ' + categoria;
+                            if (descEl) descEl.textContent = 'Descrição da etapa ' + categoria;
+                            
+                            if (projectEl) { try { const ht = document.querySelector('#holoModal .holo-title'); projectEl.textContent = ht ? ht.textContent : 'Projeto'; } catch(_) { projectEl.textContent = 'Projeto'; } }
+
+                            // Preenche carrossel com imagens
+                            const $carousel = window.jQuery ? window.jQuery('#processModalCarousel') : null;
+                            if ($carousel) {
+                                try { $carousel.trigger('destroy.owl.carousel'); } catch (err) {}
+                                $carousel.removeClass('owl-loaded');
+                                $carousel.html('');
+                                const imgs = Array(5).fill(src);
+                                $carousel.html(imgs.map(s => `<div class="item"><img src="${s}" alt="${categoria}"></div>`).join(''));
+                                $carousel.owlCarousel({
+                                    items: 3,
+                                    margin: 12,
+                                    loop: true,
+                                    dots: true,
+                                    nav: false,
+                                    responsive: { 0: { items: 1 }, 600: { items: 2 }, 992: { items: 3 } }
+                                });
+                            }
+
+                            // Delegação para trocar destaque/descrição a partir do carrossel
+                            try {
+                                const $c = window.jQuery ? window.jQuery('#processModalCarousel') : null;
+                                if ($c) {
+                                    const slides = Array(5).fill(0).map((_, i) => ({
+                                        src: src,
+                                        title: i === 0 ? ((categoria === 'wireframes') ? 'Wireframe da Home' : 'Detalhes do Processo') : `Etapa ${categoria} - ${i + 1}`,
+                                        desc: `Descri��o da etapa ${categoria} - ${i + 1}`
+                                    }));
+                                    // Atribui índices reais aos itens (considerando clones do Owl)
+                                    $c.find('.item').each(function(i){ window.jQuery(this).attr('data-idx', i % slides.length); });
+                                    $c.data('slides', slides);
+                                    $c.off('click.mm').on('click.mm', '.item img', function(){
+                                        const $it = window.jQuery(this).closest('.item');
+                                        const idx = parseInt($it.attr('data-idx')) || 0;
+                                        const data = $c.data('slides') || [];
+                                        const sl = data[idx] || { src };
+                                        if (imgEl) imgEl.src = sl.src;
+                                        if (titleEl && sl.title) titleEl.textContent = sl.title;
+                                        if (descEl && sl.desc) descEl.textContent = sl.desc;
+                                    });
+                                }
+                            } catch (e) {}
+
+                            // Mostra como modal centralizado (flex); não altera o body/holo-modal
+                            processModal.style.display = 'flex';
+                            processModal.style.display = 'flex';
+                            const scroller = document.querySelector('#holoModal .holo-body');
+                            if (scroller) scroller.classList.add('submodal-open');
+                        }, { passive: true });
+                    });
+
+                    
+                    // Fechamento do submodal
+                    const closeModal = () => {
+                        processModal.style.display = 'none';
+                        const scroller2 = document.querySelector('#holoModal .holo-body');
+                        if (scroller2) scroller2.classList.remove('submodal-open');
+                    };
+                    const scroller2 = document.querySelector('#holoModal .holo-body');
+                    if (scroller2) scroller2.classList.remove('submodal-open');
+                    if (overlay) overlay.addEventListener('click', closeModal, { passive: true });
+                    if (closeBtn) closeBtn.addEventListener('click', closeModal, { passive: true });
+
+                    processModal.dataset.bound = '1';
+                }
+            } catch (e) {}
         }
 
         function populateSelect(type, slug) {
@@ -416,3 +506,6 @@
         });
     });
 </script>
+
+
+

@@ -20,7 +20,7 @@
                     <h3 class="project-details__content__title">Resumo do Projeto</h3>
                     <p class="project-details__content__text">
                         <!-- Texto dinâmico: descrição geral do projeto -->
-                        {{ $projeto->resumo ?? '' }}
+                        Resumo
                     </p>
 
                     <!-- 🔵 Desafios -->
@@ -29,7 +29,7 @@
                         @foreach ($projeto->desafios ?? [] as $desafio)
                             <li>
                                 <span class="fa fa-exclamation-circle"></span>
-                                {{ $desafio }}
+                                Desafio
                             </li>
                         @endforeach
                     </ul>
@@ -40,7 +40,7 @@
                         @foreach ($projeto->solucoes ?? [] as $solucao)
                             <li>
                                 <span class="fa fa-lightbulb"></span>
-                                {{ $solucao }}
+                                Solucao
                             </li>
                         @endforeach
                     </ul>
@@ -51,19 +51,19 @@
                     <ul class="project-details__info-list list-unstyled">
                         <li>
                             <span>Cliente:</span>
-                            {{ $projeto->cliente_nome ?? '—' }}
+                            nome do cliente
                         </li>
                         <li>
                             <span>Data de Entrega:</span>
-                            {{ $projeto->data_entrega ? $projeto->data_entrega->format('d/m/Y') : '—' }}
+                            data de entrega
                         </li>
                         <li>
                             <span>Serviço:</span>
-                            {{ $projeto->servico ?? '—' }}
+                            servico prestado
                         </li>
                         <li>
                             <span>Localização:</span>
-                            {{ $projeto->localizacao ?? '—' }}
+                            cliente localização
                         </li>
                     </ul>
 
@@ -80,107 +80,97 @@
                     @endif
                 </div>
             </div>
-
-
         </div><!-- /.project-details-content -->
-        <h3 class="project-details__content__title">Product development</h3>
-        <div class="gallery-page gallery-page__padding">
+
+        <div class="section-title text-center" style="margin-bottom: 40px; margin-top: 0px !important;">
+            <h5 class="section-title__tagline section-title__tagline--has-dots">Da ideia ao código</h5>
+            <h2 class="section-title__title">
+                <span>Como transformamos conceitos em experiências digitais</span>
+            </h2>
+        </div><!-- /.project-section title -->
+
+        <!-- ====== Versão Desktop/Tablet ====== -->
+        <!-- ====== Versão Desktop / Tablet ====== -->
+        <div class="feature-one d-none d-md-block">
             <div class="container">
-                <div class="gallery-page__carousel ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
-                    data-owl-options='{
-                    "items": 4,
-                    "margin": 10,
-                    "smartSpeed": 700,
-                    "loop":true,
-                    "autoplay": true,
-                    "nav":false,
-                    "dots":true,
-                    "navText": ["<span class=\"icon-left-arrow\"></span>","<span class=\"icon-right-arrow\"></span>"],
-                    "responsive":{
-                        "0":{
-                            "items":1,
-                            "margin": 0
-                        },
-                        "600":{
-                            "items": 2
-                        },
-                        "992":{
-                            "items": 3
-                        },
-                        "1200":{
-                            "items": 4
-                        }
-                    }
-                    }'>
-                    <!-- gallery-item-start -->
-                    <div class="item">
-                        <div class="gallery-page__single">
-                            <img src="assets/images/gallery/gallery-1.jpg" alt="ogency">
-                            <div class="gallery-page__icon">
-                                <a class="img-popup" href="assets/images/gallery/gallery-1.jpg"><span
-                                        class="icon-plus"></span></a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- gallery-item-end -->
-                    <!-- gallery-item-start -->
-                    <div class="item">
-                        <div class="gallery-page__single">
-                            <img src="assets/images/gallery/gallery-3.jpg" alt="ogency">
-                            <div class="gallery-page__icon">
-                                <a class="img-popup" href="assets/images/gallery/gallery-3.jpg"><span
-                                        class="icon-plus"></span></a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- gallery-item-end -->
-                    <!-- gallery-item-start -->
-                    <div class="item">
-                        <div class="gallery-page__single">
-                            <img src="assets/images/gallery/gallery-4.jpg" alt="ogency">
-                            <div class="gallery-page__icon">
-                                <a class="img-popup" href="assets/images/gallery/gallery-4.jpg"><span
-                                        class="icon-plus"></span></a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- gallery-item-end -->
-                    <!-- gallery-item-start -->
-                    <div class="item">
-                        <div class="gallery-page__single">
-                            <img src="assets/images/gallery/gallery-5.jpg" alt="ogency">
-                            <div class="gallery-page__icon">
-                                <a class="img-popup" href="assets/images/gallery/gallery-5.jpg"><span
-                                        class="icon-plus"></span></a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- gallery-item-end -->
-                    <!-- gallery-item-start -->
-                    <div class="item">
-                        <div class="gallery-page__single">
-                            <img src="assets/images/gallery/gallery-6.jpg" alt="ogency">
-                            <div class="gallery-page__icon">
-                                <a class="img-popup" href="assets/images/gallery/gallery-6.jpg"><span
-                                        class="icon-plus"></span></a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- gallery-item-end -->
-                    <!-- gallery-item-start -->
-                    <div class="item">
-                        <div class="gallery-page__single">
-                            <img src="assets/images/gallery/gallery-9.jpg" alt="ogency">
-                            <div class="gallery-page__icon">
-                                <a class="img-popup" href="assets/images/gallery/gallery-9.jpg"><span
-                                        class="icon-plus"></span></a>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- gallery-item-end -->
+                <div class="row">
+                    <x-project-process-item titulo="Wireframes e Estrutura" icone="icon-idea"
+                        imagem="assets/images/feature/feature-1.jpg"
+                        descricao="Organização visual e hierarquia do conteúdo." categoria="wireframes" />
+
+                    <x-project-process-item titulo="Design de Interface (UI)" icone="icon-badge"
+                        imagem="assets/images/feature/feature-2.jpg"
+                        descricao="Cores, tipografia e componentes visuais do projeto." categoria="ui" />
+
+                    <x-project-process-item titulo="Lógica do Sistema" icone="icon-database"
+                        imagem="assets/images/feature/feature-3.jpg"
+                        descricao="Modelagem e estrutura técnica que sustentam a aplicação." categoria="logica" />
                 </div>
             </div>
         </div>
+
+        <!-- ====== Versão Mobile (Carrossel) ====== -->
+        <div class="gallery-page gallery-page__padding d-block d-md-none">
+            <div class="container">
+                <div class="gallery-page__carousel ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                    data-owl-options='{
+                "items": 1,
+                "margin": 10,
+                "smartSpeed": 700,
+                "loop": true,
+                "autoplay": true,
+                "nav": false,
+                "dots": true
+            }'>
+
+                    <!-- Item 1 -->
+                    <div class="item">
+                        <div class="feature-one__item">
+                            <div class="feature-one__item__img">
+                                <img src="{{ asset('assets/images/feature/feature-1.jpg') }}"
+                                    alt="Wireframes e Estrutura">
+                            </div>
+                            <div class="feature-one__item__content">
+                                <h4 class="feature-one__item__content--title">Wireframes e Estrutura</h4>
+                                <div class="feature-one__item__content--icon"><span class="icon-idea"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="item">
+                        <div class="feature-one__item">
+                            <div class="feature-one__item__img">
+                                <img src="{{ asset('assets/images/feature/feature-2.jpg') }}"
+                                    alt="Design de Interface (UI)">
+                            </div>
+                            <div class="feature-one__item__content">
+                                <h4 class="feature-one__item__content--title">Design de Interface (UI)</h4>
+                                <div class="feature-one__item__content--icon"><span class="icon-badge"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div class="item">
+                        <div class="feature-one__item">
+                            <div class="feature-one__item__img">
+                                <img src="{{ asset('assets/images/feature/feature-3.jpg') }}" alt="Lógica do Sistema">
+                            </div>
+                            <div class="feature-one__item__content">
+                                <h4 class="feature-one__item__content--title">Lógica do Sistema</h4>
+                                <div class="feature-one__item__content--icon"><span class="icon-database"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== Modal Global (Processos) ====== -->
+        <x-process-modal />
+
         <!-- Call To Action Start -->
         <div class="cta-two">
             <div class="cta-two__bg" style="background-image: url(assets/images/backgrounds/cta-bg-2.jpg);"></div>
@@ -223,9 +213,6 @@
                                 <a href="website-development.html">Website development</a>
                             </h3><!-- /.service-title -->
                             <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="website-development.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
                         </div><!-- /.service-card-one -->
                     </div>
                     <div class="item">
@@ -237,9 +224,6 @@
                                 <a href="graphic-designing.html">Graphic designing</a>
                             </h3><!-- /.service-title -->
                             <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="graphic-designing.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
                         </div><!-- /.service-card-one -->
                     </div>
                     <div class="item">
@@ -251,9 +235,6 @@
                                 <a href="digital-marketing.html">Digital marketing</a>
                             </h3><!-- /.service-title -->
                             <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="digital-marketing.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
                         </div><!-- /.service-card-one -->
                     </div>
                     <div class="item">
@@ -265,9 +246,6 @@
                                 <a href="apps-development.html">Apps development</a>
                             </h3><!-- /.service-title -->
                             <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="apps-development.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
                         </div><!-- /.service-card-one -->
                     </div>
                     <div class="item">
@@ -279,51 +257,6 @@
                                 <a href="website-development.html">Website development</a>
                             </h3><!-- /.service-title -->
                             <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="website-development.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
-                        </div><!-- /.service-card-one -->
-                    </div>
-                    <div class="item">
-                        <div class="service-one__item">
-                            <div class="service-one__item__icon">
-                                <span class="icon-graphic-design"></span>
-                            </div><!-- /.service-icon -->
-                            <h3 class="service-one__item__title">
-                                <a href="graphic-designing.html">Graphic designing</a>
-                            </h3><!-- /.service-title -->
-                            <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="graphic-designing.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
-                        </div><!-- /.service-card-one -->
-                    </div>
-                    <div class="item">
-                        <div class="service-one__item">
-                            <div class="service-one__item__icon">
-                                <span class="icon-technology"></span>
-                            </div><!-- /.service-icon -->
-                            <h3 class="service-one__item__title">
-                                <a href="digital-marketing.html">Digital marketing</a>
-                            </h3><!-- /.service-title -->
-                            <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="digital-marketing.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
-                        </div><!-- /.service-card-one -->
-                    </div>
-                    <div class="item">
-                        <div class="service-one__item">
-                            <div class="service-one__item__icon">
-                                <span class="icon-mobile-app"></span>
-                            </div><!-- /.service-icon -->
-                            <h3 class="service-one__item__title">
-                                <a href="apps-development.html">Apps development</a>
-                            </h3><!-- /.service-title -->
-                            <p class="service-one__item__text">Providing the solutions for your all business</p>
-                            <!-- /.service-content -->
-                            <a class="service-one__item__btn" href="apps-development.html">Read More<span
-                                    class="icon-down-right"></span></a><!-- /.service-read-more -->
                         </div><!-- /.service-card-one -->
                     </div>
                 </div>
