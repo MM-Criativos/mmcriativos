@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Novo Contato — {{ $client->name }}</h2>
             <div class="flex items-center gap-2">
                 <a href="{{ route('admin.clients.contacts.index', $client) }}"
-                    class="text-gray-600 hover:underline">Voltar</a>
+                    class="inline-flex items-center gap-1.5 px-6 py-3.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-100 transition-colors duration-200">Voltar</a>
             </div>
         </div>
     </x-slot>
@@ -99,9 +99,9 @@
                         </div>
 
                         {{-- Botão de envio --}}
-                        <div class="flex justify-end">
+                        <div class="flex justify-center">
                             <button type="submit"
-                                class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700">
+                                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
                                 Criar Contato
                             </button>
                         </div>

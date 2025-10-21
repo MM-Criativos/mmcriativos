@@ -33,22 +33,29 @@ class ClientController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:clients,slug'],
-            'logo' => ['nullable', 'image'],
+            'logo' => ['nullable', 'image', 'max:2048'], // 2MB
             'website' => ['nullable', 'string', 'max:255'],
             'sector' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
         ]);
+
+        // Gera slug se não vier
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
         }
+
+        // Upload da logo
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('clients/logos', 'public');
-            $data['logo'] = 'storage/' . $path;
+            $data['logo'] = $path; // salva o caminho relativo
         }
-        $client = Client::create($data);
-        return redirect()->route('admin.clients.edit', $client)->with('status', 'Cliente criado com sucesso.');
-    }
 
+        $client = Client::create($data);
+
+        return redirect()
+            ->route('admin.clients.edit', $client)
+            ->with('status', 'Cliente criado com sucesso.');
+    }
     public function edit(Client $client)
     {
         $client->load([

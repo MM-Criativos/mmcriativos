@@ -2,7 +2,8 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Serviço</h2>
-            <a href="{{ route('admin.services.index') }}" class="text-gray-600 hover:underline">Voltar</a>
+            <a href="{{ route('admin.services.index') }}"
+                class="inline-flex items-center gap-1.5 px-6 py-3.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-100 transition-colors duration-200">Voltar</a>
         </div>
     </x-slot>
 
@@ -45,36 +46,72 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            {{-- Thumb --}}
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Thumb</label>
-                                <input type="file" name="thumb" accept="image/*"
-                                    class="mt-1 block w-full border-gray-300 rounded-md"
-                                    onchange="previewImg(event, '#thumbPreview')">
-                                @if ($service->thumb)
-                                    <img id="thumbPreview" src="{{ asset($service->thumb) }}"
-                                        class="mt-2 h-32 rounded object-cover" alt="thumb">
-                                @else
-                                    <img id="thumbPreview" class="mt-2 h-32 rounded object-cover hidden" alt="thumb">
-                                @endif
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Thumb</label>
+                                <div class="relative group cursor-pointer w-40 h-40">
+                                    <input type="file" name="thumb" accept="image/*"
+                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        onchange="previewImage(event, 'thumb')">
+
+                                    @if ($service->thumb)
+                                        <img id="preview-thumb" src="{{ asset($service->thumb) }}" alt="Thumb"
+                                            class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
+                                    @else
+                                        <div id="preview-thumb"
+                                            class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
+                                            <i class="fa-regular fa-image text-base mr-1"></i> Thumb
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
+
+                            {{-- Cover --}}
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Cover</label>
-                                <input type="file" name="cover" accept="image/*"
-                                    class="mt-1 block w-full border-gray-300 rounded-md"
-                                    onchange="previewImg(event, '#coverPreview')">
-                                @if ($service->cover)
-                                    <img id="coverPreview" src="{{ asset($service->cover) }}"
-                                        class="mt-2 h-32 rounded object-cover" alt="cover">
-                                @else
-                                    <img id="coverPreview" class="mt-2 h-32 rounded object-cover hidden" alt="cover">
-                                @endif
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
+                                <div class="relative group cursor-pointer w-40 h-40">
+                                    <input type="file" name="cover" accept="image/*"
+                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        onchange="previewImage(event, 'cover')">
+
+                                    @if ($service->cover)
+                                        <img id="preview-cover" src="{{ asset($service->cover) }}" alt="Cover"
+                                            class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
+                                    @else
+                                        <div id="preview-cover"
+                                            class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
+                                            <i class="fa-regular fa-image text-base mr-1"></i> Cover
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
+
                         </div>
+
+                        <script>
+                            function previewImage(event, id) {
+                                const reader = new FileReader();
+                                const preview = document.getElementById(`preview-${id}`);
+                                reader.onload = () => {
+                                    if (preview.tagName === 'IMG') {
+                                        preview.src = reader.result;
+                                    } else {
+                                        preview.outerHTML = `
+                <img id="preview-${id}"
+                     src="${reader.result}"
+                     class="w-40 h-40 object-cover rounded border border-gray-200" />`;
+                                    }
+                                };
+                                reader.readAsDataURL(event.target.files[0]);
+                            }
+                        </script>
+
 
                         <div>
                             <div class="flex justify-center mt-10">
                                 <button type="submit"
-                                    class="inline-flex items-center px-6 py-4 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700">
+                                    class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
                                     Salvar Alterações
                                 </button>
                             </div>
@@ -106,7 +143,7 @@
                         </div>
                         <div>
                             <div class="flex justify-center mt-10"><button
-                                    class="inline-flex items-center px-6 py-4 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700">Salvar
+                                    class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">Salvar
                                     Informações</button></div>
                         </div>
                     </form>

@@ -44,9 +44,9 @@
                                     <div class="shrink-0">
                                         @if ($contact->photo)
                                             <img src="{{ asset($contact->photo) }}" alt="{{ $contact->name }}"
-                                                style="width:90px;height:90px;border-radius:20px;object-fit:cover;">
+                                                style="width:90px;height:90px;border-radius:10px;object-fit:cover;">
                                         @else
-                                            <div style="width:90px;height:90px;border-radius:20px;"
+                                            <div style="width:90px;height:90px;border-radius:10px;"
                                                 class="bg-gray-200 flex items-center justify-center text-xs text-gray-600">
                                                 {{ strtoupper(substr($contact->name, 0, 1)) }}</div>
                                         @endif
@@ -73,7 +73,7 @@
 
                                         <div class="mt-3 flex items-center gap-2">
                                             <a href="{{ route('admin.contacts.edit', $contact) }}"
-                                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm">
+                                                class="inline-flex items-center gap-1 px-5 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm">
                                                 <i class="fa-regular fa-pen-to-square"></i> Editar
                                             </a>
                                             <form method="POST"
@@ -82,7 +82,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                                                    class="inline-flex items-center gap-1 px-5 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
                                                     <i class="fa-regular fa-trash-can"></i> Apagar
                                                 </button>
                                             </form>

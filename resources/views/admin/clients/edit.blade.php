@@ -2,7 +2,8 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Cliente</h2>
-            <a href="{{ route('admin.clients.index') }}" class="text-gray-600 hover:underline">Voltar</a>
+            <a href="{{ route('admin.clients.index') }}"
+                class="inline-flex items-center gap-1.5 px-6 py-3.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-100 transition-colors duration-200">Voltar</a>
         </div>
     </x-slot>
 
@@ -152,8 +153,8 @@
                                             placeholder="https://..." @if (!$existing) required @endif>
                                         <div class="flex items-center gap-2">
                                             <button type="submit"
-                                                class="flex-1 inline-flex items-center justify-center px-3 py-2 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm">
-                                                <i class="fa-regular fa-floppy-disk mr-1"></i> Salvar
+                                                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm">
+                                                Salvar
                                             </button>
                                             @if ($existing)
                                                 <span class="text-xs text-gray-500">Deixe em branco e salve para

@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Serviços</h2>
             <a href="{{ route('admin.services.create') }}"
-                class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700 focus:bg-orange-700 active:bg-orange-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition ease-in-out duration-150">
+                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
                 Adicionar Serviço
             </a>
         </div>
@@ -39,7 +39,7 @@
 
                                         <div class="flex items-center justify-between mt-auto">
                                             <a href="{{ route('admin.services.edit', $service) }}"
-                                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
+                                                class="inline-flex items-center gap-1 px-5 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
                                                 <i class="fa-regular fa-pen-to-square"></i>
                                                 <span>Editar</span>
                                             </a>
@@ -49,7 +49,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                                                    class="inline-flex items-center gap-1 px-5 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
                                                     <i class="fa-regular fa-trash"></i>
                                                     <span>Apagar</span>
                                                 </button>
@@ -67,10 +67,4 @@
         </div>
     </div>
 
-    </x-app-layout>
-
-
-
-
-
-
+</x-app-layout>

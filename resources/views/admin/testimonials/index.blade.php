@@ -3,8 +3,8 @@
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Depoimentos</h2>
             <a href="{{ route('admin.testimonials.create') }}"
-                class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
-                <i class="fa-regular fa-square-plus mr-2"></i> Novo Depoimento
+                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
+                Novo Depoimento
             </a>
         </div>
     </x-slot>
@@ -42,7 +42,7 @@
                                         @endif
                                         <div class="mt-3 flex items-center gap-2">
                                             <a href="{{ route('admin.testimonials.edit', $testimonial) }}"
-                                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm">
+                                                class="inline-flex items-center gap-1 px-5 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm">
                                                 <i class="fa-regular fa-pen-to-square"></i> Editar
                                             </a>
                                             <form method="POST"
@@ -51,7 +51,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                                                    class="inline-flex items-center gap-1 px-5 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
                                                     <i class="fa-regular fa-trash-can"></i> Apagar
                                                 </button>
                                             </form>

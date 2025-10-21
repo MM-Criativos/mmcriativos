@@ -16,7 +16,7 @@ class ServiceSeeder extends Seeder
             [
                 'name' => 'Landing Page',
                 'slug' => 'landing',
-                'icon' => '<i class="fa-light fa-bullseye-arrow"></i>',
+                'icon' => 'fa-light fa-bullseye-arrow',
                 'thumb' => 'assets/images/service/thumb_landing.jpg',
                 'cover' => 'assets/images/service/cover_landing.jpg',
                 'description' => 'Feita para conversão. Ideal para campanhas e lançamentos.',
@@ -27,7 +27,7 @@ class ServiceSeeder extends Seeder
             [
                 'name' => 'Site Single Page',
                 'slug' => 'single',
-                'icon' => '<i class="fa-light fa-window-flip"></i>',
+                'icon' => 'fa-light fa-window-flip',
                 'thumb' => 'assets/images/service/thumb_single.jpg',
                 'cover' => 'assets/images/service/cover_single.jpg',
                 'description' => 'Tudo em uma única página, direto ao ponto, com design impactante.',
@@ -38,7 +38,7 @@ class ServiceSeeder extends Seeder
             [
                 'name' => 'Site Multipage',
                 'slug' => 'multi',
-                'icon' => '<i class="fa-light fa-browsers"></i>',
+                'icon' => 'fa-light fa-browsers',
                 'thumb' => 'assets/images/service/thumb_multi.jpg',
                 'cover' => 'assets/images/service/cover_multi.jpg',
                 'description' => 'Estrutura completa para apresentar sua marca com profundidade.',
@@ -49,7 +49,7 @@ class ServiceSeeder extends Seeder
             [
                 'name' => 'Portal',
                 'slug' => 'portal',
-                'icon' => '<i class="fa-light fa-network-wired"></i>',
+                'icon' => 'fa-light fa-network-wired',
                 'thumb' => 'assets/images/service/thumb_portal.jpg',
                 'cover' => 'assets/images/service/cover_portal.jpg',
                 'description' => 'Soluções sob medida para portais com gerenciamento online.',
@@ -60,7 +60,7 @@ class ServiceSeeder extends Seeder
             [
                 'name' => 'Sistema Personalizado',
                 'slug' => 'sistema',
-                'icon' => '<i class="fa-light fa-pen-paintbrush"></i>',
+                'icon' => 'fa-light fa-pen-paintbrush',
                 'thumb' => 'assets/images/service/thumb_sistema.jpg',
                 'cover' => 'assets/images/service/cover_sistema.jpg',
                 'description' => 'Desenvolvemos sistemas únicos, feitos para o fluxo do seu negócio.',
@@ -71,7 +71,7 @@ class ServiceSeeder extends Seeder
             [
                 'name' => 'SaaS e Integrações',
                 'slug' => 'saas',
-                'icon' => '<i class="fa-light fa-chart-network"></i>',
+                'icon' => 'fa-light fa-chart-network',
                 'thumb' => 'assets/images/service/thumb_saas.jpg',
                 'cover' => 'assets/images/service/cover_saas.jpg',
                 'description' => 'Conectamos automações e serviços em um ecossistema inteligente.',

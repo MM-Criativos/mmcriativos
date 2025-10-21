@@ -130,9 +130,9 @@
 
 
 
-                        <div class="flex justify-end">
+                        <div class="flex justify-center">
                             <button type="submit"
-                                class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700">Salvar</button>
+                                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm">Salvar</button>
                         </div>
                     </form>
                 </div>
