@@ -126,6 +126,109 @@
                     </form>
 
                     <div class="border-t pt-6">
+                        <h3 class="text-lg font-semibold mb-4">Endereço e Contato</h3>
+                        <form method="POST" action="{{ route('admin.clients.info.update', $client) }}"
+                            class="space-y-6">
+                            @csrf
+                            @method('PUT')
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">CEP</label>
+                                    <input type="text" name="cep"
+                                        value="{{ old('cep', optional($client->info)->cep) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md" placeholder="00000-000">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700">Rua</label>
+                                    <input type="text" name="street"
+                                        value="{{ old('street', optional($client->info)->street) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Número</label>
+                                    <input type="text" name="number"
+                                        value="{{ old('number', optional($client->info)->number) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                                <div class="md:col-span-3">
+                                    <label class="block text-sm font-medium text-gray-700">Complemento</label>
+                                    <input type="text" name="complement"
+                                        value="{{ old('complement', optional($client->info)->complement) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Bairro</label>
+                                    <input type="text" name="neighborhood"
+                                        value="{{ old('neighborhood', optional($client->info)->neighborhood) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Cidade</label>
+                                    <input type="text" name="city"
+                                        value="{{ old('city', optional($client->info)->city) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Estado</label>
+                                        <input type="text" name="state"
+                                            value="{{ old('state', optional($client->info)->state) }}"
+                                            class="mt-1 block w-full border-gray-300 rounded-md">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">UF</label>
+                                        <input type="text" name="state_code"
+                                            value="{{ old('state_code', optional($client->info)->state_code) }}"
+                                            class="mt-1 block w-full border-gray-300 rounded-md" placeholder="SP">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">País</label>
+                                        <input type="text" name="country"
+                                            value="{{ old('country', optional($client->info)->country ?? 'Brasil') }}"
+                                            class="mt-1 block w-full border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">E-mail Comercial</label>
+                                    <input type="text" name="email_commercial"
+                                        value="{{ old('email_commercial', optional($client->info)->email_commercial) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Telefone</label>
+                                    <input type="text" name="phone"
+                                        value="{{ old('phone', optional($client->info)->phone) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Telefone (alt.)</label>
+                                    <input type="text" name="phone_alt"
+                                        value="{{ old('phone_alt', optional($client->info)->phone_alt) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">WhatsApp</label>
+                                    <input type="text" name="whatsapp"
+                                        value="{{ old('whatsapp', optional($client->info)->whatsapp) }}"
+                                        class="mt-1 block w-full border-gray-300 rounded-md"
+                                        placeholder="(xx) xxxxx-xxxx">
+                                </div>
+                            </div>
+                            <div class="flex justify-center">
+                                <button type="submit"
+                                    class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm">Salvar
+                                    Endereço/Contato</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="border-t pt-6">
                         <h3 class="text-lg font-semibold mb-4">Redes Sociais</h3>
                         @php
                             $socialMap = $client->clientSocialMedia->keyBy('social_media_id');
@@ -150,7 +253,8 @@
                                         <input type="text" name="user"
                                             value="{{ old('user', optional($existing)->user) }}"
                                             class="mt-1 block w-full border-gray-300 rounded-md text-sm"
-                                            placeholder="https://..." @if (!$existing) required @endif>
+                                            placeholder="https://..."
+                                            @if (!$existing) required @endif>
                                         <div class="flex items-center gap-2">
                                             <button type="submit"
                                                 class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm">
@@ -171,3 +275,29 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+    async function buscarEnderecoPorCep(input) {
+        const cep = input.value.replace(/\D/g, '');
+        if (cep.length !== 8) return;
+
+        try {
+            const response = await fetch(`/cep/${cep}`);
+            const data = await response.json();
+
+            if (data.error) {
+                console.warn(data.error);
+                return;
+            }
+
+            // Preenche os campos
+            document.querySelector('input[name="street"]').value = data.street || '';
+            document.querySelector('input[name="neighborhood"]').value = data.neighborhood || '';
+            document.querySelector('input[name="city"]').value = data.city || '';
+            document.querySelector('input[name="state"]').value = data.state || '';
+            document.querySelector('input[name="complement"]').value = data.complement || '';
+        } catch (e) {
+            console.error('Erro ao buscar o CEP:', e);
+        }
+    }
+</script>

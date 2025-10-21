@@ -43,8 +43,9 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        // Não permite login automático enquanto não aprovado
+        // (mantém a experiência de cadastro e informa pendência)
+        // Auth::login($user);
+        return redirect()->route('pending.approval');
     }
 }

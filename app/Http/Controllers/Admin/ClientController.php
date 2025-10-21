@@ -59,6 +59,7 @@ class ClientController extends Controller
     public function edit(Client $client)
     {
         $client->load([
+            'info',
             'clientSocialMedia.socialMedia',
             'contacts' => function ($q) {
                 $q->orderByDesc('is_primary')->orderBy('id');

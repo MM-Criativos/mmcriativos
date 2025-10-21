@@ -25,7 +25,7 @@
                         {{ __('Habilidades') }}
                     </x-nav-link>
 
-                    <x-nav-link href="#" class="text-gray-400 dark:text-gray-500 cursor-not-allowed">
+                    <x-nav-link :href="route('admin.projects.index')" :active="request()->is('admin/projects*')">
                         {{ __('Projetos') }}
                     </x-nav-link>
 
@@ -37,9 +37,11 @@
                         {{ __('Depoimentos') }}
                     </x-nav-link>
 
-                    <x-nav-link href="#" class="text-gray-400 dark:text-gray-500 cursor-not-allowed">
-                        {{ __('Equipe') }}
-                    </x-nav-link>
+                    @if (Auth::user()->role === 'admin')
+                        <x-nav-link :href="route('admin.team.index')" :active="request()->is('admin/team*')">
+                            {{ __('Equipe') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -68,7 +70,7 @@
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
-                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 010-1.414z"
                                         clip-rule="evenodd" />
                                 </svg>
                             </div>
@@ -76,20 +78,30 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
+                        {{-- Novo item: Configurações --}}
+                        <x-dropdown-link :href="route('admin.settings.index')">
+                            <i class="fa-solid fa-gear mr-2 text-gray-400"></i> {{ __('Configurações') }}
                         </x-dropdown-link>
 
-                        <!-- Authentication -->
+                        <div class="border-t border-gray-100 my-1"></div>
+
+                        {{-- Perfil --}}
+                        <x-dropdown-link :href="route('profile.edit')">
+                            <i class="fa-regular fa-user mr-2 text-gray-400"></i> {{ __('Perfil') }}
+                        </x-dropdown-link>
+
+                        {{-- Logout --}}
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
                                 onclick="event.preventDefault(); this.closest('form').submit();">
-                                {{ __('Log Out') }}
+                                <i class="fa-solid fa-arrow-right-from-bracket mr-2 text-gray-400"></i>
+                                {{ __('Sair') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
                 </x-dropdown>
+
             </div>
 
             <!-- Hamburger -->
@@ -120,6 +132,14 @@
             <x-responsive-nav-link :href="route('admin.skills.index')" :active="request()->is('admin/skills*')">
                 {{ __('Habilidades') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.projects.index')" :active="request()->is('admin/projects*')">
+                {{ __('Projetos') }}
+            </x-responsive-nav-link>
+            @if (Auth::user()->role === 'admin')
+                <x-responsive-nav-link :href="route('admin.team.index')" :active="request()->is('admin/team*')">
+                    {{ __('Equipe') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
     </div>
 </nav>

@@ -75,6 +75,11 @@ class Client extends Model
         return $this->hasMany(ClientSocialMedia::class);
     }
 
+    public function info()
+    {
+        return $this->hasOne(ClientInfo::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | ACCESSORS / MUTATORS
