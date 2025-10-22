@@ -5,22 +5,15 @@
             "items": 3,
             "margin": 30,
             "smartSpeed": 1200,
-            "loop":true,
+            "loop": true,
             "autoplay": true,
-            "nav":false,
-            "dots":true,
+            "nav": false,
+            "dots": true,
             "navText": ["<span class=\"icon-left-arrow\"></span>","<span class=\"icon-right-arrow\"></span>"],
-            "responsive":{
-                "0":{
-                    "items":1,
-                    "margin": 0
-                },
-                "600":{
-                    "items": 2
-                },
-                "992":{
-                    "items": 3
-                }
+            "responsive": {
+                "0": { "items": 1, "margin": 0 },
+                "600": { "items": 2 },
+                "992": { "items": 3 }
             }
             }'>
             <div class="item">

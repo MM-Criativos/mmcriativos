@@ -204,20 +204,20 @@
                                             <div class="col-12">
                                                 <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
                                                     data-owl-options='{
-            "items": 3,
-            "margin": 30,
-            "smartSpeed": 800,
-            "loop": false,
-            "autoplay": false,
-            "dots": true,
-            "nav": false,
-            "responsive": {
-              "0": {"items":1, "margin":16},
-              "600": {"items":2},
-              "992": {"items":3},
-              "1200": {"items":3}
-            }
-          }'>
+                                                        "items": 3,
+                                                        "margin": 30,
+                                                        "smartSpeed": 800,
+                                                        "loop": false,
+                                                        "autoplay": false,
+                                                        "dots": true,
+                                                        "nav": false,
+                                                        "responsive": {
+                                                          "0": {"items":1, "margin":16},
+                                                          "600": {"items":2},
+                                                          "992": {"items":3},
+                                                          "1200": {"items":3}
+                                                        }
+                                                    }'>
 
                                                     <!-- Etapa 1 -->
                                                     <div class="item">

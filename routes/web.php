@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\SkillController as AdminSkillController;
@@ -23,26 +23,21 @@ use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectS
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\TeamController as AdminTeamController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Site\ModalController;
 
-// Site público
+// Site pÃºblico
 Route::get('/', function () {
     return view('pages.index');
 })->name('home');
 
 
 
+// ConteÃºdos dinÃ¢micos para o holo-modal
 // Conteúdos dinâmicos para o holo-modal
-Route::get('/modal-content/{type}/{slug}', function ($type, $slug) {
-    $view = "components.content.$type.$slug";
+Route::get('/modal-content/{type}/{slug}', [ModalController::class, 'content'])->name('modal.content');
 
-    if (view()->exists($view)) {
-        return response()->view($view);
-    }
 
-    return response('<p>Conteúdo não encontrado.</p>', 404);
-})->name('modal.content');
-
-// Rotas padrão do Breeze (dashboard e profile protegidos)
+// Rotas padrÃ£o do Breeze (dashboard e profile protegidos)
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified', 'approved'])->name('dashboard');
@@ -53,21 +48,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Admin auth removido — fluxo unificado no Breeze
+// Admin auth removido â€” fluxo unificado no Breeze
 
 // Rotas do Breeze (auth)
 require __DIR__ . '/auth.php';
 
-// Página de pendência de aprovação
+// PÃ¡gina de pendÃªncia de aprovaÃ§Ã£o
 Route::get('/pending-approval', function () {
     return view('auth.pending');
 })->name('pending.approval');
 
 // Admin painel (usa auth do Breeze)
 Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard pode continuar usando /dashboard padrão; aqui focamos nos CRUDs
+    // Dashboard pode continuar usando /dashboard padrÃ£o; aqui focamos nos CRUDs
 
-    // Serviços
+    // ServiÃ§os
     Route::resource('services', AdminServiceController::class);
     Route::put('services/{service}/info', [AdminServiceInfoController::class, 'update'])->name('services.info.update');
     Route::resource('services.benefits', AdminServiceBenefitController::class)
@@ -140,3 +135,4 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
     Route::put('team/{user}/approve', [AdminTeamController::class, 'approve'])->name('team.approve');
     Route::delete('team/{user}', [AdminTeamController::class, 'destroy'])->name('team.destroy');
 });
+

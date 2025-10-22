@@ -10,24 +10,16 @@
             "items": 3,
             "margin": 30,
             "smartSpeed": 1200,
-            "loop":true,
+            "loop": true,
             "autoplay": true,
-            "nav":false,
-            "dots":false,
+            "nav": false,
+            "dots": false,
             "navText": ["<span class=\"icon-left-arrow\"></span>","<span class=\"icon-right-arrow\"></span>"],
-            "responsive":{
-                "0":{
-                    "items":1
-                },
-                "768":{
-                    "items":2
-                },
-                "992":{
-                    "items": 3
-                },
-                "1200":{
-                    "items":3
-                }
+            "responsive": {
+                "0": { "items": 1 },
+                "768": { "items": 2 },
+                "992": { "items": 3 },
+                "1200": { "items": 3 }
             }
             }'>
             <div class="project-two__item">
