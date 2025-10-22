@@ -44,6 +44,7 @@ class ProjectController extends Controller
             'service_id' => ['nullable', 'exists:services,id'],
             'summary' => ['nullable', 'string'],
             'cover' => ['nullable', 'image'],
+            'thumb' => ['nullable', 'image'], // ✅ novo campo
             'video' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -62,9 +63,16 @@ class ProjectController extends Controller
             $data['cover'] = 'storage/' . $path;
         }
 
+        if ($request->hasFile('thumb')) {
+            $path = $request->file('thumb')->store('projects/thumbs', 'public');
+            $data['thumb'] = 'storage/' . $path;
+        }
+
         $project = Project::create($data);
 
-        return redirect()->route('admin.projects.edit', $project)->with('status', 'Projeto criado com sucesso.');
+        return redirect()
+            ->route('admin.projects.edit', $project)
+            ->with('status', 'Projeto criado com sucesso.');
     }
 
     public function edit(Project $project)
@@ -74,17 +82,11 @@ class ProjectController extends Controller
             'service',
             'challenges',
             'solutions',
-            'projectProcesses' => function ($q) {
-                $q->orderBy('order');
-            },
+            'projectProcesses' => fn($q) => $q->orderBy('order'),
             'projectProcesses.process',
-            'projectProcesses.images' => function ($q) {
-                $q->orderBy('order');
-            },
+            'projectProcesses.images' => fn($q) => $q->orderBy('order'),
             'skills',
-            'skillLinks' => function ($q) {
-                $q->orderBy('order');
-            },
+            'skillLinks' => fn($q) => $q->orderBy('order'),
             'skillLinks.skill',
             'skillLinks.competency',
         ]);
@@ -92,19 +94,11 @@ class ProjectController extends Controller
         $clients = Client::query()->orderBy('name')->get(['id', 'name']);
         $services = Service::query()->orderBy('name')->get(['id', 'name']);
         $processes = \App\Models\Process::query()->orderBy('order')->orderBy('name')->get(['id', 'name']);
-        $skills = \App\Models\Skill::with(['competencies' => function ($q) {
-            $q->orderBy('competency');
-        }])
+        $skills = \App\Models\Skill::with(['competencies' => fn($q) => $q->orderBy('competency')])
             ->orderBy('name')
             ->get();
 
         return view('admin.projects.edit', compact('project', 'clients', 'services', 'processes', 'skills'));
-    }
-
-    public function destroy(Project $project): RedirectResponse
-    {
-        $project->delete();
-        return redirect()->route('admin.projects.index')->with('status', 'Projeto removido.');
     }
 
     public function update(Request $request, Project $project): JsonResponse|RedirectResponse
@@ -116,12 +110,18 @@ class ProjectController extends Controller
             'service_id' => ['nullable', 'exists:services,id'],
             'summary' => ['nullable', 'string'],
             'cover' => ['nullable', 'image'],
+            'thumb' => ['nullable', 'image'], // ✅ novo campo
             'video' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($request->hasFile('cover')) {
             $path = $request->file('cover')->store('projects', 'public');
             $data['cover'] = 'storage/' . $path;
+        }
+
+        if ($request->hasFile('thumb')) {
+            $path = $request->file('thumb')->store('projects/thumbs', 'public');
+            $data['thumb'] = 'storage/' . $path;
         }
 
         $project->update($data);
@@ -138,10 +138,17 @@ class ProjectController extends Controller
                     'summary' => $project->summary,
                     'video' => $project->video,
                     'cover' => $project->cover ? asset($project->cover) : null,
+                    'thumb' => $project->thumb ? asset($project->thumb) : null, // ✅
                 ],
             ]);
         }
 
         return back()->with('status', 'Projeto atualizado.');
+    }
+
+    public function destroy(Project $project): RedirectResponse
+    {
+        $project->delete();
+        return redirect()->route('admin.projects.index')->with('status', 'Projeto removido.');
     }
 }

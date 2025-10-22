@@ -5908,7 +5908,7 @@ h6 {
   display: block;
   overflow: hidden;
   z-index: 1;
-  background-color: var(--ogency-black2);
+  background-color: rgba (0,0,0,0.5);
 }
 
 .project-two__item__image img {

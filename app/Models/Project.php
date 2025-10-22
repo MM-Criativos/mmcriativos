@@ -11,6 +11,7 @@ class Project extends Model
 
     protected $fillable = [
         'cover',
+        'thumb',
         'name',
         'slug',
         'summary',
@@ -80,4 +81,3 @@ class Project extends Model
         return $this->hasMany(ProjectSkillCompetency::class);
     }
 }
-

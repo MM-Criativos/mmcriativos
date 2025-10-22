@@ -2,85 +2,84 @@
     <div class="sticky-header__content"></div><!-- /.sticky-header__content -->
 </div><!-- /.stricky-header -->
 <section class="page-header">
-    <div class="page-header__bg__landing-page"></div>
+    <div class="page-header__bg" style="background-image: url('{{ asset($project->cover) }}');"></div>
     <!-- /.page-header__bg -->
     <div class="page-header__overlay"></div>
     <!-- /.page-header__bg -->
     <div class="container">
-        <h2 class="page-header__title">Portfolio</h2><!-- /.page-title -->
+        <h2 class="page-header__title">{{ $project->name }}</h2><!-- /.page-title -->
     </div><!-- /.container -->
 </section><!-- /.page-header -->
 <!-- Projects Details Start -->
 <section class="project-details">
     <div class="container">
         <div class="row">
-            <div class="col-xl-8 col-lg-7 wow fadeInLeft animated" data-wow-delay="300ms">
+            <!-- 🟠 Resumo do Projeto (coluna completa) -->
+            <div class="col-12 wow fadeInUp animated" data-wow-delay="200ms">
                 <div class="project-details__content">
-                    <!-- 🟠 Resumo do Projeto -->
-                    <h3 class="project-details__content__title">Resumo do Projeto</h3>
+                    <h3 class="project-details__content__title">Resumo do projeto</h3>
                     <p class="project-details__content__text">
-                        <!-- Texto dinâmico: descrição geral do projeto -->
-                        Resumo
+                        {{ $project->summary }}
                     </p>
-
-                    <!-- 🔵 Desafios -->
-                    <h4 class="project-details__content__subtitle">Desafios do Projeto</h4>
-                    <ul class="project-details__content__list list-unstyled">
-                        @foreach ($projeto->desafios ?? [] as $desafio)
-                            <li>
-                                <span class="fa fa-exclamation-circle"></span>
-                                Desafio
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    <!-- 🟢 Soluções -->
-                    <h4 class="project-details__content__subtitle">Soluções Propostas</h4>
-                    <ul class="project-details__content__list list-unstyled">
-                        @foreach ($projeto->solucoes ?? [] as $solucao)
-                            <li>
-                                <span class="fa fa-lightbulb"></span>
-                                Solucao
-                            </li>
-                        @endforeach
-                    </ul>
                 </div>
             </div>
+
+            <!-- 🔵 Desafios e Soluções (lado esquerdo) -->
+            <div class="col-xl-8 col-lg-7 wow fadeInLeft animated" data-wow-delay="300ms">
+                <div class="project-details__content">
+
+                    <!-- Desafios -->
+                    <h4 class="project-details__content__subtitle mt-4">Desafios do Projeto</h4><br>
+                    <ul class="project-details__content__list list-unstyled">
+                        @foreach ($project->challenges ?? [] as $challenge)
+                            <li>
+                                <span class="fa fa-exclamation-circle" style="color: #ff8800;"></span>
+                                <span style="margin-left: 5px; font-weight: 800">{{ $challenge->title }}</span><br>
+                                {{ $challenge->description }}<br><br>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <!-- Soluções -->
+                    <h4 class="project-details__content__subtitle">Soluções Propostas</h4><br>
+                    <ul class="project-details__content__list list-unstyled">
+                        @foreach ($project->solutions ?? [] as $solution)
+                            <li>
+                                <span class="fa fa-lightbulb" style="color: #ff8800;"></span>
+                                <span style="margin-left: 5px; font-weight: 800">{{ $solution->title }}</span><br>
+                                {{ $solution->description }}<br><br>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                </div>
+            </div>
+
+            <!-- 🧩 Detalhes do Projeto (lado direito) -->
             <div class="col-xl-4 col-lg-5 wow fadeInRight animated" data-wow-delay="400ms">
                 <div class="project-details__right">
                     <ul class="project-details__info-list list-unstyled">
-                        <li>
-                            <span>Cliente:</span>
-                            nome do cliente
-                        </li>
-                        <li>
-                            <span>Data de Entrega:</span>
-                            data de entrega
-                        </li>
-                        <li>
-                            <span>Serviço:</span>
-                            servico prestado
-                        </li>
-                        <li>
-                            <span>Localização:</span>
-                            cliente localização
-                        </li>
+                        <li><span>Cliente:</span> {{ $project->client->name }}</li>
+                        <li><span>Setor:</span> {{ $project->client->sector }}</li>
+                        <li><span>Serviço:</span> {{ $project->service->name }}</li>
+                        <li><span>Website:</span> {{ $project->client->website }}</li>
                     </ul>
 
-                    @if (!empty($projeto->redes_sociais))
-                        <div class="project-details__socials">
-                            @foreach ($projeto->redes_sociais as $rede => $url)
-                                @if ($url)
-                                    <a href="{{ $url }}" target="_blank" rel="noopener">
-                                        <i class="fab fa-{{ $rede }}"></i>
+                    @isset($clientSocials)
+                        @if ($clientSocials->isNotEmpty())
+                            <div class="project-details__socials">
+                                @foreach ($clientSocials as $sm)
+                                    <a href="{{ $sm['url'] }}" target="_blank" rel="noopener">
+                                        <i class="{{ $sm['icon'] ?? 'fa-brands fa-link' }}"></i>
                                     </a>
-                                @endif
-                            @endforeach
-                        </div>
-                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+                    @endisset
                 </div>
             </div>
-        </div><!-- /.project-details-content -->
+        </div>
+
 
         <div class="section-title text-center" style="margin-bottom: 40px; margin-top: 0px !important;">
             <h5 class="section-title__tagline section-title__tagline--has-dots">Da ideia ao código</h5>
@@ -89,7 +88,6 @@
             </h2>
         </div><!-- /.project-section title -->
 
-        <!-- ====== Versão Desktop/Tablet ====== -->
         <!-- ====== Versão Desktop / Tablet ====== -->
         <div class="feature-one d-none d-md-block">
             <div class="container">

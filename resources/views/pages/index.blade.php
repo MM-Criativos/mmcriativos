@@ -32,7 +32,7 @@
 
         @include('components.skills')
 
-        @include('components.portfolio')
+        @include('components.projects')
 
         @include('components.pricing')
 

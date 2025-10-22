@@ -115,13 +115,8 @@
 
                             <div class="row">
                                 <div class="col-12">
-                                    @php
-                                        $processes = $service->processes;
-                                        $hasCarousel = $processes->count() > 3;
-                                    @endphp
-
-                                    <div class="{{ $hasCarousel ? 'ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel' : 'work-process-one__static-grid' }}"
-                                        @if ($hasCarousel) data-owl-options='{
+                                    <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                                        data-owl-options='{
                                             "items": 3,
                                             "margin": 30,
                                             "smartSpeed": 800,
@@ -135,9 +130,9 @@
                                                 "992": {"items":3},
                                                 "1200": {"items":3}
                                             }
-                                        }' @endif>
-                                        @foreach ($processes as $process)
-                                            <div class="{{ $hasCarousel ? 'item' : 'col-lg-4 col-md-6' }}">
+                                        }'>
+                                        @foreach ($service->processes as $process)
+                                            <div class="item">
                                                 <div class="work-process-one__item text-center">
                                                     <div class="work-process-one__item__thumb">
                                                         <img src="{{ asset($process->image) }}"
@@ -153,9 +148,11 @@
                                                 </div>
                                             </div>
                                         @endforeach
+
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                     <!-- /.work-process-one -->
@@ -164,19 +161,35 @@
                         <div class="container text-center wow fadeInUp animated" data-wow-delay="200ms">
                             <div class="cta-one__author">
                                 <div class="cta-one__author--wrap">
-                                    <img src="assets/images/resources/cta-1-1.jpg" alt="MM Criativos">
+                                    @php
+                                        $cta = $service->ctas->first();
+                                        $ctaImg = optional($cta)->image;
+                                        $rawPhone =
+                                            optional($cta)->phone ??
+                                            (optional(\App\Models\Setting::first())->whatsapp ??
+                                                optional(\App\Models\Setting::first())->phone);
+                                        $phoneDigits = $rawPhone ? preg_replace('/\D+/', '', $rawPhone) : null;
+                                        $waText = 'Olá, gostaria de saber mais sobre ' . $service->name . '!';
+                                        $waHref = $phoneDigits
+                                            ? 'https://wa.me/' . $phoneDigits . '?text=' . urlencode($waText)
+                                            : null;
+                                    @endphp
+                                    @if ($ctaImg)
+                                        <img src="{{ asset($ctaImg) }}" alt="MM Criativos">
+                                    @endif
                                 </div>
-                                <a href="https://wa.me/5511958469546?text=Olá%2C+gostaria+de+criar+minha+Landing+Page+com+a+MM+Criativos!"
-                                    target="_blank" class="cta-one__icon">
-                                    <i class="fa-brands fa-whatsapp"></i>
-                                </a>
+                                @if ($waHref)
+                                    <a href="{{ $waHref }}" target="_blank" class="cta-one__icon" rel="noopener">
+                                        <i class="fa-brands fa-whatsapp"></i>
+                                    </a>
+                                @endif
                             </div><!-- /.cta-author -->
 
                             <div class="section-title">
                                 <h5 class="section-title__tagline section-title__tagline--has-dots">vamos tirar sua
                                     ideia do papel</h5>
                                 <h2 class="section-title__title">
-                                    {{ $service->ctas->title }}
+                                    {{ optional($cta)->title ?? 'Fale com nossa equipe' }}
 
                                 </h2>
                             </div><!-- /.section-title -->

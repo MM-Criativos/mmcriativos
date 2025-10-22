@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Models\Project;
 
 class ModalController extends Controller
 {
@@ -17,8 +18,71 @@ class ModalController extends Controller
                 return response('<p>Serviço não encontrado.</p>', 404);
             }
             // Carregar relações que podem enriquecer o modal, se existirem
-            $service->load(['info', 'benefits' => fn($q) => $q->orderBy('order'), 'features' => fn($q) => $q->orderBy('order')]);
+            $service->load([
+                'info',
+                'benefits' => fn($q) => $q->orderBy('order'),
+                'features' => fn($q) => $q->orderBy('order'),
+                'ctas',
+            ]);
             return response()->view('components.content.services.show', compact('service'));
+        }
+
+        if ($type === 'projects') {
+            $project = Project::query()
+                ->where('slug', $slug)
+                ->first();
+            if (!$project) {
+                return response('<p>Projeto não encontrado.</p>', 404);
+            }
+            $project->load([
+                'client',
+                'service',
+                'challenges',
+                'solutions',
+                'projectProcesses' => fn($q) => $q->orderBy('order'),
+                'projectProcesses.images' => fn($q) => $q->orderBy('order'),
+                'skills',
+                'skillLinks' => fn($q) => $q->orderBy('order'),
+                'skillLinks.skill',
+                'skillLinks.competency',
+            ]);
+
+            // Agrupar as competências por Skill
+            $skillGroups = $project->skillLinks
+                ->groupBy('skill_id')
+                ->map(function ($items) {
+                    return [
+                        'skill' => optional($items->first()->skill)->name,
+                        'competencies' => $items->map(fn($it) => optional($it->competency)->competency)->filter()->values(),
+                    ];
+                })->values();
+
+            // Midias sociais do cliente (se houver pivot client_social_media com 'user')
+            $clientSocials = collect();
+            if ($project->client) {
+                $project->client->loadMissing(['socialMedias']);
+                $clientSocials = $project->client->socialMedias->map(function ($sm) {
+                    return [
+                        'name' => $sm->name ?? null,
+                        'icon' => $sm->icon ?? null,
+                        'url' => $sm->pivot?->user,
+                    ];
+                })->filter(fn($it) => !empty($it['url']))->values();
+            }
+
+            // Processos (se quiser exibir algo plano por enquanto)
+            $processes = collect();
+
+            // Alias $projeto para compatibilidade com o template atual
+            $projeto = $project;
+
+            return response()->view('components.content.projects.show', compact(
+                'project',
+                'projeto',
+                'skillGroups',
+                'clientSocials',
+                'processes'
+            ));
         }
 
         // Fallback para conteúdos estáticos anteriores
@@ -29,4 +93,3 @@ class ModalController extends Controller
         return response('<p>Conteúdo não encontrado.</p>', 404);
     }
 }
-
