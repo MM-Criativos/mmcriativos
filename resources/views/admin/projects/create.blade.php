@@ -66,7 +66,7 @@
                             <textarea name="summary" rows="4" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('summary') }}</textarea>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {{-- Cover --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
@@ -93,6 +93,21 @@
                                     <div id="preview-thumb"
                                         class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
                                         <i class="fa-regular fa-image text-base mr-1"></i> Thumb
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Skill Cover --}}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Skill Cover</label>
+                                <div class="relative group cursor-pointer w-40 h-40">
+                                    <input type="file" name="skill_cover" accept="image/*"
+                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        onchange="previewImage(event, 'skill_cover')">
+
+                                    <div id="preview-skill_cover"
+                                        class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
+                                        <i class="fa-regular fa-image text-base mr-1"></i> Skill Cover
                                     </div>
                                 </div>
                             </div>

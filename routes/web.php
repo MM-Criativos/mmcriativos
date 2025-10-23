@@ -35,6 +35,7 @@ Route::get('/', function () {
 // ConteÃºdos dinÃ¢micos para o holo-modal
 // Conteúdos dinâmicos para o holo-modal
 Route::get('/modal-content/{type}/{slug}', [ModalController::class, 'content'])->name('modal.content');
+Route::get('/modal-process/{projectProcess}', [ModalController::class, 'process'])->name('modal.process');
 
 
 // Rotas padrÃ£o do Breeze (dashboard e profile protegidos)

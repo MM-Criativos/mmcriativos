@@ -12,6 +12,8 @@ class SkillCompetency extends Model
     protected $fillable = [
         'skill_id',
         'competency',
+        'icon',
+        'description',
     ];
 
     public function skill()
@@ -25,5 +27,19 @@ class SkillCompetency extends Model
             ->withPivot(['skill_id', 'order'])
             ->withTimestamps();
     }
-}
 
+    // Normaliza o ícone para classes CSS, caso esteja salvo como tag <i>
+    public function getIconClassAttribute(): string
+    {
+        $raw = (string) ($this->icon ?? '');
+        $raw = trim($raw);
+        if ($raw === '') return '';
+        if (strpos($raw, '<') !== false) {
+            if (preg_match('/class\s*=\s*"([^"]+)"/i', $raw, $m)) {
+                return trim($m[1]);
+            }
+            return trim(strip_tags($raw));
+        }
+        return $raw;
+    }
+}

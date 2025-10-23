@@ -42,20 +42,22 @@ $watch('darkMode', value => {
     </div>
 
     <script>
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia(
-                '(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark')
+        // Inicializa conforme preferência salva/sistema
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
         } else {
-            document.documentElement.classList.remove('dark')
+            document.documentElement.classList.remove('dark');
         }
+
+        // Fallback para botões que usam data-toggle-theme
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('[data-toggle-theme]').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.documentElement.classList.toggle('dark') localStorage.theme = document
-                        .documentElement.classList.contains('dark') ? 'dark' : 'light'
-                })
-            })
-        })
+                    document.documentElement.classList.toggle('dark');
+                    localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                });
+            });
+        });
     </script>
 </body>
 

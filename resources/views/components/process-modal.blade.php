@@ -86,6 +86,7 @@
     .process-modal__info { color: #eee; margin-top: 10px; }
     .process-modal__carousel { margin-top: 6px; }
     .process-modal__info h4 { color: #fff; margin-bottom: 8px; }
+    #processModalCarousel .item.is-active img { outline: 2px solid #ff8800; outline-offset: 2px; }
 </style>
 
 <div id="processModal" class="process-modal" style="display: none;">

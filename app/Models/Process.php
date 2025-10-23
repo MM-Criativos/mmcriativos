@@ -27,5 +27,20 @@ class Process extends Model
     {
         return $this->hasMany(ProjectProcess::class);
     }
-}
 
+    // Accessor que normaliza o campo 'icon' (aceita tag <i> completa ou apenas classes)
+    public function getIconClassAttribute(): string
+    {
+        $raw = (string) ($this->icon ?? '');
+        $raw = trim($raw);
+        if ($raw === '') return '';
+
+        if (strpos($raw, '<') !== false) {
+            if (preg_match('/class\s*=\s*"([^"]+)"/i', $raw, $m)) {
+                return trim($m[1]);
+            }
+            return trim(strip_tags($raw));
+        }
+        return $raw;
+    }
+}

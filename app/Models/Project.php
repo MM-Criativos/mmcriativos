@@ -12,6 +12,7 @@ class Project extends Model
     protected $fillable = [
         'cover',
         'thumb',
+        'skill_cover',
         'name',
         'slug',
         'summary',

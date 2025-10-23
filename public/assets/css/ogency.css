@@ -5606,7 +5606,7 @@ h6 {
 .service-page__carousel {
   background-color: var(--ogency-black);
   position: relative;
-  padding: 120px 0;
+  padding: 40px 0;
 }
 
 @media (max-width: 767px) {
@@ -6922,7 +6922,7 @@ h6 {
 }
 
 .cta-two {
-  background-color: var(--ogency-black2);
+  background-color: rgba (0,0,0,0.7)!important;
   position: relative;
   padding: 120px 0;
 }

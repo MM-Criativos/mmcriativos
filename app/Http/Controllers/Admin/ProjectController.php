@@ -45,6 +45,7 @@ class ProjectController extends Controller
             'summary' => ['nullable', 'string'],
             'cover' => ['nullable', 'image'],
             'thumb' => ['nullable', 'image'], // ✅ novo campo
+            'skill_cover' => ['nullable', 'image'],
             'video' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -66,6 +67,11 @@ class ProjectController extends Controller
         if ($request->hasFile('thumb')) {
             $path = $request->file('thumb')->store('projects/thumbs', 'public');
             $data['thumb'] = 'storage/' . $path;
+        }
+
+        if ($request->hasFile('skill_cover')) {
+            $path = $request->file('skill_cover')->store('projects/skills', 'public');
+            $data['skill_cover'] = 'storage/' . $path;
         }
 
         $project = Project::create($data);
@@ -111,6 +117,7 @@ class ProjectController extends Controller
             'summary' => ['nullable', 'string'],
             'cover' => ['nullable', 'image'],
             'thumb' => ['nullable', 'image'], // ✅ novo campo
+            'skill_cover' => ['nullable', 'image'],
             'video' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -122,6 +129,11 @@ class ProjectController extends Controller
         if ($request->hasFile('thumb')) {
             $path = $request->file('thumb')->store('projects/thumbs', 'public');
             $data['thumb'] = 'storage/' . $path;
+        }
+
+        if ($request->hasFile('skill_cover')) {
+            $path = $request->file('skill_cover')->store('projects/skills', 'public');
+            $data['skill_cover'] = 'storage/' . $path;
         }
 
         $project->update($data);
@@ -136,11 +148,12 @@ class ProjectController extends Controller
                     'client_id' => $project->client_id,
                     'service_id' => $project->service_id,
                     'summary' => $project->summary,
-                    'video' => $project->video,
-                    'cover' => $project->cover ? asset($project->cover) : null,
-                    'thumb' => $project->thumb ? asset($project->thumb) : null, // ✅
-                ],
-            ]);
+                'video' => $project->video,
+                'cover' => $project->cover ? asset($project->cover) : null,
+                'thumb' => $project->thumb ? asset($project->thumb) : null, // ✅
+                'skill_cover' => $project->skill_cover ? asset($project->skill_cover) : null,
+            ],
+        ]);
         }
 
         return back()->with('status', 'Projeto atualizado.');

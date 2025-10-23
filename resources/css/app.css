@@ -1,3 +1,44 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Dark mode adjustments for admin UI */
+@layer base {
+  /* Panels/cards and common utility overrides */
+  .dark .bg-white { @apply bg-dark-800; }
+  .dark .bg-gray-50 { @apply bg-dark-900; }
+  .dark .bg-gray-100 { @apply bg-dark-800; }
+
+  .dark .text-gray-900 { @apply text-gray-100; }
+  .dark .text-gray-800 { @apply text-gray-100; }
+  .dark .text-gray-700 { @apply text-gray-200; }
+  .dark .text-gray-600 { @apply text-gray-300; }
+
+  .dark .border-gray-100 { @apply border-gray-700/50; }
+  .dark .border-gray-200 { @apply border-gray-700; }
+  .dark .border-gray-300 { @apply border-gray-700; }
+
+  /* Inputs/selects/textareas */
+  .dark input[type='text'],
+  .dark input[type='email'],
+  .dark input[type='url'],
+  .dark input[type='number'],
+  .dark input[type='password'],
+  .dark input[type='search'],
+  .dark input[type='tel'],
+  .dark select,
+  .dark textarea {
+    @apply bg-dark-900 text-gray-100 placeholder-gray-400 border-gray-700 focus:border-orange-500 focus:ring-orange-500;
+  }
+
+  .dark label { @apply text-gray-200; }
+
+  /* Tables and dividers */
+  .dark hr { @apply border-gray-700; }
+}
+
+/* Map common hover utilities to dark-friendly colors */
+@layer utilities {
+  .dark .hover\:bg-gray-50:hover { @apply bg-dark-800; }
+  .dark .hover\:bg-gray-100:hover { @apply bg-dark-800; }
+}

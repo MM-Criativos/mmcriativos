@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Models\ProjectProcess;
 use App\Models\Project;
+use App\Models\Skill;
 
 class ModalController extends Controller
 {
@@ -85,11 +87,57 @@ class ModalController extends Controller
             ));
         }
 
+        if ($type === 'skills') {
+            $skill = Skill::query()->where('slug', $slug)->first();
+            if (!$skill) {
+                return response('<p>Skill não encontrada.</p>', 404);
+            }
+            $skill->load(['competencies' => fn($q) => $q->orderBy('competency')]);
+            return response()->view('components.content.skills.show', compact('skill'));
+        }
+
         // Fallback para conteúdos estáticos anteriores
         $view = "components.content.$type.$slug";
         if (view()->exists($view)) {
             return response()->view($view);
         }
         return response('<p>Conteúdo não encontrado.</p>', 404);
+    }
+
+    public function process(ProjectProcess $projectProcess)
+    {
+        $projectProcess->load([
+            'project',
+            'process',
+            'images' => function ($q) {
+                $q->orderBy('order');
+            },
+        ]);
+
+        $images = $projectProcess->images->map(function ($img) {
+            return [
+                'id' => $img->id,
+                'src' => asset($img->image),
+                'title' => $img->title,
+                'description' => $img->description,
+                'solution' => $img->solution,
+                'order' => $img->order,
+            ];
+        })->values();
+
+        return response()->json([
+            'project' => [
+                'id' => $projectProcess->project?->id,
+                'name' => $projectProcess->project?->name,
+            ],
+            'process' => [
+                'id' => $projectProcess->process?->id,
+                'name' => $projectProcess->process?->name,
+                'slug' => $projectProcess->process?->slug,
+                'icon' => $projectProcess->process?->icon,
+            ],
+            'description' => $projectProcess->description,
+            'images' => $images,
+        ]);
     }
 }
