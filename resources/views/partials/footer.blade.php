@@ -25,6 +25,7 @@
 @include('partials.scripts2')
 @include('partials.scripts-process')
 @include('partials.scripts-competencies')
+@include('partials.scripts-flip')
 
 </body>
 

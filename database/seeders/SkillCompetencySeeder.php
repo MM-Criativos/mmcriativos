@@ -12,66 +12,69 @@ class SkillCompetencySeeder extends Seeder
      */
     public function run(): void
     {
+        DB::table('skill_competencies')->truncate();
+
         DB::table('skill_competencies')->insert([
-            // 1️⃣ Front End
-            ['skill_id' => 1, 'competency' => 'HTML5', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'CSS3', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'JavaScript (ES6+)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'Vue.js', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'React', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'TailwindCSS', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'Bootstrap', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'Responsive Design', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'Accessibility (WCAG)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 1, 'competency' => 'Animations (CSS / GSAP)', 'created_at' => now(), 'updated_at' => now()],
 
-            // 2️⃣ Back End
-            ['skill_id' => 2, 'competency' => 'PHP (Laravel, Lumen)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'Node.js / Express.js', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'RESTful APIs', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'Authentication (Sanctum, JWT)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'Eloquent ORM', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'Queues and Schedulers', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'File Upload and Storage', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'Database Migrations and Seeders', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'Integration with External APIs', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 2, 'competency' => 'Security Best Practices (OWASP)', 'created_at' => now(), 'updated_at' => now()],
+            // 🟠 1️⃣ Layout e Interface (Front-End)
+            ['skill_id' => 1, 'competency' => 'HTML5', 'icon' => 'fa-brands fa-html5', 'description' => 'Estrutura base de todo site moderno, o HTML5 organiza o conteúdo de forma semântica e otimizada, garantindo legibilidade e melhor indexação em buscadores.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'CSS3', 'icon' => 'fa-brands fa-css3-alt', 'description' => 'Define o estilo, cores e tipografia de cada projeto. O CSS3 garante responsividade e identidade visual coesa em qualquer resolução de tela.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'JavaScript (ES6+)', 'icon' => 'fa-brands fa-js', 'description' => 'Responsável pela interatividade e dinamismo da página. O JavaScript moderno traz vida aos elementos e melhora significativamente a experiência do usuário.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'Vue.js', 'icon' => 'fa-brands fa-vuejs', 'description' => 'Framework progressivo utilizado para construir interfaces reativas e modulares. O Vue.js oferece leveza, escalabilidade e fácil manutenção em projetos web complexos.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'React', 'icon' => 'fa-brands fa-react', 'description' => 'Biblioteca JavaScript voltada para criação de componentes reutilizáveis. O React simplifica o desenvolvimento de interfaces dinâmicas com excelente desempenho.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'Tailwind CSS', 'icon' => 'fa-solid fa-wind', 'description' => 'Framework utilitário que acelera o design front-end. O TailwindCSS permite construir layouts responsivos e consistentes com código limpo e modular.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'Bootstrap', 'icon' => 'fa-brands fa-bootstrap', 'description' => 'Biblioteca clássica para prototipagem e interfaces rápidas. O Bootstrap oferece componentes prontos e responsivos que agilizam o desenvolvimento visual.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'Design Responsivo', 'icon' => 'fa-solid fa-display', 'description' => 'Planeja e adapta o design a diferentes dispositivos, resoluções e contextos. O design responsivo garante acessibilidade e usabilidade em qualquer tela.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'Acessibilidade (WCAG)', 'icon' => 'fa-solid fa-universal-access', 'description' => 'Conjunto de diretrizes que garante acessibilidade digital. Aplicamos os padrões WCAG para interfaces inclusivas, legíveis e navegáveis por todos.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 1, 'competency' => 'Animações (CSS / GSAP)', 'icon' => 'fa-solid fa-bolt', 'description' => 'Aplicação de transições suaves e micro-animações em CSS e GSAP. As animações aprimoram a percepção de fluidez e a interação com a interface.', 'created_at' => now(), 'updated_at' => now()],
 
-            // 3️⃣ UX e UI
-            ['skill_id' => 3, 'competency' => 'Design Systems', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Figma', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Prototyping and Wireframing', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Information Architecture', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Visual Hierarchy', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Accessibility Design', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Typography and Color Theory', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Microinteractions', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Responsive UI Design', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 3, 'competency' => 'Usability Testing', 'created_at' => now(), 'updated_at' => now()],
+            // 🟡 2️⃣ Estrutura e Lógica (Back-End)
+            ['skill_id' => 2, 'competency' => 'PHP (Laravel, Lumen)', 'icon' => 'fa-brands fa-php', 'description' => 'Frameworks PHP como Laravel e Lumen fornecem a base sólida para sistemas robustos, seguros e escaláveis, com código limpo e de fácil manutenção.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Node.js / Express.js', 'icon' => 'fa-brands fa-node-js', 'description' => 'Ambiente moderno para APIs e serviços escaláveis. O Node.js com Express.js garante performance, modularidade e comunicação eficiente entre sistemas.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'APIs RESTful', 'icon' => 'fa-solid fa-link', 'description' => 'APIs RESTful estruturam a comunicação entre front-end e back-end, garantindo integração limpa, segura e independente de plataforma ou linguagem.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Autenticação (Sanctum, JWT)', 'icon' => 'fa-solid fa-user-shield', 'description' => 'Autenticação segura e confiável através de Sanctum e JWT. Protege dados e controla acessos em ambientes com múltiplos níveis de permissão.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Eloquent ORM', 'icon' => 'fa-solid fa-database', 'description' => 'Camada de abstração que facilita o uso de bancos relacionais. O Eloquent ORM simplifica consultas, relacionamentos e manipulação de dados.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Filas e Agendadores', 'icon' => 'fa-solid fa-clock', 'description' => 'Gerencia processos automáticos e tarefas recorrentes. Filas e agendadores otimizam performance e mantêm o sistema sempre responsivo.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Upload e Armazenamento de Arquivos', 'icon' => 'fa-solid fa-upload', 'description' => 'Gerencia o envio, armazenamento e versionamento de arquivos com segurança, integrando-se a drivers locais e em nuvem para maior flexibilidade.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Migrações e Seeders de Banco de Dados', 'icon' => 'fa-solid fa-code-branch', 'description' => 'Controla estrutura e versionamento do banco de dados. Migrations e Seeders garantem consistência e rastreabilidade em qualquer ambiente.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Integração com APIs Externas', 'icon' => 'fa-solid fa-plug', 'description' => 'Cria pontes entre plataformas externas e o sistema. Integrações via API conectam serviços, ampliando as funcionalidades do projeto.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 2, 'competency' => 'Boas Práticas de Segurança (OWASP)', 'icon' => 'fa-solid fa-shield-halved', 'description' => 'Implementa boas práticas de segurança OWASP para proteger o sistema contra vulnerabilidades, injeções e ataques de autenticação.', 'created_at' => now(), 'updated_at' => now()],
 
-            // 4️⃣ SEO e Performance
-            ['skill_id' => 4, 'competency' => 'Semantic HTML', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'Meta Tags and Rich Snippets', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'Sitemap & Robots.txt', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'Core Web Vitals Optimization', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'Lazy Loading and Asset Optimization', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'Cache Strategies (HTTP, Laravel)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'SEO Technical Implementation', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'Internal Linking Optimization', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'PageSpeed Insights Analysis', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 4, 'competency' => 'Google Analytics & Search Console', 'created_at' => now(), 'updated_at' => now()],
+            // 🟢 3️⃣ Experiência do Usuário (UX/UI)
+            ['skill_id' => 3, 'competency' => 'Design Systems', 'icon' => 'fa-solid fa-layer-group', 'description' => 'Conjunto de padrões visuais e componentes reutilizáveis. Um Design System mantém consistência e agilidade no desenvolvimento de interfaces.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Figma', 'icon' => 'fa-brands fa-figma', 'description' => 'Ferramenta colaborativa para design de interfaces digitais. O Figma facilita prototipagem, validação visual e integração com equipes multidisciplinares.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Prototipagem e Wireframing', 'icon' => 'fa-solid fa-vector-square', 'description' => 'Processo de esboço e prototipagem de fluxos antes da codificação. Permite validar ideias e aprimorar a experiência do usuário rapidamente.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Arquitetura da Informação', 'icon' => 'fa-solid fa-diagram-project', 'description' => 'Organiza o conteúdo e define hierarquias de navegação. A arquitetura da informação cria jornadas lógicas e intuitivas dentro do produto.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Hierarquia Visual', 'icon' => 'fa-solid fa-sitemap', 'description' => 'Define pesos visuais, contrastes e foco de atenção. A hierarquia visual conduz o olhar do usuário e melhora a compreensão da interface.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Design de Acessibilidade', 'icon' => 'fa-solid fa-eye', 'description' => 'Inclui princípios de design acessível para garantir usabilidade por todos os públicos, respeitando limitações visuais, motoras e cognitivas.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Tipografia e Teoria das Cores', 'icon' => 'fa-solid fa-palette', 'description' => 'Combinações equilibradas de tipografia e cores definem a identidade e a legibilidade, criando harmonia estética e clareza em cada tela.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Microinterações', 'icon' => 'fa-solid fa-wand-magic-sparkles', 'description' => 'Micro-animações e feedbacks visuais refinam a interação, tornando o uso mais intuitivo e satisfatório para o usuário final.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Design de Interface Responsiva', 'icon' => 'fa-solid fa-display', 'description' => 'Cria interfaces fluidas e adaptáveis a múltiplos dispositivos. O design responsivo garante consistência visual e usabilidade contínua.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 3, 'competency' => 'Testes de Usabilidade', 'icon' => 'fa-solid fa-flask', 'description' => 'Etapa essencial de validação de usabilidade. Testes reais avaliam navegação, clareza e eficiência da experiência proposta.', 'created_at' => now(), 'updated_at' => now()],
 
-            // 5️⃣ Automatização e IA
-            ['skill_id' => 5, 'competency' => 'n8n Workflow Automation', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'Zapier & Make (Integromat)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'Webhooks Integration', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'AI Content Generation (GPT, Claude, Mistral)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'Prompt Engineering', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'Text Classification & Moderation', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'API Integrations (OpenAI, HuggingFace)', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'SaaS Integrations', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'Workflow Automation Systems', 'created_at' => now(), 'updated_at' => now()],
-            ['skill_id' => 5, 'competency' => 'Basic Model Training', 'created_at' => now(), 'updated_at' => now()],
+            // 🔵 4️⃣ SEO e Performance
+            ['skill_id' => 4, 'competency' => 'HTML Semântico', 'icon' => 'fa-solid fa-code', 'description' => 'Estrutura semântica e bem organizada que melhora a indexação e acessibilidade, tornando o conteúdo compreensível para buscadores e leitores de tela.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Meta Tags e Snippets Enriquecidos', 'icon' => 'fa-solid fa-tags', 'description' => 'Otimização de metadados e snippets enriquecidos para ampliar a visibilidade do site e melhorar o desempenho nas buscas orgânicas.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Sitemap e Robots.txt', 'icon' => 'fa-solid fa-map', 'description' => 'Criação e manutenção de arquivos Sitemap e Robots.txt, orientando mecanismos de busca na navegação e indexação eficiente do conteúdo.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Otimização de Core Web Vitals', 'icon' => 'fa-solid fa-gauge-high', 'description' => 'Aprimoramento dos Core Web Vitals com foco em velocidade, estabilidade visual e interatividade, elevando métricas de experiência do usuário.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Lazy Loading e Otimização de Recursos', 'icon' => 'fa-solid fa-rocket', 'description' => 'Carregamento inteligente de imagens e scripts com Lazy Loading e compressão de ativos para desempenho superior em qualquer rede.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Estratégias de Cache (HTTP, Laravel)', 'icon' => 'fa-solid fa-box-archive', 'description' => 'Uso de cache HTTP e de aplicação para reduzir requisições e acelerar o carregamento de páginas em visitas subsequentes.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Implementação Técnica de SEO', 'icon' => 'fa-solid fa-magnifying-glass-chart', 'description' => 'Implementação técnica de SEO, estruturando títulos, descrições e links para maximizar o alcance orgânico e a relevância de conteúdo.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Otimização de Links Internos', 'icon' => 'fa-solid fa-link', 'description' => 'Estratégia de links internos que reforça hierarquia e relevância das páginas, aprimorando o rastreamento por mecanismos de busca.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Análise de PageSpeed Insights', 'icon' => 'fa-solid fa-chart-line', 'description' => 'Análise contínua de desempenho via PageSpeed Insights para identificar gargalos e aplicar melhorias técnicas mensuráveis.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 4, 'competency' => 'Google Analytics e Search Console', 'icon' => 'fa-brands fa-google', 'description' => 'Monitoramento de tráfego e comportamento do usuário por meio das ferramentas Google Analytics e Search Console, baseando decisões em dados reais.', 'created_at' => now(), 'updated_at' => now()],
+
+            // 🟣 5️⃣ Automatização e Inteligência Artificial
+            ['skill_id' => 5, 'competency' => 'Automação com n8n', 'icon' => 'fa-solid fa-network-wired', 'description' => 'Criação de fluxos automatizados e integrações complexas com o n8n, conectando serviços para otimizar tarefas repetitivas e aumentar eficiência operacional.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Zapier e Make (Integromat)', 'icon' => 'fa-solid fa-diagram-next', 'description' => 'Uso de plataformas Zapier e Make para automatizar processos entre aplicações, reduzindo erros humanos e acelerando rotinas de trabalho.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Integração via Webhooks', 'icon' => 'fa-solid fa-plug', 'description' => 'Integração via Webhooks que conecta sistemas em tempo real, garantindo comunicação rápida e sincronizada entre plataformas diferentes.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Geração de Conteúdo com IA', 'icon' => 'fa-solid fa-robot', 'description' => 'Aplicação de inteligência artificial para gerar textos e ideias criativas com base em contexto, tom e intenção definidos pelo projeto.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Engenharia de Prompts', 'icon' => 'fa-solid fa-terminal', 'description' => 'Engenharia de prompts que aprimora a comunicação com modelos de IA, garantindo respostas precisas e alinhadas ao objetivo do usuário.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Classificação e Moderação de Texto', 'icon' => 'fa-solid fa-filter', 'description' => 'Classificação automática e moderação de conteúdo textual, garantindo segurança, organização e conformidade com políticas de uso.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Integrações com APIs de IA', 'icon' => 'fa-solid fa-code-merge', 'description' => 'Integrações com APIs de IA como OpenAI e HuggingFace, expandindo funcionalidades e conectando modelos avançados ao sistema.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Integrações SaaS', 'icon' => 'fa-solid fa-cloud', 'description' => 'Conexão entre diferentes serviços SaaS, integrando sistemas e automatizando fluxos que otimizam tempo e reduzem custos operacionais.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Sistemas de Automação de Fluxo', 'icon' => 'fa-solid fa-gears', 'description' => 'Sistemas de automação que interligam processos e plataformas, garantindo continuidade operacional e redução de tarefas manuais.', 'created_at' => now(), 'updated_at' => now()],
+            ['skill_id' => 5, 'competency' => 'Treinamento Básico de Modelos', 'icon' => 'fa-solid fa-brain', 'description' => 'Treinamento básico de modelos customizados para IA, adaptando comportamentos e resultados conforme as necessidades do projeto.', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }
