@@ -72,6 +72,20 @@
             top: 18px;
             right: 18px;
         }
+
+        /* Keep the top menu visible and unchanged while hero is pinned */
+        body.hero-sticky-lock .main-header {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+            pointer-events: auto !important;
+            position: fixed; /* freeze in place over the video */
+            top: 0; left: 0; right: 0;
+            z-index: 1005;
+            background: transparent; /* preserve current look */
+        }
+        /* Hide sticky clone while hero is pinned to avoid swap */
+        body.hero-sticky-lock .stricky-header { display: none !important; }
     </style>
     <nav class="main-menu">
         <div class="container-fluid">

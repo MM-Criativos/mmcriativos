@@ -13,7 +13,11 @@
 
         @include('components.slider')
 
-        @include('components.line')
+        {{-- @include('components.line') --}}
+
+        @include('components.highlights')
+
+        @include('components.service')
 
         @include('components.aboutus')
 

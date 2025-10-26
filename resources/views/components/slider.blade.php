@@ -25,8 +25,10 @@
         .video-hero__overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(0, 0, 0, .40), rgba(0, 0, 0, .60));
+            background: rgba(0, 0, 0, 0);
             z-index: 2;
+            pointer-events: none;
+            transition: background-color .2s ease;
         }
 
         .video-hero__content {
@@ -45,6 +47,38 @@
             .video-hero__content {
                 min-height: 92vh;
             }
+        }
+
+        /* Central messages (diferenciais) */
+        .hero-diffs {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center; /* center in both axes */
+            pointer-events: none; /* allow menu/buttons to remain clickable */
+        }
+        .hero-diff {
+            color: #fff;
+            font-weight: 600;
+            line-height: 1.15;
+            font-size: clamp(24px, 5vw, 56px);
+            text-shadow: 0 2px 24px rgba(0,0,0,.45);
+            opacity: 0; /* GSAP controls */
+            pointer-events: none;
+            text-align: center;
+            padding: 0 20px; /* mobile safe gutters */
+            grid-area: 1 / 1; /* stack all items centered */
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Lock sticky header while hero is pinned */
+        body.hero-sticky-lock .stricky-header { 
+            opacity: 0 !important; 
+            visibility: hidden !important; 
+            transform: translateY(-100%) !important; 
+            pointer-events: none !important; 
         }
 
         /* Glassmorphism controls (social + phone) */
@@ -97,11 +131,14 @@
                 <source src="{{ asset($video ?? 'assets/video/MMConnect.mp4') }}" type="video/mp4">
             </video>
         </div>
+        <div class="video-hero__overlay"></div>
         <div class="container video-hero__content">
             <div class="row w-100">
                 <div class="col-xl-12">
-                    <div class="main-slider__two__content text-center">
-                        <!-- Conteúdo opcional: pode inserir call to action aqui se quiser -->
+                    <div class="main-slider__two__content text-center hero-diffs">
+                        <div class="hero-diff" data-overlay="0.2">Diferencial 1</div>
+                        <div class="hero-diff" data-overlay="0.3">Diferencial 2</div>
+                        <div class="hero-diff" data-overlay="0.4">Diferencial 3</div>
                     </div>
                 </div>
             </div>
@@ -137,31 +174,82 @@
 </section>
 <!--Main Slider End-->
 
-<style>
-    .diferencials {
-        background-color: #000;
-        padding: 50px;
-    }
-</style>
+<script>
+    (function () {
+        function loadScript(src) {
+            return new Promise(function(resolve, reject) {
+                var s = document.createElement('script');
+                s.src = src;
+                s.onload = resolve;
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        }
 
-<section class="diferencials">
-    <div class="container">
-        <div>
-            <div class="col-md-12">
-                <div class="section-title">
-                    <h2 class="section-title__title">Explore our best recently<br> completed projects</h2>
-                </div><!-- section-title -->
-            </div>
-            <div class="col-md-12">
-                <div class="section-title">
-                    <h2 class="section-title__title">Explore our best recently<br> completed projects</h2>
-                </div><!-- section-title -->
-            </div>
-            <div class="col-md-12">
-                <div class="section-title">
-                    <h2 class="section-title__title">Explore our best recently<br> completed projects</h2>
-                </div><!-- section-title -->
-            </div>
-        </div>
-    </div>
-</section>
+        function initHeroScroll() {
+            var startTimeline = function() {
+                try { gsap.registerPlugin(ScrollTrigger); } catch (e) {}
+
+                var section = document.querySelector('.main-slider');
+                var overlay = section && section.querySelector('.video-hero__overlay');
+                var diffs = gsap.utils.toArray('.hero-diff');
+                if (!section || !overlay || !diffs.length) return;
+
+                gsap.set(overlay, { backgroundColor: 'rgba(0,0,0,0)' });
+                gsap.set(diffs, { autoAlpha: 0, y: 40 });
+
+                var lockSticky = function(flag){
+                    document.body.classList.toggle('hero-sticky-lock', !!flag);
+                };
+
+                var tl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top top',
+                        end: '+=' + (diffs.length * 100) + '%',
+                        pin: true,
+                        scrub: 1,
+                        anticipatePin: 1,
+                        onEnter: function(){ lockSticky(true); },
+                        onEnterBack: function(){ lockSticky(true); },
+                        onLeave: function(){ lockSticky(false); },
+                        onLeaveBack: function(){ lockSticky(false); }
+                    }
+                });
+
+                diffs.forEach(function(el, i) {
+                    var targetOverlay = parseFloat(el.getAttribute('data-overlay') || '0.2');
+                    tl.to(overlay, { duration: 0.4, backgroundColor: 'rgba(0,0,0,' + targetOverlay + ')' });
+                    tl.fromTo(el, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '<');
+                    if (i < diffs.length - 1) {
+                        tl.to(el, { autoAlpha: 0, y: -30, duration: 0.45, ease: 'power2.in' }, '+=0.5');
+                    }
+                });
+            };
+
+            var afterGSAP = function(){
+                if (window.ScrollTrigger) {
+                    startTimeline();
+                } else {
+                    loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js')
+                        .then(startTimeline)
+                        .catch(function(){});
+                }
+            };
+
+            if (window.gsap) {
+                afterGSAP();
+            } else {
+                loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js')
+                    .then(afterGSAP)
+                    .catch(function(){});
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHeroScroll);
+        } else {
+            initHeroScroll();
+        }
+    })();
+</script>
