@@ -79,13 +79,20 @@
             visibility: visible !important;
             transform: none !important;
             pointer-events: auto !important;
-            position: fixed; /* freeze in place over the video */
-            top: 0; left: 0; right: 0;
+            position: fixed;
+            /* freeze in place over the video */
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 1005;
-            background: transparent; /* preserve current look */
+            background: transparent;
+            /* preserve current look */
         }
+
         /* Hide sticky clone while hero is pinned to avoid swap */
-        body.hero-sticky-lock .stricky-header { display: none !important; }
+        body.hero-sticky-lock .stricky-header {
+            display: none !important;
+        }
     </style>
     <nav class="main-menu">
         <div class="container-fluid">
@@ -111,9 +118,9 @@
             <button class="glass-btn site-menu-close js-close-menu" aria-label="Fechar menu"><i
                     class="fa-solid fa-xmark"></i></button>
             <ul class="site-menu-list">
-                <li><a href="#">Work</a></li>
-                <li><a href="#">Services</a></li>
-                <li><a href="#">Impact</a></li>
+                <li><a href="#">Sobre</a></li>
+                <li><a href="#">Valores</a></li>
+                <li><a href="#">Contato</a></li>
             </ul>
             <div class="site-menu-sub">
                 <a href="#">Contact</a>

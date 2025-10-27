@@ -23,9 +23,12 @@
 <!-- Template JS -->
 <script src="{{ asset('assets/js/ogency.js') }}"></script>
 @include('partials.scripts2')
+@include('partials.scripts2-maps')
+@include('partials.scripts2-select-db')
 @include('partials.scripts-process')
 @include('partials.scripts-competencies')
 @include('partials.scripts-flip')
+@include('partials.scripts-benefits-glitch')
 
 </body>
 

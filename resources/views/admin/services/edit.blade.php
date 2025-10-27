@@ -67,21 +67,29 @@
                                 </div>
                             </div>
 
-                            {{-- Cover --}}
+                            {{-- Cover (vídeo) --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
                                 <div class="relative group cursor-pointer w-40 h-40">
-                                    <input type="file" name="cover" accept="image/*"
+                                    <input type="file" name="cover" accept="video/*"
                                         class="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                        onchange="previewImage(event, 'cover')">
+                                        onchange="previewCover(event)">
 
+                                    @php
+                                        $cover = $service->cover;
+                                        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4', '.webm', '.ogg', '.mov']);
+                                    @endphp
                                     @if ($service->cover)
-                                        <img id="preview-cover" src="{{ asset($service->cover) }}" alt="Cover"
-                                            class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
+                                        @if ($isVideo)
+                                            <video id="preview-cover" src="{{ asset($service->cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition" controls muted></video>
+                                        @else
+                                            <img id="preview-cover" src="{{ asset($service->cover) }}" alt="Cover"
+                                                class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
+                                        @endif
                                     @else
                                         <div id="preview-cover"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Cover
+                                            <i class="fa-regular fa-file-video text-base mr-1"></i> Vídeo
                                         </div>
                                     @endif
                                 </div>
@@ -106,7 +114,16 @@
                                 reader.readAsDataURL(event.target.files[0]);
                             }
                         </script>
-
+                        <script>
+                            function previewCover(event) {
+                                const [file] = event.target.files || [];
+                                if (!file) return;
+                                const url = URL.createObjectURL(file);
+                                const el = document.getElementById('preview-cover');
+                                el.outerHTML = `
+                    <video id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>`;
+                            }
+                        </script>
 
                         <div>
                             <div class="flex justify-center mt-10">
@@ -390,18 +407,22 @@
                                                 <i class="fa-solid fa-rotate-right"></i>
                                             </button>
 
-                                            <form method="POST"
-                                                action="{{ route('admin.processes.destroy', $process) }}"
-                                                onsubmit="return confirm('Remover processo?');">
-                                                @csrf @method('DELETE')
-                                                <button
-                                                    class="inline-flex items-center justify-center p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                                                    title="Apagar">
-                                                    <i class="fa-regular fa-trash-can"></i>
-                                                </button>
-                                            </form>
+                                            <button type="submit"
+                                                form="delete-process-{{ $process->id }}"
+                                                formnovalidate
+                                                class="inline-flex items-center justify-center p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                                                title="Apagar"
+                                                onclick="return confirm('Remover processo?');">
+                                                <i class="fa-regular fa-trash-can"></i>
+                                            </button>
                                         </div>
                                     </div>
+                                </form>
+                                <!-- Hidden delete form (outside to avoid nested forms) -->
+                                <form id="delete-process-{{ $process->id }}" method="POST"
+                                    action="{{ route('admin.processes.destroy', $process) }}" style="display:none">
+                                    @csrf
+                                    @method('DELETE')
                                 </form>
                             </div>
                         @endforeach

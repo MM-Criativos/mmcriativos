@@ -42,17 +42,16 @@
                                 </div>
                             </div>
 
-                            {{-- Cover --}}
+                            {{-- Cover (vídeo) --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
                                 <div class="relative group cursor-pointer w-40 h-40">
-                                    <input type="file" name="cover" accept="image/*"
+                                    <input type="file" name="cover" accept="video/*"
                                         class="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                        onchange="previewImage(event, 'cover')">
+                                        onchange="previewCover(event)">
 
-                                    <div id="preview-cover"
-                                        class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                        <i class="fa-regular fa-image text-base mr-1"></i> Cover
+                                    <div id="preview-cover" class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
+                                        <i class="fa-regular fa-file-video text-base mr-1"></i> Vídeo
                                     </div>
                                 </div>
                             </div>
@@ -61,19 +60,25 @@
 
                         <script>
                             function previewImage(event, id) {
-                                const reader = new FileReader();
+                                const [file] = event.target.files || [];
+                                if (!file) return;
+                                const url = URL.createObjectURL(file);
                                 const preview = document.getElementById(`preview-${id}`);
-                                reader.onload = () => {
-                                    if (preview.tagName === 'IMG') {
-                                        preview.src = reader.result;
-                                    } else {
-                                        preview.outerHTML = `
-                <img id="preview-${id}"
-                     src="${reader.result}"
-                     class="w-40 h-40 object-cover rounded border border-gray-200" />`;
-                                    }
-                                };
-                                reader.readAsDataURL(event.target.files[0]);
+                                if (preview.tagName === 'IMG') {
+                                    preview.src = url;
+                                } else {
+                                    preview.outerHTML = `
+                    <img id="preview-${id}" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" />`;
+                                }
+                            }
+
+                            function previewCover(event) {
+                                const [file] = event.target.files || [];
+                                if (!file) return;
+                                const url = URL.createObjectURL(file);
+                                const container = document.getElementById('preview-cover');
+                                container.outerHTML = `
+                    <video id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>`;
                             }
                         </script>
 

@@ -34,7 +34,7 @@ class ServiceController extends Controller
             'icon' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'thumb' => ['nullable', 'image'],
-            'cover' => ['nullable', 'image'],
+            'cover' => ['nullable', 'file', 'mimes:mp4,webm,ogg,mov'],
         ]);
 
         if (empty($data['slug'])) {
@@ -81,7 +81,7 @@ class ServiceController extends Controller
             'icon' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'thumb' => ['nullable', 'image'],
-            'cover' => ['nullable', 'image'],
+            'cover' => ['nullable', 'file', 'mimes:mp4,webm,ogg,mov'],
         ]);
 
         foreach (['thumb', 'cover'] as $field) {
