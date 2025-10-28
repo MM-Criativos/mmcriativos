@@ -4451,7 +4451,6 @@ h6 {
 .about-one__thumb__round--top {
   width: 190px;
   height: 190px;
-  background-color: var(--ogency-black2);
   border-radius: 50%;
   position: absolute;
   left: -31px;
@@ -4464,7 +4463,6 @@ h6 {
 }
 
 .about-one__thumb__img {
-  background-color: var(--ogency-black);
   border-radius: 50%;
   display: inline-block;
   overflow: hidden;
@@ -4474,7 +4472,6 @@ h6 {
 .about-one__thumb__img img {
   max-width: 100%;
   height: auto;
-  mix-blend-mode: luminosity;
   transition: all 500ms ease;
 }
 

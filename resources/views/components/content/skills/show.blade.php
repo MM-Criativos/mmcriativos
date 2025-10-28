@@ -2,67 +2,106 @@
     <div class="sticky-header__content"></div>
 </div>
 <section class="page-header">
-    <div class="page-header__bg"
-        style="background-image: url('{{ $skill->cover ? asset($skill->cover) : asset('assets/images/backgrounds/page-header-bg.jpg') }}');">
-    </div>
+    @php
+        $cover = $skill->cover;
+        $isVideo =
+            $cover &&
+            \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), [
+                '.mp4',
+                '.webm',
+                '.ogg',
+                '.mov',
+            ]);
+    @endphp
+    @if ($cover)
+        @if ($isVideo)
+            <video class="page-header__bg" autoplay muted loop playsinline preload="metadata"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85;z-index:1;">
+                <source src="{{ asset($cover) }}">
+            </video>
+        @else
+            <div class="page-header__bg" style="background-image: url('{{ asset($cover) }}');"></div>
+        @endif
+    @else
+        <div class="page-header__bg"
+            style="background-image: url('{{ asset('assets/images/backgrounds/page-header-bg.jpg') }}');"></div>
+    @endif
     <div class="page-header__overlay"></div>
     <div class="container">
         <h2 class="page-header__title">{{ $skill->name }}</h2>
-        <p class="about-one__content__text-one">{!! nl2br(e($skill->description)) !!}</p>
-
     </div>
     <!-- /.page-header -->
 </section>
-<section class="about-one">
+<section class="about-one d-none d-lg-block">
+    <div class="container">
+        <div class="row align-items-center">
+            <!-- Imagem -->
+            <div class="col-lg-6">
+                <div class="about-one__thumb wow fadeInLeft animated" data-wow-delay="300ms">
+                    <div class="about-one__thumb__round--top"></div>
+                    <div class="about-one__thumb__img">
+                        @php($info = optional($skill->info))
+                        @php($img = $info->image ? asset($info->image) : asset('assets/images/resources/about-1-1.jpg'))
+                        <img src="{{ $img }}" alt="{{ $skill->name }}">
+                    </div>
+                    <div class="about-one__thumb__round--bottom"></div>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="200ms">
-            <div class="award-one__item">
-                <div class="award-one__item__year">2012</div><!-- /.award-year -->
-                <h4 class="award-one__item__title">Best developers</h4><!-- /.award-title -->
-                <p class="award-one__item__text">Quisqu tell us risus sid adpis viera bibe um urna.</p>
-                <!-- /.award-text -->
-                <div class="award-one__item__thumb">
-                    <img src="assets/images/resources/award-icon.png" alt="ogency">
-                </div><!-- /.award-image -->
-            </div><!-- /.award-item -->
-            <div class="award-one__item">
-                <div class="award-one__item__year">2018</div><!-- /.award-year -->
-                <h4 class="award-one__item__title">Quality design</h4><!-- /.award-title -->
-                <p class="award-one__item__text">Quisqu tell us risus sid adpis viera bibe um urna.</p>
-                <!-- /.award-text -->
-                <div class="award-one__item__thumb">
-                    <img src="assets/images/resources/award-icon.png" alt="ogency">
-                </div><!-- /.award-image -->
-            </div><!-- /.award-item -->
-        </div>
-        <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="500ms">
-            <div class="award-one__trophy"><img src="assets/images/resources/award.png" alt="ogency"></div>
-            <!-- /.Trophy-image -->
-        </div>
-        <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="300ms">
-            <div class="award-one__item award-one__item--ml">
-                <div class="award-one__item__year">2015</div><!-- /.award-year -->
-                <h4 class="award-one__item__title">Marketing expert</h4><!-- /.award-title -->
-                <p class="award-one__item__text">Quisqu tell us risus sid adpis viera bibe um urna.</p>
-                <!-- /.award-text -->
-                <div class="award-one__item__thumb">
-                    <img src="assets/images/resources/award-icon.png" alt="ogency">
-                </div><!-- /.award-image -->
-            </div><!-- /.award-item -->
-            <div class="award-one__item award-one__item--ml">
-                <div class="award-one__item__year">2020</div><!-- /.award-year -->
-                <h4 class="award-one__item__title">Client choice</h4><!-- /.award-title -->
-                <p class="award-one__item__text">Quisqu tell us risus sid adpis viera bibe um urna.</p>
-                <!-- /.award-text -->
-                <div class="award-one__item__thumb">
-                    <img src="assets/images/resources/award-icon.png" alt="ogency">
-                </div><!-- /.award-image -->
-            </div><!-- /.award-item -->
+            <!-- Texto -->
+            <div class="col-lg-6">
+                <div class="about-one__content">
+                    <div class="section-title">
+                        <h5 class="section-title__tagline section-title__tagline--has-dots">
+                            {{ $info->subtitle ?? '' }}
+                        </h5>
+                        <h2 class="section-title__title">
+                            {{ $info->title ?? '' }}
+                        </h2>
+                    </div>
+                    <p class="about-one__content__text-one">
+                        {!! isset($info->description) ? nl2br(e($info->description)) : '' !!}
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
-
 </section>
+
+<section class="about-one d-block d-lg-none">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="about-one__content text-center">
+                    <div class="section-title mb-3">
+                        <h5 class="section-title__tagline section-title__tagline--has-dots">
+                            {{ $info->subtitle ?? '' }}
+                        </h5>
+                        <h2 class="section-title__title">
+                            {{ $info->title ?? '' }}
+                        </h2>
+                    </div>
+
+                    <!-- Imagem vem após o título -->
+                    <div class="about-one__thumb wow fadeInUp animated mb-4" data-wow-delay="200ms">
+                        <div class="about-one__thumb__img">
+                            @php($info = optional($skill->info))
+                            @php($img = $info->image ? asset($info->image) : asset('assets/images/resources/about-1-1.jpg'))
+                            <img src="{{ $img }}" alt="{{ $skill->name }}" class="img-fluid rounded">
+                        </div>
+                    </div>
+
+                    <!-- Descrição -->
+                    <p class="about-one__content__text-one">
+                        {!! isset($info->description) ? nl2br(e($info->description)) : '' !!}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
 
 <section class="service-one">
     <div class="container">
@@ -221,8 +260,13 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="section-title text-center">
-                    <h5 class="section-title__tagline section-title__tagline--has-dots">what we’re offering</h5>
-                    <h2 class="section-title__title">Services we’re providing<br> to our customers</h2>
+                    <h5 class="section-title__tagline section-title__tagline--has-dots">
+                        tecnologia, performance e propósito
+                    </h5>
+                    <h2 class="section-title__title">
+                        Nossas competências moldam resultados reais
+                    </h2>
+
                 </div><!-- section-title -->
             </div>
         </div>
@@ -266,7 +310,6 @@
                 </div>
             @endforelse
         </div>
-
 
         <!-- Carousel (mobile): 1 card por competência -->
         <div class="d-md-none">

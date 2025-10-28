@@ -31,6 +31,11 @@ class Skill extends Model
             ->withTimestamps();
     }
 
+    public function info()
+    {
+        return $this->hasOne(SkillInfo::class);
+    }
+
     // Normaliza o ícone para classes CSS, caso o campo tenha sido salvo como tag <i>
     public function getIconClassAttribute(): string
     {

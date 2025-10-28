@@ -34,7 +34,8 @@ class SkillController extends Controller
             'icon' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'thumb' => ['nullable', 'image'],
-            'cover' => ['nullable', 'image'],
+            // Accept image or video for cover
+            'cover' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm,ogg,mov'],
         ]);
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
@@ -51,7 +52,7 @@ class SkillController extends Controller
 
     public function edit(Skill $skill)
     {
-        $skill->load(['competencies' => function ($q) {
+        $skill->load(['info', 'competencies' => function ($q) {
             $q->orderBy('id');
         }]);
         return view('admin.skills.edit', compact('skill'));
@@ -65,7 +66,8 @@ class SkillController extends Controller
             'icon' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'thumb' => ['nullable', 'image'],
-            'cover' => ['nullable', 'image'],
+            // Accept image or video for cover
+            'cover' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm,ogg,mov'],
         ]);
         foreach (['thumb', 'cover'] as $field) {
             if ($request->hasFile($field)) {

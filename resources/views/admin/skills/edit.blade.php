@@ -72,22 +72,30 @@
                                 </div>
                             </div>
 
-                            {{-- Cover --}}
+                            {{-- Cover (imagem ou vídeo) --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
 
                                 <div class="relative group cursor-pointer w-40 h-40">
-                                    <input type="file" name="cover" accept="image/*"
+                                    <input type="file" name="cover" accept="image/*,video/*"
                                         class="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                        onchange="previewImage(event, 'cover')">
+                                        onchange="previewCover(event)">
 
+                                    @php
+                                        $cover = $skill->cover;
+                                        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4', '.webm', '.ogg', '.mov']);
+                                    @endphp
                                     @if ($skill->cover)
-                                        <img id="preview-cover" src="{{ asset($skill->cover) }}" alt="Cover"
-                                            class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
+                                        @if ($isVideo)
+                                            <video id="preview-cover" src="{{ asset($skill->cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition" controls muted></video>
+                                        @else
+                                            <img id="preview-cover" src="{{ asset($skill->cover) }}" alt="Cover"
+                                                class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
+                                        @endif
                                     @else
                                         <div id="preview-cover"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Cover
+                                            <i class="fa-regular fa-file-video text-base mr-1"></i> Cover
                                         </div>
                                     @endif
                                 </div>
@@ -113,6 +121,21 @@
                             }
                         </script>
 
+                        <script>
+                            function previewCover(event) {
+                                const [file] = event.target.files || [];
+                                if (!file) return;
+                                const url = URL.createObjectURL(file);
+                                const isVideo = /^video\//.test(file.type);
+                                const el = document.getElementById('preview-cover');
+                                if (isVideo) {
+                                    el.outerHTML = `<video id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>`;
+                                } else {
+                                    el.outerHTML = `<img id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" />`;
+                                }
+                            }
+                        </script>
+
 
                         {{-- Botão --}}
                         <div class="flex justify-center">
@@ -120,6 +143,47 @@
                                 class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
                                 Salvar Alterações
                             </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-8">
+                    <h3 class="text-lg font-semibold mb-2">Informações da Skill</h3>
+                    <form method="POST" action="{{ route('admin.skills.info.update', $skill) }}" enctype="multipart/form-data" class="space-y-4">
+                        @csrf
+                        @method('PUT')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Imagem</label>
+                                <div class="relative group cursor-pointer w-40 h-40">
+                                    <input type="file" name="image" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewImg(event, '#preview-skillinfo-image')">
+                                    @if (optional($skill->info)->image)
+                                        <img id="preview-skillinfo-image" src="{{ asset($skill->info->image) }}" class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition" alt="Imagem">
+                                    @else
+                                        <div id="preview-skillinfo-image"
+                                            class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
+                                            <i class="fa-regular fa-image text-base mr-1"></i> Imagem
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Subtítulo</label>
+                                <input type="text" name="subtitle" value="{{ old('subtitle', optional($skill->info)->subtitle) }}" class="mt-1 block w-full border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Título</label>
+                                <input type="text" name="title" value="{{ old('title', optional($skill->info)->title) }}" class="mt-1 block w-full border-gray-300 rounded-md" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Descrição</label>
+                                <textarea name="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('description', optional($skill->info)->description) }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center mt-10">
+                            <button class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">Salvar Informações</button>
                         </div>
                     </form>
 

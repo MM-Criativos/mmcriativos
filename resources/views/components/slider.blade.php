@@ -190,6 +190,8 @@
             var startTimeline = function() {
                 try { gsap.registerPlugin(ScrollTrigger); } catch (e) {}
 
+                // Pin the whole slider section so its absolutely-positioned
+                // children (social/phone) stay aligned during the pin.
                 var section = document.querySelector('.main-slider');
                 var overlay = section && section.querySelector('.video-hero__overlay');
                 var diffs = gsap.utils.toArray('.hero-diff');
@@ -207,9 +209,11 @@
                         trigger: section,
                         start: 'top top',
                         end: '+=' + (diffs.length * 100) + '%',
-                        pin: true,
+                        pin: true,                 // pin the slider section
+                        pinSpacing: 'margin',      // keep layout flow without criar gap ao voltar
                         scrub: 1,
                         anticipatePin: 1,
+                        invalidateOnRefresh: true,
                         onEnter: function(){ lockSticky(true); },
                         onEnterBack: function(){ lockSticky(true); },
                         onLeave: function(){ lockSticky(false); },
@@ -225,11 +229,17 @@
                         tl.to(el, { autoAlpha: 0, y: -30, duration: 0.45, ease: 'power2.in' }, '+=0.5');
                     }
                 });
+                // Hold a beat with the 3º diferencial visível antes de liberar o pin
+                tl.to({}, { duration: 0.4 });
             };
 
             var afterGSAP = function(){
                 if (window.ScrollTrigger) {
                     startTimeline();
+                    // make sure positions are correct after assets load
+                    window.addEventListener('load', function(){
+                        try { ScrollTrigger.refresh(); } catch(e){}
+                    });
                 } else {
                     loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js')
                         .then(startTimeline)

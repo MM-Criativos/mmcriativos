@@ -67,17 +67,17 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            {{-- Cover --}}
+                            {{-- Cover (imagem ou vídeo) --}}
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
                                 <div class="relative group cursor-pointer w-40 h-40">
-                                    <input type="file" name="cover" accept="image/*"
+                                    <input type="file" name="cover" accept="image/*,video/*"
                                         class="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                        onchange="previewImage(event, 'cover')">
+                                        onchange="previewCover(event)">
 
                                     <div id="preview-cover"
                                         class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                        <i class="fa-regular fa-image text-base mr-1"></i> Cover
+                                        <i class="fa-regular fa-file-video text-base mr-1"></i> Cover
                                     </div>
                                 </div>
                             </div>
@@ -135,6 +135,21 @@
                                     }
                                 };
                                 reader.readAsDataURL(event.target.files[0]);
+                            }
+                        </script>
+
+                        <script>
+                            function previewCover(event) {
+                                const [file] = event.target.files || [];
+                                if (!file) return;
+                                const url = URL.createObjectURL(file);
+                                const isVideo = /^video\//.test(file.type);
+                                const el = document.getElementById('preview-cover');
+                                if (isVideo) {
+                                    el.outerHTML = `<video id=\"preview-cover\" src=\"${url}\" class=\"w-40 h-40 object-cover rounded border border-gray-200\" controls muted></video>`;
+                                } else {
+                                    el.outerHTML = `<img id=\"preview-cover\" src=\"${url}\" class=\"w-40 h-40 object-cover rounded border border-gray-200\" />`;
+                                }
                             }
                         </script>
 

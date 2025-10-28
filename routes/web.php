@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\ProjectImageController as AdminProjectImageContro
 use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectSkillCompetencyController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\TeamController as AdminTeamController;
+use App\Http\Controllers\Admin\SkillInfoController as AdminSkillInfoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Site\ModalController;
 
@@ -98,6 +99,7 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
 
     // Skills
     Route::resource('skills', AdminSkillController::class);
+    Route::put('skills/{skill}/info', [AdminSkillInfoController::class, 'update'])->name('skills.info.update');
     Route::resource('skills.competencies', AdminSkillCompetencyController::class)
         ->only(['store', 'update', 'destroy'])
         ->shallow();

@@ -63,14 +63,25 @@
     <div class="sticky-header__content"></div><!-- /.sticky-header__content -->
 </div><!-- /.stricky-header -->
 <section class="page-header">
-    <div class="page-header__bg" style="background-image: url('{{ asset($project->cover) }}');"></div>
-    <!-- /.page-header__bg -->
+    @php
+        $cover = $project->cover;
+        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4', '.webm', '.ogg', '.mov']);
+    @endphp
+    @if ($cover)
+        @if ($isVideo)
+            <video class="page-header__bg" autoplay muted loop playsinline preload="metadata"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.85;z-index:1;">
+                <source src="{{ asset($cover) }}">
+            </video>
+        @else
+            <div class="page-header__bg" style="background-image: url('{{ asset($cover) }}');"></div>
+        @endif
+    @endif
     <div class="page-header__overlay"></div>
-    <!-- /.page-header__bg -->
     <div class="container">
-        <h2 class="page-header__title">{{ $project->name }}</h2><!-- /.page-title -->
-    </div><!-- /.container -->
-</section><!-- /.page-header -->
+        <h2 class="page-header__title">{{ $project->name }}</h2>
+    </div>
+</section>
 <!-- Projects Details Start -->
 <section class="project-details">
     <div class="container">

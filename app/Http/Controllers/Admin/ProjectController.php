@@ -43,7 +43,8 @@ class ProjectController extends Controller
             'client_id' => ['nullable', 'exists:clients,id'],
             'service_id' => ['nullable', 'exists:services,id'],
             'summary' => ['nullable', 'string'],
-            'cover' => ['nullable', 'image'],
+            // Cover pode ser imagem ou vídeo
+            'cover' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm,ogg,mov'],
             'thumb' => ['nullable', 'image'], // ✅ novo campo
             'skill_cover' => ['nullable', 'image'],
             'video' => ['nullable', 'string', 'max:255'],
@@ -115,7 +116,8 @@ class ProjectController extends Controller
             'client_id' => ['nullable', 'exists:clients,id'],
             'service_id' => ['nullable', 'exists:services,id'],
             'summary' => ['nullable', 'string'],
-            'cover' => ['nullable', 'image'],
+            // Cover pode ser imagem ou vídeo
+            'cover' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm,ogg,mov'],
             'thumb' => ['nullable', 'image'], // ✅ novo campo
             'skill_cover' => ['nullable', 'image'],
             'video' => ['nullable', 'string', 'max:255'],
