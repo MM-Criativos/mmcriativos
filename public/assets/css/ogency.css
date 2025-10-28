@@ -5942,7 +5942,6 @@ h6 {
 .project-two__item__content {
   position: absolute;
   bottom: 30px;
-  left: 30px;
   transform: translateY(66%);
   transition: opacity 500ms ease, visibility 500ms ease, transform 500ms ease;
   transition-delay: 0s, 0s, 0s;

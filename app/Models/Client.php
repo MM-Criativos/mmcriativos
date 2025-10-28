@@ -110,7 +110,7 @@ class Client extends Model
     public function getLogoUrlAttribute()
     {
         return $this->logo
-            ? asset($this->logo)
+            ? asset('storage/' . $this->logo)
             : asset('images/defaults/client-placeholder.png');
     }
 }
