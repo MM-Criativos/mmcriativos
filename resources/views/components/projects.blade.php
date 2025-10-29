@@ -1,5 +1,26 @@
 <style>
-    /* ======== CARD BASE ======== */
+    /* =========================================
+🔶 BASE DA SEÇÃO - CAMPO HOLOGRÁFICO GLOBAL
+========================================= */
+    .project-two {
+        position: relative;
+        overflow: hidden;
+    }
+
+    #holo-field {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        filter: blur(1.2px);
+    }
+
+    /* =========================================
+🔶 BASE DO CARD HOLOGRÁFICO - MMCriativos
+========================================= */
     .project-portal {
         position: relative;
         border-radius: 16px;
@@ -10,106 +31,125 @@
         perspective: 1000px;
         height: 350px;
         display: flex;
-        flex-direction: column;
         justify-content: center;
         align-items: center;
-        border: none;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        z-index: 2;
     }
 
-    .project-portal .project-two__item__holo {
-        position: absolute;
-        inset: 0;
+    .project-two__item__holo {
+        position: relative;
+        width: 100%;
+        height: 100%;
         border-radius: 16px;
-        overflow: hidden;
         transform-style: preserve-3d;
         will-change: transform;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform: translateY(-15px);
     }
 
-    /* ======== LOGO ======== */
+    /* =========================================
+💫 CAMADA — LOGO HOLOGRÁFICO (Three.js)
+========================================= */
+    .portal-interface {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 400px;
+        height: 400px;
+        transform: translate(-50%, -50%);
+        opacity: 1;
+        z-index: 3;
+        pointer-events: none;
+        transition: opacity 0.4s ease, filter 0.4s ease;
+        overflow: visible;
+    }
+
+    .portal-interface img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: none !important;
+    }
+
+    .portal-interface canvas.logo-points {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) !important;
+        width: 400px !important;
+        height: 400px !important;
+        z-index: 4;
+        pointer-events: none;
+    }
+
+    /* =========================================
+💬 LOGO REAL
+========================================= */
     .portal-logo {
         position: absolute;
-        top: 45%;
-        left: 50%;
-        z-index: 4;
-        /* acima de partÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­culas/feixe para respeitar PNG */
-        animation: floatLogo 4s ease-in-out infinite;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        z-index: 5;
+        transition: opacity 0.5s ease;
         pointer-events: none;
-        isolation: isolate;
-        /* garante blend isolado */
-    }
-
-    .portal-logo::before {
-        /* halo atrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡s do PNG para realÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ar sem tingir o logo */
-        content: "";
-        position: absolute;
-        inset: -30px;
-        background: radial-gradient(ellipse at center, rgba(255, 136, 0, .28), rgba(255, 136, 0, 0) 60%);
-        filter: blur(12px);
-        z-index: -1;
-        border-radius: 50%;
     }
 
     .portal-logo img {
-        width: 120px;
-        height: auto;
+        width: 230px;
+        height: 230px;
         object-fit: contain;
-        opacity: 1;
-        filter: none;
-        /* nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o coloriza PNG */
-        transition: opacity 0.6s ease, transform 0.6s ease;
-        will-change: transform, opacity;
-        image-rendering: -webkit-optimize-contrast;
-        image-rendering: optimizeQuality;
-        background: transparent;
     }
 
-    @keyframes floatLogo {
-
-        0%,
-        100% {
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        50% {
-            transform: translate(-50%, -54%) scale(1.05);
-        }
-    }
-
-    /* ======== SWARM PARTICLES ======== */
-    .holo-swarm {
-        position: absolute;
-        inset: 10% 8% 18% 8%;
-        z-index: 2;
-        pointer-events: none;
-        overflow: hidden;
-        border-radius: 12px;
-        mix-blend-mode: screen;
-    }
-
-    .holo-swarm .px {
-        position: absolute;
-        width: 3px;
-        height: 3px;
-        border-radius: 1px;
-        background: rgba(255, 136, 0, 0.95);
-        box-shadow: 0 0 10px rgba(255, 136, 0, 1), 0 0 18px rgba(255, 136, 0, .8);
+    /* =========================================
+⚡ HOVER: transição entre holograma e logo
+========================================= */
+    .project-two__item__holo:hover .portal-interface {
         opacity: 0;
-        will-change: transform, opacity, filter;
+        visibility: hidden;
     }
 
-    /* (portal-interface removed) */
+    .project-two__item__holo:hover .portal-logo {
+        opacity: 1;
+        visibility: visible;
+    }
 
-    /* ======== TEXTO / LEGENDA ======== */
+    .project-two__item__holo:hover .portal-logo img {
+        animation: holographicIn 0.6s ease forwards;
+    }
+
+    @keyframes holographicIn {
+        0% {
+            opacity: 0;
+            filter: blur(8px) brightness(1.4);
+            transform: scale(0.9);
+        }
+
+        100% {
+            opacity: 1;
+            filter: blur(0) brightness(1);
+            transform: scale(1);
+        }
+    }
+
+    /* =========================================
+🧠 LEGENDA / TEXTO INFERIOR
+========================================= */
     .project-two__item__content {
         position: absolute;
-        bottom: 15px;
+        bottom: 3px;
         text-align: center;
-        z-index: 4;
+        z-index: 6;
         width: 100%;
         color: #fff;
         text-shadow: 0 0 10px rgba(255, 136, 0, 0.3);
-        background: none;
-        padding: 0;
     }
 
     .project-two__item__content__cats {
@@ -128,69 +168,25 @@
         line-height: 1.3;
     }
 
-    /* ======== LOGO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ PARTICLES (HOLOGRAM) ======== */
-    .portal-logo .logo-particles {
+    #holo-field {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 120px;
-        /* sync with logo width */
-        height: auto;
-        pointer-events: none;
-        transform-style: preserve-3d;
-        mix-blend-mode: screen;
-        will-change: transform;
-    }
-
-    .portal-logo .logo-particles .dot {
-        position: absolute;
-        width: 3px;
-        height: 3px;
-        border-radius: 1.5px;
-        background: rgba(255, 136, 0, 0.95);
-        box-shadow: 0 0 10px rgba(255, 136, 0, 0.9), 0 0 18px rgba(255, 136, 0, 0.7);
-        opacity: 0;
-        will-change: transform, opacity, filter;
-    }
-
-    /* WebGL portal rings canvas; hide original CSS portals */
-</style>
-<style>
-    /* Hologram refinements: remove original halo, brighter dense particles, hide on hover */
-    .portal-logo::before {
-        display: none !important;
-    }
-
-    .portal-logo .logo-particles {
-        will-change: transform, opacity;
-        transition: opacity .4s ease, transform .4s ease;
-    }
-
-    .portal-logo .logo-particles .dot {
-        background: rgba(255, 136, 0, 0.98);
-        box-shadow: 0 0 14px rgba(255, 136, 0, 1), 0 0 28px rgba(255, 136, 0, 0.9);
-    }
-
-    .portal-logo canvas.logo-points {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        inset: 0;
+        z-index: 0;
         pointer-events: none;
         mix-blend-mode: screen;
-        transition: opacity .4s ease, transform .4s ease;
     }
-
-    /* hover behavior is controlled via GSAP; no CSS hide */
 </style>
 
-<!-- Project Start -->
 <section class="project-two">
+    <!-- 🌌 Campo holográfico global -->
+    <canvas id="holo-field"></canvas>
+
     <div class="container">
         <div class="section-title text-center">
             <h5 class="section-title__tagline section-title__tagline--has-dots">nossos projetos</h5>
             <h2 class="section-title__title">
-                Conheça alguns dos trabalhos<br> que deram vida a grandes ideias
+                Conheça alguns dos trabalhos<br>
+                que deram vida a grandes ideias
             </h2>
         </div>
 
@@ -204,10 +200,10 @@
                 "nav": false,
                 "dots": false,
                 "responsive": {
-                    "0": { "items": 1 },
-                    "768": { "items": 2 },
-                    "992": { "items": 3 },
-                    "1200": { "items": 3 }
+                    "0": {"items": 1},
+                    "768": {"items": 2},
+                    "992": {"items": 3},
+                    "1200": {"items": 3}
                 }
             }'>
 
@@ -221,13 +217,14 @@
             @foreach ($projects as $project)
                 <div class="project-two__item project-portal cursor-pointer" data-slug="{{ $project->slug }}"
                     data-name="{{ addslashes($project->name) }}">
-
                     <div class="project-two__item__holo">
+                        <!-- 💫 Camada 2: Holograma principal -->
+                        <div class="portal-interface">
+                            <img src="{{ asset($project->thumb ?: $project->cover ?: 'assets/images/project/project-2-1.jpg') }}"
+                                alt="{{ $project->name }}" class="project-thumb" loading="lazy" decoding="async">
+                        </div>
 
-                        <!-- Partículas -->
-                        <div class="holo-swarm"></div>
-
-                        <!-- Logo do cliente -->
+                        <!-- 💬 Logo real -->
                         @php
                             $logo = $project->client
                                 ? $project->client->logo_url
@@ -235,11 +232,11 @@
                         @endphp
                         <div class="portal-logo">
                             <img src="{{ $logo }}" alt="{{ optional($project->client)->name ?? 'Cliente' }}"
-                                loading="lazy" decoding="async">
+                                class="client-logo" loading="lazy" decoding="async">
                         </div>
-
                     </div>
 
+                    <!-- 🧠 Legenda -->
                     <div class="project-two__item__content">
                         <p class="project-two__item__content__cats">
                             @if ($project->service)
@@ -255,18 +252,18 @@
                     </div>
                 </div>
             @endforeach
-
         </div>
     </div>
+    <canvas id="holo-field"></canvas>
 </section>
-<!-- Project End -->
 
 
 <script>
     (function() {
+        // utilitário para carregar libs externas
         function loadScript(src) {
-            return new Promise(function(res, rej) {
-                var s = document.createElement('script');
+            return new Promise((res, rej) => {
+                const s = document.createElement('script');
                 s.src = src;
                 s.onload = res;
                 s.onerror = rej;
@@ -274,544 +271,355 @@
             });
         }
 
-        function initHoloCards() {
-            try {
-                if (!window.gsap) return;
-            } catch (e) {
-                return;
+        // campo global de partículas/luz holográfica
+        function createGlobalHoloField() {
+            const canvas = document.getElementById('holo-field');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const particles = [];
+            const numParticles = 300;
+            let w, h;
+            let mouseX = 0,
+                mouseY = 0;
+
+            function resize() {
+                const rect = canvas.getBoundingClientRect();
+                w = rect.width;
+                h = rect.height;
+                canvas.width = w;
+                canvas.height = h;
+                particles.length = 0;
+
+                for (let i = 0; i < numParticles; i++) {
+                    particles.push({
+                        x: Math.random() * w,
+                        y: Math.random() * h,
+                        z: Math.random() * 400 - 200, // profundidade Z
+                        r: Math.random() * 2 + 0.5,
+                        a: Math.random() * Math.PI * 2,
+                        v: 0.25 + Math.random() * 0.35,
+                        alpha: Math.random() * 0.4 + 0.3
+                    });
+                }
             }
 
-            // Ensure three.js is available
+            function animate() {
+                ctx.clearRect(0, 0, w, h);
+
+                // 🔶 gradiente base tipo “faixa energética”
+                const grad = ctx.createRadialGradient(w / 2, h, h / 4, w / 2, h, h);
+                grad.addColorStop(0, 'rgba(255,136,0,0.25)');
+                grad.addColorStop(0.5, 'rgba(255,136,0,0.1)');
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // ✨ partículas com eixo Z e parallax
+                for (const p of particles) {
+                    p.x += Math.cos(p.a) * p.v;
+                    p.y += Math.sin(p.a) * p.v * 0.6;
+                    p.z += Math.sin(p.a * 0.5) * 0.8;
+                    p.a += (Math.random() - 0.5) * 0.05;
+
+                    // reaparece se sair
+                    if (p.x < -100) p.x = w + 100;
+                    if (p.x > w + 100) p.x = -100;
+                    if (p.y < -100) p.y = h + 100;
+                    if (p.y > h + 100) p.y = -100;
+
+                    // efeito de profundidade (quanto mais distante, menor)
+                    const scale = 1 - p.z / 400;
+                    const px = (p.x - w / 2) * scale + w / 2 + (mouseX - w / 2) * 0.05;
+                    const py = (p.y - h / 2) * scale + h / 2 + (mouseY - h / 2) * 0.03;
+
+                    ctx.beginPath();
+                    ctx.fillStyle = `rgba(255,136,0,${p.alpha * scale})`;
+                    ctx.arc(px, py, p.r * scale * 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener('mousemove', e => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            window.addEventListener('resize', resize);
+            resize();
+            animate();
+        }
+
+
+        // inicializador dos hologramas por card
+        function initHoloCards() {
+            if (!window.gsap) return;
+
             function ensureThree() {
-                return new Promise(function(resolve, reject) {
+                return new Promise((resolve, reject) => {
                     if (window.THREE) return resolve();
                     loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js')
-                        .then(resolve)
+                        .then(() => window.THREE ? resolve() : reject())
                         .catch(reject);
                 });
             }
 
-            // Build hologram with WebGL points (three.js)
-            function buildLogoHologramThree(card, wrap, img) {
-                function ready() {
-                    try {
-                        var wTarget = 210; // larger logo
-                        var cw = Math.min(wTarget, img.naturalWidth || wTarget);
-                        var ratio = (img.naturalHeight || wTarget) / (img.naturalWidth || wTarget);
-                        var ch = Math.max(1, Math.round(cw * ratio));
-
-                        // Sample alpha from the logo
-                        var off = document.createElement('canvas');
-                        off.width = cw;
-                        off.height = ch;
-                        var ctx = off.getContext('2d');
-                        ctx.clearRect(0, 0, cw, ch);
-                        ctx.drawImage(img, 0, 0, cw, ch);
-                        var data = ctx.getImageData(0, 0, cw, ch).data;
-
-                        // Build positions from non-transparent pixels
-                        // dynamic step to cap particle count for FPS (~14k per logo)
-                        var target = 14000;
-                        var step = Math.max(1, Math.floor(Math.sqrt((cw * ch) / target)));
-                        if (step < 1) step = 1;
-                        var pts = [];
-                        var phases = [];
-                        for (var y = 0; y < ch; y += step) {
-                            for (var x = 0; x < cw; x += step) {
-                                var a = data[(y * cw + x) * 4 + 3];
-                                if (a > 60) {
-                                    // center geometry at (0,0)
-                                    pts.push(x - cw / 2);
-                                    pts.push((ch / 2) - y);
-                                    pts.push((Math.random() - 0.5) * 18); // slight depth
-                                    phases.push(Math.random() * Math.PI * 2);
-                                }
-                            }
-                        }
-                        var count = pts.length / 3;
-                        if (count < 5) {
-                            // Not enough pixels to form a hologram; keep PNG only
-                            return;
-                        }
-
-                        // Create renderer/camera/scene
-                        var scene = new THREE.Scene();
-                        var camera = new THREE.PerspectiveCamera(45, cw / ch, 0.1, 1000);
-                        camera.position.z = Math.max(cw, ch) * 1.6;
-
-                        var renderer = new THREE.WebGLRenderer({
-                            alpha: true,
-                            antialias: true
-                        });
-                        renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
-                        renderer.setSize(cw, ch);
-                        renderer.domElement.className = 'logo-points';
-                        wrap.appendChild(renderer.domElement);
-
-                        // Round disc texture for points
-                        function discTexture() {
-                            var c = document.createElement('canvas');
-                            c.width = c.height = 32;
-                            var g = c.getContext('2d');
-                            var grd = g.createRadialGradient(16, 16, 0, 16, 16, 16);
-                            grd.addColorStop(0, 'rgba(255,255,255,1)');
-                            grd.addColorStop(0.5, 'rgba(255,255,255,0.9)');
-                            grd.addColorStop(1, 'rgba(255,255,255,0)');
-                            g.fillStyle = grd;
-                            g.fillRect(0, 0, 32, 32);
-                            var tex = new THREE.CanvasTexture(c);
-                            tex.minFilter = THREE.LinearFilter;
-                            return tex;
-                        }
-
-                        // Use card accent color if present
-                        var accent = (getComputedStyle(card).getPropertyValue('--accent') || '#ff8800').trim() ||
-                            '#ff8800';
-                        var material = new THREE.PointsMaterial({
-                            size: 3.4,
-                            sizeAttenuation: true,
-                            map: discTexture(),
-                            transparent: true,
-                            depthWrite: false,
-                            color: new THREE.Color(accent),
-                            blending: THREE.AdditiveBlending,
-                            opacity: 1
-                        });
-
-                        var geometry = new THREE.BufferGeometry();
-                        var positionAttr = new THREE.Float32BufferAttribute(new Float32Array(pts), 3);
-                        geometry.setAttribute('position', positionAttr);
-                        var points = new THREE.Points(geometry, material);
-                        scene.add(points);
-
-                        // High-density point cloud for hover (densify effect)
-                        var targetHi = 22000;
-                        var stepHi = Math.max(1, Math.floor(Math.sqrt((cw * ch) / targetHi)));
-                        if (stepHi < 1) stepHi = 1;
-                        var ptsHi = [],
-                            phasesHi = [];
-                        for (var y2 = 0; y2 < ch; y2 += stepHi) {
-                            for (var x2 = 0; x2 < cw; x2 += stepHi) {
-                                var a2 = data[(y2 * cw + x2) * 4 + 3];
-                                if (a2 > 60) {
-                                    ptsHi.push(x2 - cw / 2);
-                                    ptsHi.push((ch / 2) - y2);
-                                    ptsHi.push((Math.random() - 0.5) * 18);
-                                    phasesHi.push(Math.random() * Math.PI * 2);
-                                }
-                            }
-                        }
-                        var countHi = ptsHi.length / 3;
-                        var geometryHi = new THREE.BufferGeometry();
-                        var posHi = new THREE.Float32BufferAttribute(new Float32Array(ptsHi), 3);
-                        geometryHi.setAttribute('position', posHi);
-                        var materialHi = new THREE.PointsMaterial({
-                            size: 3.2,
-                            sizeAttenuation: true,
-                            map: discTexture(),
-                            transparent: true,
-                            depthWrite: false,
-                            color: new THREE.Color(accent),
-                            blending: THREE.AdditiveBlending,
-                            opacity: 0
-                        });
-                        var pointsHi = new THREE.Points(geometryHi, materialHi);
-                        scene.add(pointsHi);
-
-                        // Default: hologram visible, PNG logo hidden
-                        try {
-                            img.style.opacity = '0';
-                        } catch (e) {}
-
-                        // Gentle ambient motion preserving shape
-                        var t0 = performance.now();
-                        var ampX = 0.6,
-                            ampY = 0.8,
-                            ampZ = 1.1; // tighter jitter to preserve shape
-                        function update() {
-                            var t = (performance.now() - t0) / 1000;
-                            var pos = geometry.attributes.position.array;
-                            for (var i = 0; i < count; i++) {
-                                var baseX = pts[i * 3];
-                                var baseY = pts[i * 3 + 1];
-                                var baseZ = pts[i * 3 + 2];
-                                var ph = phases[i];
-                                pos[i * 3] = baseX + Math.sin(t * 1.4 + ph) * ampX;
-                                pos[i * 3 + 1] = baseY + Math.cos(t * 1.3 + ph) * ampY;
-                                pos[i * 3 + 2] = baseZ + Math.sin(t * 1.7 + ph) * ampZ;
-                            }
-                            geometry.attributes.position.needsUpdate = true;
-                            if (countHi) {
-                                var pos2 = geometryHi.attributes.position.array;
-                                for (var j = 0; j < countHi; j++) {
-                                    var bx = ptsHi[j * 3];
-                                    var by = ptsHi[j * 3 + 1];
-                                    var bz = ptsHi[j * 3 + 2];
-                                    var ph2 = phasesHi[j];
-                                    pos2[j * 3] = bx + Math.sin(t * 1.5 + ph2) * (ampX * 0.9);
-                                    pos2[j * 3 + 1] = by + Math.cos(t * 1.4 + ph2) * (ampY * 0.9);
-                                    pos2[j * 3 + 2] = bz + Math.sin(t * 1.8 + ph2) * (ampZ * 0.9);
-                                }
-                                geometryHi.attributes.position.needsUpdate = true;
-                            }
-                            renderer.render(scene, camera);
-                        }
-                        gsap.ticker.add(update);
-
-                        // store refs for transition + hover
-                        card.__holoData = {
-                            material: material,
-                            points: points,
-                            materialHi: materialHi,
-                            pointsHi: pointsHi,
-                            object: points,
-                            img: img,
-                            hasPoints: true
-                        };
-
-                        // Hover timeline: particles condense and PNG logo reappears
-                        if (!card.__hoverTl) {
-                            var hoverTl = gsap.timeline({
-                                paused: true,
-                                defaults: {
-                                    ease: 'power2.inOut'
-                                }
-                            });
-                            // densify + glow
-                            hoverTl.to(material, {
-                                duration: 0.2,
-                                size: 3.6,
-                                opacity: 1
-                            }, 0);
-                            hoverTl.to(materialHi, {
-                                duration: 0.25,
-                                opacity: 1,
-                                size: 3.9
-                            }, 0);
-                            // reveal PNG and fade particles after a brief focus
-                            hoverTl.to(img, {
-                                duration: 0.35,
-                                opacity: 1
-                            }, 0.2);
-                            hoverTl.to([material, materialHi], {
-                                duration: 0.35,
-                                opacity: 0.0
-                            }, 0.2);
-                            card.__hoverTl = hoverTl;
-
-                            function onHoverEnter() {
-                                if (card.__transitionRunning) return;
-                                hoverTl.play();
-                            }
-
-                            function onHoverLeave() {
-                                if (card.__transitionRunning) return;
-                                hoverTl.reverse();
-                            }
-                            card.addEventListener('mouseenter', onHoverEnter);
-                            card.addEventListener('mouseleave', onHoverLeave);
-                        }
-                    } catch (err) {
-                        /* ignore */
-                    }
-                }
-
-                if (img && (img.complete && img.naturalWidth)) ready();
-                else if (img) {
-                    if (img.decode) {
-                        img.decode().then(ready).catch(function() {
-                            img.addEventListener('load', ready, {
-                                once: true
-                            });
-                        });
-                    } else {
-                        img.addEventListener('load', ready, {
-                            once: true
-                        });
-                    }
-                }
+            function makeDiscTexture() {
+                const c = document.createElement('canvas');
+                c.width = c.height = 32;
+                const g = c.getContext('2d');
+                const grd = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+                grd.addColorStop(0, 'rgba(255,255,255,1)');
+                grd.addColorStop(0.5, 'rgba(255,255,255,0.8)');
+                grd.addColorStop(1, 'rgba(255,255,255,0)');
+                g.fillStyle = grd;
+                g.fillRect(0, 0, 32, 32);
+                return c;
             }
 
-            // Build particle cloud from a logo image (PNG with alpha)
-            function buildLogoHologram(card, wrap, img) {
-                function ready() {
-                    try {
-                        var wTarget = 120; // same as CSS width of logo
-                        var cw = Math.min(wTarget, img.naturalWidth || wTarget);
-                        var ratio = (img.naturalHeight || wTarget) / (img.naturalWidth || wTarget);
-                        var ch = Math.max(1, Math.round(cw * ratio));
+            // 💫 holograma individual
+            function buildLogoHologramThree(card, wrap, img) {
+                if (wrap.querySelector('canvas.logo-points')) return;
 
-                        var off = document.createElement('canvas');
-                        off.width = cw;
-                        off.height = ch;
-                        var ctx = off.getContext('2d');
-                        ctx.clearRect(0, 0, cw, ch);
-                        ctx.drawImage(img, 0, 0, cw, ch);
-                        var data = ctx.getImageData(0, 0, cw, ch).data;
+                const accent = (getComputedStyle(card).getPropertyValue('--accent') || '#ff8800').trim();
 
-                        var container = document.createElement('div');
-                        container.className = 'logo-particles';
-                        container.style.width = cw + 'px';
-                        container.style.height = ch + 'px';
-                        wrap.appendChild(container);
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+                camera.position.z = 370;
 
-                        var step = cw > 140 ? 4 : 3; // denser sampling
-                        for (var y = 0; y < ch; y += step) {
-                            for (var x = 0; x < cw; x += step) {
-                                var idx = (y * cw + x) * 4;
-                                var a = data[idx + 3]; // alpha channel
-                                if (a > 60) {
-                                    var dot = document.createElement('span');
-                                    dot.className = 'dot';
-                                    dot.style.left = x + 'px';
-                                    dot.style.top = y + 'px';
-                                    container.appendChild(dot);
+                const renderer = new THREE.WebGLRenderer({
+                    alpha: true,
+                    antialias: true
+                });
+                renderer.setClearColor(0x000000, 0);
+                renderer.setSize(230, 230);
+                renderer.domElement.className = 'logo-points';
+                Object.assign(renderer.domElement.style, {
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '100%',
+                    height: '100%',
+                    zIndex: 5,
+                    mixBlendMode: 'screen',
+                    pointerEvents: 'none',
+                    transition: 'opacity 0.4s ease'
+                });
+                wrap.appendChild(renderer.domElement);
 
-                                    var z0 = (Math.random() - 0.5) * 30;
-                                    var dly = Math.random() * 0.4;
-                                    var amp = 1.4 + Math.random() * 2.2;
-                                    gsap.set(dot, {
-                                        x: 0,
-                                        y: 0,
-                                        z: z0,
-                                        opacity: 0
-                                    });
-                                    gsap.to(dot, {
-                                        duration: 0.8,
-                                        opacity: 0.85,
-                                        delay: dly,
-                                        ease: 'power2.out'
-                                    });
-                                    gsap.to(dot, {
-                                        duration: 2 + Math.random() * 2.5,
-                                        x: '+=' + (Math.random() * amp - amp / 2),
-                                        y: '+=' + (Math.random() * amp - amp / 2),
-                                        z: z0 + (Math.random() * 18 - 9),
-                                        repeat: -1,
-                                        yoyo: true,
-                                        ease: 'sine.inOut',
-                                        delay: dly
-                                    });
-                                    gsap.to(dot, {
-                                        duration: 1.2 + Math.random(),
-                                        opacity: 0.7 + Math.random() * 0.3,
-                                        filter: 'blur(' + (Math.random() * 1.2) + 'px)',
-                                        repeat: -1,
-                                        yoyo: true,
-                                        ease: 'sine.inOut',
-                                        delay: dly * 0.5
-                                    });
-                                }
-                            }
+                if (img) img.style.display = 'none';
+
+                // 🧠 Pré-processamento do logo em partículas
+                const off = document.createElement('canvas');
+                const targetSize = 300;
+                const aspect = img.naturalWidth / img.naturalHeight;
+                if (aspect >= 1) {
+                    off.width = targetSize;
+                    off.height = targetSize / aspect;
+                } else {
+                    off.width = targetSize * aspect;
+                    off.height = targetSize;
+                }
+
+                const ctx = off.getContext('2d', {
+                    willReadFrequently: true
+                });
+                ctx.drawImage(img, 0, 0, off.width, off.height);
+                const data = ctx.getImageData(0, 0, off.width, off.height).data;
+
+                const pts = [],
+                    phases = [];
+                const step = 2;
+                for (let y = 0; y < off.height; y += step) {
+                    for (let x = 0; x < off.width; x += step) {
+                        const a = data[(y * off.width + x) * 4 + 3];
+                        if (a > 40) {
+                            pts.push(x - off.width / 2, off.height / 2 - y, (Math.random() - 0.5) * 6);
+                            phases.push(Math.random() * Math.PI * 2);
                         }
-
-                        // Hide original logo completely (no shadow)
-                        gsap.to(img, {
-                            duration: 0.4,
-                            opacity: 0,
-                            ease: 'power2.out'
-                        });
-
-                        // Hover intensifies the hologram
-                        card.addEventListener('mouseenter', function() {
-                            gsap.to(container, {
-                                duration: 0.4,
-                                scale: 1.06,
-                                filter: 'brightness(1.2)'
-                            });
-                        });
-                        card.addEventListener('mouseleave', function() {
-                            gsap.to(container, {
-                                duration: 0.6,
-                                scale: 1.0,
-                                filter: 'brightness(1)'
-                            });
-                        });
-                    } catch (err) {
-                        /* ignore */
                     }
                 }
 
-                if (img && (img.complete && img.naturalWidth)) ready();
-                else if (img) img.addEventListener('load', ready, {
-                    once: true
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(pts), 3));
+
+                const texture = new THREE.CanvasTexture(makeDiscTexture());
+                const material = new THREE.PointsMaterial({
+                    size: 3.4,
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    color: new THREE.Color(accent),
+                    opacity: 0.85
+                });
+
+                const points = new THREE.Points(geometry, material);
+                points.scale.set(0.75, 0.75, 0.75);
+                scene.add(points);
+
+                const pos = geometry.attributes.position.array;
+                const baseZ = [...pos];
+                const t0 = performance.now();
+
+                // ✴️ Controle de glitch
+                let glitching = false;
+                let glitchProgress = 0;
+
+                function triggerGlitchOnce() {
+                    if (glitching) return;
+                    glitching = true;
+                    glitchProgress = 0;
+                    setTimeout(() => (glitching = false), 320 + Math.random() * 120);
+                }
+
+                // registra no barramento global
+                (window.__holoBus ||= {
+                    instances: [],
+                    started: false
+                }).instances.push({
+                    trigger: triggerGlitchOnce,
+                    el: renderer.domElement
+                });
+
+                function animate() {
+                    const t = (performance.now() - t0) / 1000;
+
+                    if (glitching) {
+                        glitchProgress = Math.min(glitchProgress + 0.08, 1);
+                    } else if (glitchProgress > 0) {
+                        glitchProgress = Math.max(glitchProgress - 0.05, 0);
+                    }
+
+                    const spread = glitching ?
+                        Math.sin(glitchProgress * Math.PI) * 35 // expansão momentânea
+                        :
+                        0;
+
+                    for (let i = 0; i < pts.length / 3; i++) {
+                        const iz = i * 3 + 2;
+                        const base = baseZ[iz];
+                        const pulse = Math.sin(t * 3 + phases[i]) * 2;
+                        const zOffset = base + pulse + (Math.random() - 0.5) * (glitching ? 2.5 : 0.2);
+
+                        // partículas expandem e se recolhem no glitch
+                        const xBase = pts[i * 3];
+                        const yBase = pts[i * 3 + 1];
+                        const angle = phases[i];
+                        const radius = spread * 0.2;
+
+                        pos[i * 3] = xBase + Math.cos(angle) * radius;
+                        pos[i * 3 + 1] = yBase + Math.sin(angle) * radius;
+                        pos[iz] = zOffset;
+                    }
+
+                    geometry.attributes.position.needsUpdate = true;
+
+                    // leve rotação constante
+                    points.rotation.y = Math.sin(t * 0.5) * 0.2;
+                    points.rotation.x = Math.cos(t * 0.3) * 0.1;
+
+                    // brilho intenso durante glitch, depois volta
+                    const pulse = glitching ? 1.35 : 1;
+                    material.opacity = (0.7 + Math.sin(t * 2) * 0.25) * pulse;
+
+                    renderer.render(scene, camera);
+                    requestAnimationFrame(animate);
+                }
+                animate();
+
+                // hover padrão
+                const parent = wrap.parentElement;
+                parent.addEventListener('mouseenter', () => {
+                    gsap.to(renderer.domElement, {
+                        opacity: 0,
+                        duration: 0.4,
+                        ease: 'power2.out'
+                    });
+                });
+                parent.addEventListener('mouseleave', () => {
+                    gsap.to(renderer.domElement, {
+                        opacity: 1,
+                        duration: 0.6,
+                        ease: 'power2.out'
+                    });
                 });
             }
 
-            function initLogoForCard(card) {
-                if (card.__holoLogoBuilt) return; // avoid duplicates
-                var logoWrap = card.querySelector('.portal-logo');
-                var logoImg = logoWrap ? logoWrap.querySelector('img') : null;
-                if (logoWrap && logoImg) {
-                    // ensure load even if lazy
-                    try {
-                        if ('loading' in logoImg) logoImg.loading = 'eager';
-                    } catch (e) {}
-                    ensureThree().then(function() {
-                        buildLogoHologramThree(card, logoWrap, logoImg);
-                        card.__holoLogoBuilt = true;
-                        if (!card.__transitionBound) {
-                            card.addEventListener('click', function() {
-                                var slug = card.getAttribute('data-slug');
-                                var name = card.getAttribute('data-name');
-                                if (window.openProjectModal) {
-                                    try {
-                                        openProjectModal(slug, name);
-                                    } catch (e) {}
-                                }
-                            });
-                            card.__transitionBound = true;
-                        }
-                    }).catch(function() {
-                        buildLogoHologram(card, logoWrap, logoImg);
-                        card.__holoLogoBuilt = true;
-                    });
-                }
+            // inicia o agendador global de glitch (um a cada 3s)
+            const bus = (window.__holoBus ||= {
+                instances: [],
+                started: false
+            });
+            if (!bus.started) {
+                bus.started = true;
+                setInterval(() => {
+                    const list = bus.instances.filter(i => i && i.el && document.body.contains(i.el));
+                    if (!list.length) return;
+                    const idx = Math.floor(Math.random() * list.length);
+                    list[idx].trigger(); // 💥 dispara glitch em UM holograma
+                }, 3000); // ⏱️ a cada 3 segundos
             }
 
 
-            var cards = document.querySelectorAll('.project-portal');
-            cards.forEach(function(card) {
-                var holo = card.querySelector('.project-two__item__holo');
-                var swarm = card.querySelector('.holo-swarm');
-                if (!holo || !swarm) return;
 
-                // create particles
-                var N = 36;
-                for (var i = 0; i < N; i++) {
-                    var p = document.createElement('span');
-                    p.className = 'px';
-                    swarm.appendChild(p);
-                    var x = Math.random() * 100,
-                        y = Math.random() * 100;
-                    p.style.left = x + '%';
-                    p.style.top = y + '%';
-                    var driftX = (Math.random() * 2 - 1) * 20; // px
-                    var driftY = (Math.random() * 2 - 1) * 30; // px
-                    var d = 2 + Math.random() * 3;
-                    gsap.set(p, {
-                        opacity: Math.random() * 0.6 + 0.2
-                    });
-                    gsap.to(p, {
-                        duration: 2.5 + Math.random() * 2.5,
-                        x: driftX,
-                        y: driftY,
-                        repeat: -1,
-                        yoyo: true,
-                        ease: 'sine.inOut'
-                    });
-                    gsap.to(p, {
-                        duration: 1.8 + Math.random() * 1.4,
-                        opacity: 0.15 + Math.random() * 0.7,
-                        repeat: -1,
-                        yoyo: true,
-                        ease: 'sine.inOut'
-                    });
-                    gsap.to(p, {
-                        duration: 4 + Math.random() * 3,
-                        filter: 'blur(' + (Math.random() * 1.2) + 'px)',
-                        repeat: -1,
-                        yoyo: true,
-                        ease: 'sine.inOut'
-                    });
-                }
+            function initThumbHologram(card) {
+                if (card.__holoThumbBuilt) return;
+                const wrap = card.querySelector('.portal-interface');
+                const img = wrap ? wrap.querySelector('img') : null;
+                if (!wrap || !img) return;
+                ensureThree().then(() => buildLogoHologramThree(card, wrap, img));
+                card.__holoThumbBuilt = true;
+            }
 
-                // Build holographic logo as particles
-                initLogoForCard(card);
+            // inicializa todos os cards
+            document.querySelectorAll('.project-portal').forEach(card => {
+                const holo = card.querySelector('.project-two__item__holo');
+                if (!holo) return;
 
-                // Build WebGL portal rings + central beam
-                // portals removed as requested
+                initThumbHologram(card);
 
-                // tilt on hover/move
-                var rect;
-                var maxTilt = 8;
-
-                function onMove(e) {
+                let rect;
+                const maxTilt = 8;
+                card.addEventListener('mousemove', e => {
                     rect = rect || holo.getBoundingClientRect();
-                    var cx = rect.left + rect.width / 2;
-                    var cy = rect.top + rect.height / 2;
-                    var x = (e.clientX - cx) / rect.width; // -0.5..0.5
-                    var y = (e.clientY - cy) / rect.height;
+                    const x = (e.clientX - rect.left - rect.width / 2) / rect.width;
+                    const y = (e.clientY - rect.top - rect.height / 2) / rect.height;
                     gsap.to(holo, {
                         duration: 0.3,
                         rotateY: x * maxTilt,
                         rotateX: -y * maxTilt,
-                        transformPerspective: 800,
-                        transformStyle: 'preserve-3d'
+                        transformPerspective: 800
                     });
-                }
-
-                function onLeave() {
+                });
+                card.addEventListener('mouseleave', () => {
                     gsap.to(holo, {
                         duration: 0.5,
                         rotateX: 0,
                         rotateY: 0
                     });
-                }
-                card.addEventListener('mousemove', onMove);
-                card.addEventListener('mouseleave', onLeave);
-
-                // touch pulse
-                card.addEventListener('touchstart', function() {
-                    card.classList.add('mobile-active');
-                    setTimeout(function() {
-                        card.classList.remove('mobile-active');
-                    }, 1200);
                 });
-
-                // beam intensity on hover (only if CSS beam exists)
-                var beam = card.querySelector('.portal-beam');
-                if (beam) {
-                    card.addEventListener('mouseenter', function() {
-                        gsap.to(beam, {
-                            duration: 0.4,
-                            opacity: 1
-                        });
-                    });
-                    card.addEventListener('mouseleave', function() {
-                        gsap.to(beam, {
-                            duration: 0.6,
-                            opacity: 0.8
-                        });
-                    });
-                }
             });
 
-            // Safety: re-scan after carousel initializes/clones
-            setTimeout(function() {
-                document.querySelectorAll('.project-portal').forEach(initLogoForCard);
-            }, 400);
-            setTimeout(function() {
-                document.querySelectorAll('.project-portal').forEach(initLogoForCard);
-            }, 1200);
+            // reativa quando owl duplica slides
+            document.querySelectorAll('.ogency-owl__carousel').forEach(carousel => {
+                carousel.addEventListener('translated.owl.carousel', () => {
+                    document.querySelectorAll('.project-portal').forEach(initThumbHologram);
+                });
+            });
 
-            // Observe carousel DOM for new slides (e.g., Owl clones)
-            var carousel = document.querySelector('.project-two__carousel');
-            if (carousel && window.MutationObserver) {
-                var mo = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(m) {
-                        if (!m.addedNodes) return;
-                        m.addedNodes.forEach(function(n) {
-                            if (n.nodeType !== 1) return;
-                            if (n.matches && n.matches('.project-portal')) initLogoForCard(
-                                n);
-                            if (n.querySelectorAll) n.querySelectorAll('.project-portal')
-                                .forEach(initLogoForCard);
-                        });
-                    });
-                });
-                mo.observe(carousel, {
-                    childList: true,
-                    subtree: true
-                });
-            }
+            setTimeout(() => document.querySelectorAll('.project-portal').forEach(initThumbHologram), 800);
+
+            // ativa o campo de luz global
+            createGlobalHoloField();
         }
 
-        if (window.gsap) {
-            initHoloCards();
-        } else {
-            loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js').then(initHoloCards).catch(
-                function() {});
-        }
+        if (window.gsap) initHoloCards();
+        else loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js')
+            .then(initHoloCards)
+            .catch(() => console.error("GSAP não pôde ser carregado."));
     })();
 </script>
