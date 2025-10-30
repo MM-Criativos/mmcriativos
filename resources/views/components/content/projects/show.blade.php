@@ -1,4 +1,21 @@
 <style>
+    .page-header__title {
+        text-align: center;
+        display: block;
+        width: 100vw;
+        /* pega a tela inteira */
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        line-height: 1.2;
+    }
+
+    .page-header__bg {
+        margin-top: -20px;
+    }
+
     .feature-one__item__img {
         width: 100%;
         height: 280px;
@@ -57,6 +74,120 @@
     #project-skills .service-one__item__text {
         flex: 1 1 auto;
     }
+
+    .project-info-card {
+        position: relative;
+        z-index: 5;
+        /* garante que fique acima do vídeo */
+        margin-top: -80px;
+        /* sobe o card sobre o header */
+        display: flex;
+        justify-content: center;
+        margin-bottom: 40px;
+    }
+
+    .project-info-card__inner {
+        background: #111;
+        border-radius: 8px;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+        width: 80%;
+        overflow: hidden;
+    }
+
+    .project-info-card__bar {
+        height: 5px;
+        background-color: #ff8800;
+    }
+
+    .project-info-card__content {
+        display: flex;
+        justify-content: space-between;
+        /* espaçamento dinâmico */
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: 25px 40px;
+        text-align: center;
+        gap: 15px 20px;
+        /* controle de respiro entre linhas (mobile/tablet) */
+    }
+
+    /* Cada bloco de informação */
+    .project-info-card__content>div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 160px;
+        /* garante equilíbrio */
+        flex: 1;
+        /* distribui dinamicamente o espaço */
+    }
+
+    /* Label acima do valor */
+    .project-info-card__content .label {
+        font-size: 0.8rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+    }
+
+    .project-info-card__content .value {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #fff;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    /* Link dentro do valor */
+    .value-link {
+        color: #fff;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .value-link:hover {
+        color: #ff8800;
+    }
+
+    /* Tablets */
+    @media (max-width: 992px) {
+        .project-info-card__content {
+            justify-content: space-around;
+            padding: 25px 20px;
+        }
+
+        .project-info-card__content>div {
+            min-width: 200px;
+            flex: 0 1 45%;
+            /* duas por linha */
+        }
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+        .project-info-card__content {
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 10px;
+        }
+
+        .project-info-card__content>div {
+            flex: 1 1 100%;
+            min-width: unset;
+        }
+    }
+
+    .project-details__content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        max-width: 900px;
+        margin: 0 auto;
+    }
 </style>
 
 <div class="stricky-header stricked-menu main-menu">
@@ -65,8 +196,16 @@
 <section class="page-header">
     @php
         $cover = $project->cover;
-        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4', '.webm', '.ogg', '.mov']);
+        $isVideo =
+            $cover &&
+            \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), [
+                '.mp4',
+                '.webm',
+                '.ogg',
+                '.mov',
+            ]);
     @endphp
+
     @if ($cover)
         @if ($isVideo)
             <video class="page-header__bg" autoplay muted loop playsinline preload="metadata"
@@ -77,11 +216,218 @@
             <div class="page-header__bg" style="background-image: url('{{ asset($cover) }}');"></div>
         @endif
     @endif
+
     <div class="page-header__overlay"></div>
-    <div class="container">
-        <h2 class="page-header__title">{{ $project->name }}</h2>
+
+    <div class="container" style="position: relative; z-index: 2;">
+        <h2 class="page-header__title">{{-- {{ $project->name }} --}}</h2>
     </div>
 </section>
+
+<!-- 🔶 Section de conteúdo -->
+<section class="project-details">
+    <div class="container">
+
+        <!-- 🟠 Card de informações flutuando -->
+        <div class="project-info-card">
+            <div class="project-info-card__inner">
+                <div class="project-info-card__bar"></div>
+                <div class="project-info-card__content row text-center justify-content-center align-items-center">
+                    <div class="col-md-3 col-6 mb-3 mb-md-0">
+                        <h6 class="label">Cliente</h6>
+                        <p class="value">{{ $project->client->name }}</p>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3 mb-md-0">
+                        <h6 class="label">Setor</h6>
+                        <p class="value">{{ $project->client->sector }}</p>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3 mb-md-0">
+                        <h6 class="label">Serviço</h6>
+                        <p class="value">{{ $project->service->name }}</p>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3 mb-md-0">
+                        <h6 class="label">Website</h6>
+                        <p class="value">
+                            @php
+                                $displayUrl = preg_replace('/^(https?:\/\/)?(www\.)?/i', '', $project->client->website);
+                            @endphp
+                            <a href="{{ $project->client->website }}" target="_blank" rel="noopener" class="value-link">
+                                {{ $displayUrl }}
+                            </a>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔸 Conteúdo principal -->
+        <div class="wow fadeInUp animated mt-5" data-wow-delay="200ms">
+            <div class="project-details__content">
+                <div class="section-title text-center" style="margin-top: 80px !important;">
+                    <h5 class="section-title__tagline section-title__tagline--has-dots">Da ideia ao código</h5>
+
+                    <h3 class="project-details__content__title">Resumo do projeto</h3>
+                    <p>{{ $project->summary }}</p>
+                </div><!-- /.project-section title -->
+
+            </div>
+        </div>
+
+        <!-- 🔸 Conteúdo principal -->
+        <div class="wow fadeInUp animated mt-5" data-wow-delay="200ms">
+            <div class="project-details__content">
+                <div class="section-title text-center">
+                    <h5 class="section-title__tagline section-title__tagline--has-dots">Da ideia ao código</h5>
+                    <h3 class="project-details__content__title">Desafios do projeto</h3>
+                </div>
+
+                <div class="service-one">
+                    <div class="container">
+
+                        <!-- Grid (desktop/tablet) -->
+                        <div class="row d-none d-md-flex">
+                            @forelse($project->challenges as $index => $challenge)
+                                <div class="col-lg-4 col-md-6 wow fadeInUp animated"
+                                    data-wow-delay="{{ ($index + 1) * 100 }}ms">
+                                    <div class="pixel-card" style="max-height: 240px; margin-bottom:30px;">
+
+                                        <!-- Frente -->
+                                        <div class="pixel-card__content front">
+                                            <div class="service-one__item" style="position:relative;">
+                                                <span class="holo-pixels" aria-hidden="true"></span>
+                                                <div class="service-one__item__icon">
+                                                    <span class="fa fa-exclamation-circle"
+                                                        style="color:#ff8800;"></span>
+                                                </div>
+                                                <h3 class="service-one__item__title">
+                                                    <a href="javascript:void(0)">{{ $challenge->title }}</a>
+                                                </h3>
+                                                <p class="service-one__item__text">&nbsp;</p>
+                                                <a class="service-one__item__btn js-details-open"
+                                                    href="javascript:void(0)">
+                                                    Explorar <span class="icon-down-right"></span>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <!-- Verso -->
+                                        <div class="pixel-card__content back">
+                                            <div class="service-one__item" style="position:relative;">
+                                                <span class="holo-pixels" aria-hidden="true"></span>
+                                                <div class="service-one__item__icon">
+                                                    <span class="fa fa-lightbulb" style="color:#ff8800;"></span>
+                                                </div>
+                                                <p class="service-one__item__text">
+                                                    {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 200) ?: 'Em breve mais detalhes.' }}
+                                                </p>
+                                                <a class="service-one__item__btn js-details-close"
+                                                    href="javascript:void(0)">
+                                                    Voltar <span class="icon-left-arrow"></span>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-12 text-center">
+                                    <p>Nenhum desafio cadastrado.</p>
+                                </div>
+                            @endforelse
+                        </div>
+
+
+                        <!-- Carousel (mobile) -->
+                        <div class="d-md-none">
+                            <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                                data-owl-options='{
+                            "items": 1,
+                            "margin": 10,
+                            "smartSpeed": 700,
+                            "loop": true,
+                            "autoplay": true,
+                            "nav": false,
+                            "dots": true
+                         }'>
+                                @forelse($project->challenges as $challenge)
+                                    <div class="item">
+                                        <div class="pixel-card">
+                                            <div class="pixel-card__content front">
+                                                <div class="service-one__item" style="position: relative;">
+                                                    <span class="holo-pixels" aria-hidden="true"></span>
+                                                    <div class="service-one__item__icon">
+                                                        <span class="fa fa-exclamation-circle"
+                                                            style="color:#ff8800;"></span>
+                                                    </div>
+                                                    <h3 class="service-one__item__title">
+                                                        <a href="javascript:void(0)">{{ $challenge->title }}</a>
+                                                    </h3>
+                                                    <p class="service-one__item__text">&nbsp;</p>
+                                                    <a class="service-one__item__btn js-details-open"
+                                                        href="javascript:void(0)">
+                                                        Explorar <span class="icon-down-right"></span>
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                            <div class="pixel-card__content back">
+                                                <div class="service-one__item" style="position: relative;">
+                                                    <span class="holo-pixels" aria-hidden="true"></span>
+                                                    <div class="service-one__item__icon">
+                                                        <span class="fa fa-lightbulb" style="color:#ff8800;"></span>
+                                                    </div>
+                                                    <p class="service-one__item__text">
+                                                        {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
+                                                    </p>
+                                                    <a class="service-one__item__btn js-details-close"
+                                                        href="javascript:void(0)">
+                                                        Voltar <span class="icon-left-arrow"></span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="item">
+                                        <p class="text-center">Nenhum desafio cadastrado.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <h4 class="project-details__content__subtitle mt-5">Desafios do Projeto</h4>
+        <ul class="project-details__content__list list-unstyled mt-3">
+            @foreach ($project->challenges ?? [] as $challenge)
+                <li class="mb-4">
+                    <span class="fa fa-exclamation-circle" style="color: #ff8800;"></span>
+                    <strong class="ms-2">{{ $challenge->title }}</strong><br>
+                    {{ $challenge->description }}
+                </li>
+            @endforeach
+        </ul>
+
+        <h4 class="project-details__content__subtitle mt-4">Soluções Propostas</h4>
+        <ul class="project-details__content__list list-unstyled mt-3">
+            @foreach ($project->solutions ?? [] as $solution)
+                <li class="mb-4">
+                    <span class="fa fa-lightbulb" style="color: #ff8800;"></span>
+                    <strong class="ms-2">{{ $solution->title }}</strong><br>
+                    {{ $solution->description }}
+                </li>
+            @endforeach
+        </ul>
+    </div>
+</section>
+
+
 <!-- Projects Details Start -->
 <section class="project-details">
     <div class="container">
@@ -124,30 +470,6 @@
                         @endforeach
                     </ul>
 
-                </div>
-            </div>
-
-            <!-- 🧩 Detalhes do Projeto (lado direito) -->
-            <div class="col-xl-4 col-lg-5 wow fadeInRight animated" data-wow-delay="400ms">
-                <div class="project-details__right">
-                    <ul class="project-details__info-list list-unstyled">
-                        <li><span>Cliente:</span> {{ $project->client->name }}</li>
-                        <li><span>Setor:</span> {{ $project->client->sector }}</li>
-                        <li><span>Serviço:</span> {{ $project->service->name }}</li>
-                        <li><span>Website:</span> {{ $project->client->website }}</li>
-                    </ul>
-
-                    @isset($clientSocials)
-                        @if ($clientSocials->isNotEmpty())
-                            <div class="project-details__socials">
-                                @foreach ($clientSocials as $sm)
-                                    <a href="{{ $sm['url'] }}" target="_blank" rel="noopener">
-                                        <i class="{{ $sm['icon'] ?? 'fa-brands fa-link' }}"></i>
-                                    </a>
-                                @endforeach
-                            </div>
-                        @endif
-                    @endisset
                 </div>
             </div>
         </div>
@@ -257,7 +579,8 @@
                                         data-category="{{ $proc?->slug ?? 'proc-' . $pp->id }}"
                                         data-etapa="{{ $proc?->name ?? '' }}"
                                         data-slides='@json($slides)'
-                                        data-descricao="{{ $pp->description }}" data-process-id="{{ $pp->id }}">
+                                        data-descricao="{{ $pp->description }}"
+                                        data-process-id="{{ $pp->id }}">
                                         Ver Processo <span class="icon-down-right"></span>
                                     </button>
                                 </div>
@@ -348,7 +671,8 @@
                                         <!-- botão -->
                                         <a href="javascript:void(0)"
                                             class="service-one__item__btn open-competencies-modal"
-                                            data-skill="{{ $sg['name'] }}" data-comps='@json($sg['competencies'])'>
+                                            data-skill="{{ $sg['name'] }}"
+                                            data-comps='@json($sg['competencies'])'>
                                             Ver Competências <span class="icon-down-right"></span>
                                         </a>
 

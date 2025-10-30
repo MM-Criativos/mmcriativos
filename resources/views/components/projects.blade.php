@@ -332,6 +332,8 @@
                 mouseY = 0;
             let running = true;
             let rafId = 0;
+            let isVisible = true;
+            let lastTick = 0;
 
             function resize() {
                 const rect = canvas.getBoundingClientRect();
@@ -359,6 +361,7 @@
                     rafId = 0;
                     return;
                 }
+                lastTick = performance.now();
                 ctx.clearRect(0, 0, w, h);
 
                 const grad = ctx.createRadialGradient(w / 2, h, h / 4, w / 2, h, h);
@@ -399,20 +402,49 @@
 
             window.addEventListener('resize', resize);
             window.addEventListener('visibilitychange', () => {
-                running = !document.hidden;
+                running = !document.hidden && isVisible;
                 if (running && !rafId) rafId = requestAnimationFrame(animate);
             });
             window.addEventListener('focus', () => {
-                running = true;
+                running = true && isVisible;
                 if (!rafId) rafId = requestAnimationFrame(animate);
             });
             window.addEventListener('blur', () => {
                 running = false;
             });
             window.addEventListener('pageshow', () => {
-                running = true;
+                running = true && isVisible;
                 if (!rafId) rafId = requestAnimationFrame(animate);
             });
+
+            // Observa mudanças de tamanho do container (ajusta quando a seção muda de layout)
+            const section = canvas.closest('.project-two') || canvas.parentElement || canvas;
+            if (window.ResizeObserver) {
+                const ro = new ResizeObserver(() => resize());
+                try { ro.observe(section); } catch (_) { ro.observe(canvas); }
+            }
+
+            // Pausa/retoma baseado na visibilidade em viewport para evitar sumiços
+            if (window.IntersectionObserver) {
+                const io = new IntersectionObserver(entries => {
+                    for (const entry of entries) {
+                        if (entry.target !== (section || canvas)) continue;
+                        isVisible = entry.isIntersecting;
+                        running = isVisible && !document.hidden;
+                        if (running && !rafId) rafId = requestAnimationFrame(animate);
+                    }
+                }, { threshold: 0.05 });
+                try { io.observe(section); } catch (_) { io.observe(canvas); }
+            }
+
+            // Keep-alive: revive o loop se algo matar o RAF sem eventos de retorno
+            const watchdog = setInterval(() => {
+                if (!document.body.contains(canvas)) { clearInterval(watchdog); return; }
+                if (!document.hidden && isVisible) {
+                    const stale = performance.now() - lastTick > 2000;
+                    if (!rafId || stale) rafId = requestAnimationFrame(animate);
+                }
+            }, 1500);
 
             resize();
             if (!rafId) rafId = requestAnimationFrame(animate);
