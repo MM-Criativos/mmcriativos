@@ -200,6 +200,13 @@
                 gsap.set(overlay, { backgroundColor: 'rgba(0,0,0,0)' });
                 gsap.set(diffs, { autoAlpha: 0, y: 40 });
 
+                // Evita que qualquer margem residual crie "gap" ao refrescar/recarregar
+                try {
+                    ScrollTrigger.addEventListener('refreshInit', function () {
+                        gsap.set(section, { clearProps: 'margin' });
+                    });
+                } catch (e) {}
+
                 var lockSticky = function(flag){
                     document.body.classList.toggle('hero-sticky-lock', !!flag);
                 };
@@ -210,7 +217,8 @@
                         start: 'top top',
                         end: '+=' + (diffs.length * 100) + '%',
                         pin: true,                 // pin the slider section
-                        pinSpacing: 'margin',      // keep layout flow without criar gap ao voltar
+                        // Use padding (padrão) para evitar colapso de margens que causa espaço em branco
+                        pinSpacing: true,
                         scrub: 1,
                         anticipatePin: 1,
                         invalidateOnRefresh: true,
