@@ -16,6 +16,14 @@
         margin-top: -20px;
     }
 
+    .section-title {
+        margin-top: 40px ! important;
+    }
+
+    .service-one {
+        padding: 30px 0 50px;
+    }
+
     .feature-one__item__img {
         width: 100%;
         height: 280px;
@@ -139,6 +147,10 @@
         text-align: center;
     }
 
+    .project_details {
+        padding: 20px 0px 20px !important;
+    }
+
     /* Link dentro do valor */
     .value-link {
         color: #fff;
@@ -177,6 +189,10 @@
             flex: 1 1 100%;
             min-width: unset;
         }
+    }
+
+    .project-details {
+        padding: 20px 0 20px !important;
     }
 
     .project-details__content {
@@ -274,156 +290,452 @@
             </div>
         </div>
 
-        <!-- 🔸 Conteúdo principal -->
-        <div class="wow fadeInUp animated mt-5" data-wow-delay="200ms">
-            <div class="project-details__content">
-                <div class="section-title text-center">
-                    <h5 class="section-title__tagline section-title__tagline--has-dots">Da ideia ao código</h5>
-                    <h3 class="project-details__content__title">Desafios do projeto</h3>
+        <!-- Challenge Start -->
+        <section class="service-one @@extraClassName">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="section-title text-center">
+                            <h5 class="section-title__tagline section-title__tagline--has-dots">Quais problemas
+                                precisamos resolver</h5>
+                            <h2 class="section-title__title">Os desafios do projeto</h2>
+                        </div><!-- section-title -->
+                    </div>
                 </div>
+                <style>
+                    /* Pixel swap card (sem flip 3D) para Challenges */
+                    .pixel-card {
+                        position: relative;
+                        min-height: 320px;
+                    }
 
-                <div class="service-one">
-                    <div class="container">
+                    .pixel-card__content {
+                        position: absolute;
+                        inset: 0;
+                        height: 100%;
+                        transition: opacity .18s linear, visibility .18s linear;
+                    }
 
-                        <!-- Grid (desktop/tablet) -->
-                        <div class="row d-none d-md-flex">
-                            @forelse($project->challenges as $index => $challenge)
-                                <div class="col-lg-4 col-md-6 wow fadeInUp animated"
-                                    data-wow-delay="{{ ($index + 1) * 100 }}ms">
-                                    <div class="pixel-card" style="max-height: 240px; margin-bottom:30px;">
+                    .pixel-card__content.front {
+                        opacity: 1;
+                        visibility: visible;
+                    }
 
-                                        <!-- Frente -->
-                                        <div class="pixel-card__content front">
-                                            <div class="service-one__item" style="position:relative;">
-                                                <span class="holo-pixels" aria-hidden="true"></span>
-                                                <div class="service-one__item__icon">
-                                                    <span class="fa fa-exclamation-circle"
-                                                        style="color:#ff8800;"></span>
-                                                </div>
-                                                <h3 class="service-one__item__title">
-                                                    <a href="javascript:void(0)">{{ $challenge->title }}</a>
-                                                </h3>
-                                                <p class="service-one__item__text">&nbsp;</p>
-                                                <a class="service-one__item__btn js-details-open"
-                                                    href="javascript:void(0)">
-                                                    Explorar <span class="icon-down-right"></span>
-                                                </a>
-                                            </div>
-                                        </div>
+                    .pixel-card__content.back {
+                        opacity: 0;
+                        visibility: hidden;
+                    }
 
-                                        <!-- Verso -->
-                                        <div class="pixel-card__content back">
-                                            <div class="service-one__item" style="position:relative;">
-                                                <span class="holo-pixels" aria-hidden="true"></span>
-                                                <div class="service-one__item__icon">
-                                                    <span class="fa fa-lightbulb" style="color:#ff8800;"></span>
-                                                </div>
-                                                <p class="service-one__item__text">
-                                                    {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 200) ?: 'Em breve mais detalhes.' }}
-                                                </p>
-                                                <a class="service-one__item__btn js-details-close"
-                                                    href="javascript:void(0)">
-                                                    Voltar <span class="icon-left-arrow"></span>
-                                                </a>
-                                            </div>
-                                        </div>
+                    .pixel-card.is-details .pixel-card__content.front {
+                        opacity: 0;
+                        visibility: hidden;
+                    }
 
+                    .pixel-card.is-details .pixel-card__content.back {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+
+                    .pixel-card .service-one__item {
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: flex-start;
+                        border-radius: 14px;
+                    }
+
+                    .pixel-card .service-one__item__title {
+                        margin-bottom: 8px;
+                    }
+
+                    .pixel-card .holo-pixels {
+                        position: absolute;
+                        inset: -2px;
+                        border-radius: 14px;
+                        pointer-events: none;
+                        opacity: 0;
+                        mix-blend-mode: screen;
+                        background-image: radial-gradient(rgba(255, 136, 0, .35) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 136, 0, .15) 0%, transparent 60%);
+                        background-size: 4px 4px, 100% 100%;
+                        filter: blur(.2px);
+                    }
+
+                    /* Efeitos de desmontar/montar em pixels (opcional, usado se adicionar classes via JS) */
+                    .pixel-card.is-opening .holo-pixels {
+                        animation: pixDisperse .5s ease-out both;
+                    }
+
+                    .pixel-card.is-closing .holo-pixels {
+                        animation: pixAssemble .5s ease-out both;
+                    }
+
+                    @keyframes pixDisperse {
+                        0% {
+                            opacity: .8;
+                            background-size: 6px 6px, 100% 100%;
+                            filter: blur(.3px);
+                            transform: translateY(0) scale(1);
+                        }
+
+                        60% {
+                            opacity: .4;
+                            background-size: 12px 12px, 120% 100%;
+                            filter: blur(.6px);
+                        }
+
+                        100% {
+                            opacity: 0;
+                            background-size: 18px 18px, 140% 100%;
+                            filter: blur(1px);
+                            transform: translateY(3px) scale(1.02);
+                        }
+                    }
+
+                    @keyframes pixAssemble {
+                        0% {
+                            opacity: 0;
+                            background-size: 18px 18px, 140% 100%;
+                            filter: blur(1px);
+                            transform: translateY(-3px) scale(.98);
+                        }
+
+                        40% {
+                            opacity: .4;
+                            background-size: 12px 12px, 115% 100%;
+                            filter: blur(.6px);
+                        }
+
+                        100% {
+                            opacity: .55;
+                            background-size: 4px 4px, 100% 100%;
+                            filter: blur(.2px);
+                            transform: translateY(0) scale(1);
+                        }
+                    }
+                </style>
+
+                <!-- Grid (desktop/tablet): 1 card por challenge -->
+                <div class="row d-none d-md-flex">
+                    @forelse(($project->challenges ?? []) as $index => $challenge)
+                        <div class="col-lg-4 col-md-6 wow fadeInUp animated"
+                            data-wow-delay="{{ ($index + 1) * 100 }}ms">
+                            <div class="pixel-card" style="max-height: 200px; margin-bottom:30px;">
+                                <!-- Frente -->
+                                <div class="pixel-card__content front">
+                                    <div class="service-one__item" style="margin-bottom:30px; position:relative;">
+                                        <span class="holo-pixels" aria-hidden="true"></span>
+                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
+                                                style="color:#ff8800;"></span></div>
+                                        <h3 class="service-one__item__title" style="max-height: 20px;"><a
+                                                href="javascript:void(0)">{{ $challenge->title }}</a></h3>
+                                        <p class="service-one__item__text" style="min-height: 110px;">&nbsp;</p>
+                                        <a class="service-one__item__btn js-details-open" style="max-heigh: 20px;"
+                                            href="javascript:void(0)">Explorar
+                                            <span class="icon-down-right"></span></a>
                                     </div>
                                 </div>
-                            @empty
-                                <div class="col-12 text-center">
-                                    <p>Nenhum desafio cadastrado.</p>
+                                <!-- Verso (detalhe) -->
+                                <div class="pixel-card__content back">
+                                    <div class="service-one__item" style="margin-bottom:30px; position:relative;">
+                                        <span class="holo-pixels" aria-hidden="true"></span>
+                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
+                                                style="color:#ff8800;"></span></div>
+                                        <p class="service-one__item__text" style="min-height: 130px;">
+                                            {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
+                                        </p>
+                                        <a class="service-one__item__btn js-details-close"
+                                            href="javascript:void(0)">Voltar
+                                            <span class="icon-left-arrow"></span></a>
+                                    </div>
                                 </div>
-                            @endforelse
-                        </div>
-
-
-                        <!-- Carousel (mobile) -->
-                        <div class="d-md-none">
-                            <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
-                                data-owl-options='{
-                            "items": 1,
-                            "margin": 10,
-                            "smartSpeed": 700,
-                            "loop": true,
-                            "autoplay": true,
-                            "nav": false,
-                            "dots": true
-                         }'>
-                                @forelse($project->challenges as $challenge)
-                                    <div class="item">
-                                        <div class="pixel-card">
-                                            <div class="pixel-card__content front">
-                                                <div class="service-one__item" style="position: relative;">
-                                                    <span class="holo-pixels" aria-hidden="true"></span>
-                                                    <div class="service-one__item__icon">
-                                                        <span class="fa fa-exclamation-circle"
-                                                            style="color:#ff8800;"></span>
-                                                    </div>
-                                                    <h3 class="service-one__item__title">
-                                                        <a href="javascript:void(0)">{{ $challenge->title }}</a>
-                                                    </h3>
-                                                    <p class="service-one__item__text">&nbsp;</p>
-                                                    <a class="service-one__item__btn js-details-open"
-                                                        href="javascript:void(0)">
-                                                        Explorar <span class="icon-down-right"></span>
-                                                    </a>
-                                                </div>
-                                            </div>
-
-                                            <div class="pixel-card__content back">
-                                                <div class="service-one__item" style="position: relative;">
-                                                    <span class="holo-pixels" aria-hidden="true"></span>
-                                                    <div class="service-one__item__icon">
-                                                        <span class="fa fa-lightbulb" style="color:#ff8800;"></span>
-                                                    </div>
-                                                    <p class="service-one__item__text">
-                                                        {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
-                                                    </p>
-                                                    <a class="service-one__item__btn js-details-close"
-                                                        href="javascript:void(0)">
-                                                        Voltar <span class="icon-left-arrow"></span>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @empty
-                                    <div class="item">
-                                        <p class="text-center">Nenhum desafio cadastrado.</p>
-                                    </div>
-                                @endforelse
                             </div>
                         </div>
+                    @empty
+                        <div class="col-12 text-center">
+                            <p>Nenhum desafio cadastrado.</p>
+                        </div>
+                    @endforelse
+                </div>
 
+                <!-- Carousel (mobile): 1 card por challenge -->
+                <div class="d-md-none">
+                    <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                        data-owl-options='{
+                        "items": 1,
+                        "margin": 10,
+                        "smartSpeed": 700,
+                        "loop": true,
+                        "autoplay": true,
+                        "nav": false,
+                        "dots": true
+                    }'>
+                        @forelse(($project->challenges ?? []) as $challenge)
+                            <div class="item">
+                                <div class="pixel-card">
+                                    <div class="pixel-card__content front">
+                                        <div class="service-one__item" style="position: relative;">
+                                            <span class="holo-pixels" aria-hidden="true"></span>
+                                            <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
+                                                    style="color:#ff8800;"></span></div>
+                                            <h3 class="service-one__item__title"><a
+                                                    href="javascript:void(0)">{{ $challenge->title }}</a></h3>
+                                            <p class="service-one__item__text">&nbsp;</p>
+                                            <a class="service-one__item__btn js-details-open"
+                                                href="javascript:void(0)">Explorar
+                                                <span class="icon-down-right"></span></a>
+                                        </div>
+                                    </div>
+                                    <div class="pixel-card__content back">
+                                        <div class="service-one__item" style="position: relative;">
+                                            <span class="holo-pixels" aria-hidden="true"></span>
+                                            <div class="service-one__item__icon"><span
+                                                    class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
+                                            </div>
+                                            <p class="service-one__item__text">
+                                                {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
+                                            </p>
+                                            <a class="service-one__item__btn js-details-close"
+                                                href="javascript:void(0)">Voltar
+                                                <span class="icon-left-arrow"></span></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="item">
+                                <p class="text-center">Nenhum desafio cadastrado.</p>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
+        <!-- Solutions Start -->
+        <section class="service-one @@extraClassName">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="section-title text-center">
+                            <h5 class="section-title__tagline section-title__tagline--has-dots">
+                                Como transformamos desafios em resultados
+                            </h5>
+                            <h2 class="section-title__title">
+                                As soluções do projeto
+                            </h2>
+                        </div><!-- section-title -->
 
+                    </div>
+                </div>
+                <style>
+                    /* Pixel swap card (sem flip 3D) para Challenges */
+                    .pixel-card {
+                        position: relative;
+                        min-height: 320px;
+                    }
 
-        <h4 class="project-details__content__subtitle mt-5">Desafios do Projeto</h4>
-        <ul class="project-details__content__list list-unstyled mt-3">
-            @foreach ($project->challenges ?? [] as $challenge)
-                <li class="mb-4">
-                    <span class="fa fa-exclamation-circle" style="color: #ff8800;"></span>
-                    <strong class="ms-2">{{ $challenge->title }}</strong><br>
-                    {{ $challenge->description }}
-                </li>
-            @endforeach
-        </ul>
+                    .pixel-card__content {
+                        position: absolute;
+                        inset: 0;
+                        height: 100%;
+                        transition: opacity .18s linear, visibility .18s linear;
+                    }
 
-        <h4 class="project-details__content__subtitle mt-4">Soluções Propostas</h4>
-        <ul class="project-details__content__list list-unstyled mt-3">
-            @foreach ($project->solutions ?? [] as $solution)
-                <li class="mb-4">
-                    <span class="fa fa-lightbulb" style="color: #ff8800;"></span>
-                    <strong class="ms-2">{{ $solution->title }}</strong><br>
-                    {{ $solution->description }}
-                </li>
-            @endforeach
-        </ul>
+                    .pixel-card__content.front {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+
+                    .pixel-card__content.back {
+                        opacity: 0;
+                        visibility: hidden;
+                    }
+
+                    .pixel-card.is-details .pixel-card__content.front {
+                        opacity: 0;
+                        visibility: hidden;
+                    }
+
+                    .pixel-card.is-details .pixel-card__content.back {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+
+                    .pixel-card .service-one__item {
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: flex-start;
+                        border-radius: 14px;
+                    }
+
+                    .pixel-card .service-one__item__title {
+                        margin-bottom: 8px;
+                    }
+
+                    .pixel-card .holo-pixels {
+                        position: absolute;
+                        inset: -2px;
+                        border-radius: 14px;
+                        pointer-events: none;
+                        opacity: 0;
+                        mix-blend-mode: screen;
+                        background-image: radial-gradient(rgba(255, 136, 0, .35) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 136, 0, .15) 0%, transparent 60%);
+                        background-size: 4px 4px, 100% 100%;
+                        filter: blur(.2px);
+                    }
+
+                    /* Efeitos de desmontar/montar em pixels (opcional, usado se adicionar classes via JS) */
+                    .pixel-card.is-opening .holo-pixels {
+                        animation: pixDisperse .5s ease-out both;
+                    }
+
+                    .pixel-card.is-closing .holo-pixels {
+                        animation: pixAssemble .5s ease-out both;
+                    }
+
+                    @keyframes pixDisperse {
+                        0% {
+                            opacity: .8;
+                            background-size: 6px 6px, 100% 100%;
+                            filter: blur(.3px);
+                            transform: translateY(0) scale(1);
+                        }
+
+                        60% {
+                            opacity: .4;
+                            background-size: 12px 12px, 120% 100%;
+                            filter: blur(.6px);
+                        }
+
+                        100% {
+                            opacity: 0;
+                            background-size: 18px 18px, 140% 100%;
+                            filter: blur(1px);
+                            transform: translateY(3px) scale(1.02);
+                        }
+                    }
+
+                    @keyframes pixAssemble {
+                        0% {
+                            opacity: 0;
+                            background-size: 18px 18px, 140% 100%;
+                            filter: blur(1px);
+                            transform: translateY(-3px) scale(.98);
+                        }
+
+                        40% {
+                            opacity: .4;
+                            background-size: 12px 12px, 115% 100%;
+                            filter: blur(.6px);
+                        }
+
+                        100% {
+                            opacity: .55;
+                            background-size: 4px 4px, 100% 100%;
+                            filter: blur(.2px);
+                            transform: translateY(0) scale(1);
+                        }
+                    }
+                </style>
+
+                <!-- Grid (desktop/tablet): 1 card por challenge -->
+                <div class="row d-none d-md-flex">
+                    @forelse(($project->solutions ?? []) as $index => $solution)
+                        <div class="col-lg-4 col-md-6 wow fadeInUp animated"
+                            data-wow-delay="{{ ($index + 1) * 100 }}ms">
+                            <div class="pixel-card" style="max-height: 200px; margin-bottom:30px;">
+                                <!-- Frente -->
+                                <div class="pixel-card__content front">
+                                    <div class="service-one__item" style="margin-bottom:30px; position:relative;">
+                                        <span class="holo-pixels" aria-hidden="true"></span>
+                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
+                                                style="color:#ff8800;"></span></div>
+                                        <h3 class="service-one__item__title" style="max-height: 20px;"><a
+                                                href="javascript:void(0)">{{ $solution->title }}</a></h3>
+                                        <p class="service-one__item__text" style="min-height: 110px;">&nbsp;</p>
+                                        <a class="service-one__item__btn js-details-open" style="max-heigh: 20px;"
+                                            href="javascript:void(0)">Explorar
+                                            <span class="icon-down-right"></span></a>
+                                    </div>
+                                </div>
+                                <!-- Verso (detalhe) -->
+                                <div class="pixel-card__content back">
+                                    <div class="service-one__item" style="margin-bottom:30px; position:relative;">
+                                        <span class="holo-pixels" aria-hidden="true"></span>
+                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
+                                                style="color:#ff8800;"></span></div>
+                                        <p class="service-one__item__text" style="min-height: 130px;">
+                                            {{ \Illuminate\Support\Str::limit((string) ($solution->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
+                                        </p>
+                                        <a class="service-one__item__btn js-details-close"
+                                            href="javascript:void(0)">Voltar
+                                            <span class="icon-left-arrow"></span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-12 text-center">
+                            <p>Nenhum desafio cadastrado.</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- Carousel (mobile): 1 card por solution -->
+                <div class="d-md-none">
+                    <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                        data-owl-options='{
+                        "items": 1,
+                        "margin": 10,
+                        "smartSpeed": 700,
+                        "loop": true,
+                        "autoplay": true,
+                        "nav": false,
+                        "dots": true
+                    }'>
+                        @forelse(($project->solutions ?? []) as $solution)
+                            <div class="item">
+                                <div class="pixel-card">
+                                    <div class="pixel-card__content front">
+                                        <div class="service-one__item" style="position: relative;">
+                                            <span class="holo-pixels" aria-hidden="true"></span>
+                                            <div class="service-one__item__icon"><span
+                                                    class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
+                                            </div>
+                                            <h3 class="service-one__item__title"><a
+                                                    href="javascript:void(0)">{{ $solution->title }}</a></h3>
+                                            <p class="service-one__item__text">&nbsp;</p>
+                                            <a class="service-one__item__btn js-details-open"
+                                                href="javascript:void(0)">Explorar
+                                                <span class="icon-down-right"></span></a>
+                                        </div>
+                                    </div>
+                                    <div class="pixel-card__content back">
+                                        <div class="service-one__item" style="position: relative;">
+                                            <span class="holo-pixels" aria-hidden="true"></span>
+                                            <div class="service-one__item__icon"><span
+                                                    class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
+                                            </div>
+                                            <p class="service-one__item__text">
+                                                {{ \Illuminate\Support\Str::limit((string) ($solution->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
+                                            </p>
+                                            <a class="service-one__item__btn js-details-close"
+                                                href="javascript:void(0)">Voltar
+                                                <span class="icon-left-arrow"></span></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="item">
+                                <p class="text-center">Nenhum desafio cadastrado.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 </section>
 
@@ -431,50 +743,6 @@
 <!-- Projects Details Start -->
 <section class="project-details">
     <div class="container">
-        <div class="row">
-            <!-- 🟠 Resumo do Projeto (coluna completa) -->
-            <div class="col-12 wow fadeInUp animated" data-wow-delay="200ms">
-                <div class="project-details__content">
-                    <h3 class="project-details__content__title">Resumo do projeto</h3>
-                    <p class="project-details__content__text">
-                        {{ $project->summary }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- 🔵 Desafios e Soluções (lado esquerdo) -->
-            <div class="col-xl-8 col-lg-7 wow fadeInLeft animated" data-wow-delay="300ms">
-                <div class="project-details__content">
-
-                    <!-- Desafios -->
-                    <h4 class="project-details__content__subtitle mt-4">Desafios do Projeto</h4><br>
-                    <ul class="project-details__content__list list-unstyled">
-                        @foreach ($project->challenges ?? [] as $challenge)
-                            <li>
-                                <span class="fa fa-exclamation-circle" style="color: #ff8800;"></span>
-                                <span style="margin-left: 5px; font-weight: 800">{{ $challenge->title }}</span><br>
-                                {{ $challenge->description }}<br><br>
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    <!-- Soluções -->
-                    <h4 class="project-details__content__subtitle">Soluções Propostas</h4><br>
-                    <ul class="project-details__content__list list-unstyled">
-                        @foreach ($project->solutions ?? [] as $solution)
-                            <li>
-                                <span class="fa fa-lightbulb" style="color: #ff8800;"></span>
-                                <span style="margin-left: 5px; font-weight: 800">{{ $solution->title }}</span><br>
-                                {{ $solution->description }}<br><br>
-                            </li>
-                        @endforeach
-                    </ul>
-
-                </div>
-            </div>
-        </div>
-
-
         <div class="section-title text-center" style="margin-bottom: 80px; margin-top: 80px !important;">
             <h5 class="section-title__tagline section-title__tagline--has-dots">Da ideia ao código</h5>
             <h2 class="section-title__title">
@@ -603,9 +871,13 @@
                 style="background-image: url('{{ $project->skill_cover ? asset($project->skill_cover) : asset('assets/images/backgrounds/cta-bg-2.jpg') }}');">
             </div>
             <div class="section-title text-center" style="margin-bottom: 40px; margin-top: 0px !important;">
-                <h5 class="section-title__tagline section-title__tagline--has-dots">nossos projetos</h5>
-                <h2 class="section-title__title">Conheça alguns dos trabalhos<br> que deram vida a grandes ideias
+                <h5 class="section-title__tagline section-title__tagline--has-dots">
+                    Tecnologias e práticas utilizadas
+                </h5>
+                <h2 class="section-title__title">
+                    As habilidades que impulsionaram<br> o desenvolvimento do projeto
                 </h2>
+
             </div><!-- /.project-section title -->
             <div class="container">
 
@@ -703,9 +975,11 @@
 
                 <div class="container">
                     <div class="section-title text-center" style="margin-bottom: 10px; margin-top: 10px !important;">
-                        <h5 class="section-title__tagline section-title__tagline--has-dots">nossos projetos</h5>
-                        <h2 class="section-title__title">Conheça alguns dos trabalhos<br> que deram vida a grandes
-                            ideias
+                        <h5 class="section-title__tagline section-title__tagline--has-dots">
+                            Onde a criação ganha vida
+                        </h5>
+                        <h2 class="section-title__title">
+                            Assista ao resultado final do projeto
                         </h2>
                     </div><!-- /.project-section title -->
                     <div class="video-one__banner wow fadeInUp animated animated" data-wow-delay="100ms">
@@ -719,7 +993,7 @@
                             data-wow-delay="400ms">
                             <div class="curved-circle">
                                 <span class="curved-circle-item">
-                                    Watch&emsp;Our&emsp;agency&emsp;portfolio&emsp;Video
+                                    Veja&emsp;o&emsp;resultado&emsp;do&emsp;nosso&emsp;projeto!
                                 </span>
                             </div>
                             <!-- video btn start -->
@@ -733,51 +1007,6 @@
                 </div>
             </div>
         @endif
-        <div class="section-title text-center wow fadeInUp animated" data-wow-delay="400ms">
-            <h5 class="section-title__tagline section-title__tagline--has-dots">our work showcase</h5>
-            <h2 class="section-title__title">Explore similar portfolio<br> you might like it</h2>
-        </div><!-- related-project-section-title -->
-        <div class="row">
-            <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="200ms">
-                <div class="project-two__item">
-                    <div class="project-two__item__image"><img src="assets/images/project/project-2-1.jpg"
-                            alt="ogency"></div><!-- /.project-image -->
-                    <div class="project-two__item__content">
-                        <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
-                                href="projects.html">Agency</a></p><!-- /.project-category -->
-                        <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
-                                marketing</a>
-                        </h3><!-- /.project-title -->
-                    </div>
-                </div><!-- /.project-item-two -->
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="300ms">
-                <div class="project-two__item">
-                    <div class="project-two__item__image"><img src="assets/images/project/project-2-4.jpg"
-                            alt="ogency"></div><!-- /.project-image -->
-                    <div class="project-two__item__content">
-                        <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
-                                href="projects.html">Agency</a></p><!-- /.project-category -->
-                        <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
-                                marketing</a>
-                        </h3><!-- /.project-title -->
-                    </div>
-                </div><!-- /.project-item-two -->
-            </div>
-            <div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="400ms">
-                <div class="project-two__item">
-                    <div class="project-two__item__image"><img src="assets/images/project/project-2-5.jpg"
-                            alt="ogency"></div><!-- /.project-image -->
-                    <div class="project-two__item__content">
-                        <p class="project-two__item__content__cats"><a href="projects.html">Digital</a>, <a
-                                href="projects.html">Agency</a></p><!-- /.project-category -->
-                        <h3 class="project-two__item__content__title"><a href="project-details.html">Asus
-                                marketing</a>
-                        </h3><!-- /.project-title -->
-                    </div>
-                </div><!-- /.project-item-two -->
-            </div>
-        </div>
     </div>
 </section>
 <!-- Projects Details End -->

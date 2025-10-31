@@ -1,6 +1,6 @@
 <!-- Pricing Start -->
 <section class="pricing-one" id="planos">
-    <div class="container">
+    <div class="container" style="padding-bottom: 60px;">
         <div class="section-title text-center">
             <h5 class="section-title__tagline section-title__tagline--has-dots">nossos planos</h5>
             <h2 class="section-title__title">
@@ -179,12 +179,6 @@
                 </div>
 
             </div>
-        </div>
-        <!-- Link para tabela detalhada -->
-        <div class="text-center mt-3 pb-5">
-            <a href="#detalhes-planos" class="ogency-btn ogency-btn--border">
-                Ver comparativo completo dos planos <span class="icon-down-right"></span>
-            </a>
         </div>
     </div>
 </section>

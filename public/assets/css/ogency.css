@@ -7849,18 +7849,6 @@ h6 {
   background-position: right 25.75px center;
 }
 
-.contact-one__input-box .bootstrap-select>.dropdown-toggle:before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 30px;
-  font-family: "Font Awesome 5 Free";
-  content: "\f107";
-  font-weight: 900;
-  font-size: 14px;
-  color: var(--ogency-color);
-}
-
 .contact-one__input-box .bootstrap-select .dropdown-menu>li+li>a {
   border-top: 1px solid var(--ogency-black3);
 }
@@ -7908,7 +7896,6 @@ h6 {
 .ogency-stretch__image {
   position: relative;
   margin-left: auto;
-  background-color: var(--ogency-black2);
   max-width: 890px;
   height: 100%;
   overflow: hidden;
