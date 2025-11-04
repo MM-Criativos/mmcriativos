@@ -14,17 +14,27 @@ class PlanController extends Controller
         $this->middleware(['auth', 'approved']);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $plans = Plan::with('service')->latest('id')->paginate(20);
-        return view('admin.commercial.plans.index', compact('plans'));
+        // Reutiliza o modelo de edição de preços (categorias, vantagens)
+        $category = $request->query('category', 'Presença Digital');
+        $categories = Plan::query()->select('category')->distinct()->pluck('category')->all();
+        if (empty($categories)) {
+            $categories = ['Presença Digital', 'Soluções Inteligentes'];
+        }
+
+        $plans = Plan::with(['service', 'advantages'])
+            ->where('category', $category)
+            ->orderBy('price')
+            ->get();
+
+        return view('admin.commercial.plans.manage', compact('plans', 'category', 'categories'));
     }
 
     public function create()
     {
-        $plan = new Plan();
-        $services = Service::orderBy('name')->get();
-        return view('admin.commercial.plans.create', compact('plan', 'services'));
+        // Desnecessário no fluxo atual: gestão feita via tela unificada
+        return redirect()->route('admin.commercial.plans.index');
     }
 
     public function store(Request $request)
@@ -44,9 +54,8 @@ class PlanController extends Controller
 
     public function edit(Plan $plan)
     {
-        $plan->load('service');
-        $services = Service::orderBy('name')->get();
-        return view('admin.commercial.plans.edit', compact('plan', 'services'));
+        // Redireciona para a tela unificada na categoria do plano
+        return redirect()->route('admin.commercial.plans.index', ['category' => $plan->category]);
     }
 
     public function update(Request $request, Plan $plan)
@@ -70,4 +79,3 @@ class PlanController extends Controller
             ->with('status', 'Plano removido.');
     }
 }
-
