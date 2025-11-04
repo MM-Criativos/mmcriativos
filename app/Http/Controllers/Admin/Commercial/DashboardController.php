@@ -22,10 +22,11 @@ class DashboardController extends Controller
             'budgets' => Budget::count(),
             'extras' => Extra::count(),
             'email_templates' => EmailTemplate::count(),
+            'clients' => \App\Models\Client::count(),
+            'testimonials' => \App\Models\ClientTestimonial::count(),
         ];
 
         // View a ser criada na etapa de UI
         return view('admin.commercial.dashboard', compact('stats'));
     }
 }
-

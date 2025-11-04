@@ -40,6 +40,7 @@ use App\Http\Controllers\Admin\Commercial\PlanController as CommercialPlanContro
 use App\Http\Controllers\Admin\Commercial\BudgetController as CommercialBudgetController;
 use App\Http\Controllers\Admin\Commercial\ExtraController as CommercialExtraController;
 use App\Http\Controllers\Admin\Commercial\EmailTemplateController as CommercialEmailTemplateController;
+use App\Http\Controllers\Admin\Content\DashboardController as ContentDashboardController;
 
 // Site pÃºblico
 Route::get('/', function () {
@@ -148,6 +149,11 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
     Route::put('layout/aboutus', [AdminAboutUsController::class, 'update'])->name('layout.aboutus.update');
     Route::get('layout/price', [AdminPriceController::class, 'edit'])->name('layout.price.edit');
     Route::put('layout/price', [AdminPriceController::class, 'update'])->name('layout.price.update');
+
+    // Content module (Serviços e Habilidades)
+    Route::prefix('content')->name('content.')->group(function () {
+        Route::get('/', [ContentDashboardController::class, 'index'])->name('dashboard');
+    });
 
     // Projects
     Route::resource('projects', AdminProjectController::class)->only(['index','create','store','edit','update','destroy']);

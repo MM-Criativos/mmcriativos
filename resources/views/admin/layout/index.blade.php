@@ -18,11 +18,6 @@
                             <div class="text-lg font-semibold">Linhas</div>
                             <p class="text-sm text-gray-600">Edite as frases do bloco deslizante.</p>
                         </a>
-                        <a href="{{ route('admin.layout.price.edit') }}"
-                            class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-700">
-                            <div class="text-lg font-semibold">Preços</div>
-                            <p class="text-sm text-gray-600">Gerencie valores, descrições e vantagens dos planos.</p>
-                        </a>
                         <a href="{{ route('admin.layout.aboutus.edit') }}"
                             class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-700">
                             <div class="text-lg font-semibold">Sobre nós</div>
@@ -34,4 +29,3 @@
         </div>
     </div>
 </x-app-layout>
-

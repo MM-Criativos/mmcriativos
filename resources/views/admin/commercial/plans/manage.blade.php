@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">Planos • Comercial</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">Planos</h2>
         </div>
     </x-slot>
 
@@ -17,7 +17,8 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
                         <select name="category" class="border-gray-300 rounded-md" onchange="this.form.submit()">
                             @foreach ($categories as $cat)
-                                <option value="{{ $cat }}" @selected($cat === $category)>{{ $cat }}</option>
+                                <option value="{{ $cat }}" @selected($cat === $category)>{{ $cat }}
+                                </option>
                             @endforeach
                         </select>
                     </form>
@@ -35,11 +36,15 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm text-gray-600">Preço</label>
-                                        <input type="text" name="plans[{{ $plan->id }}][price]" value="{{ $plan->price }}" class="mt-1 w-full border-gray-300 rounded-md" />
+                                        <input type="text" name="plans[{{ $plan->id }}][price]"
+                                            value="{{ $plan->price }}"
+                                            class="mt-1 w-full border-gray-300 rounded-md" />
                                     </div>
                                     <div>
                                         <label class="block text-sm text-gray-600">Descrição</label>
-                                        <input type="text" name="plans[{{ $plan->id }}][description]" value="{{ $plan->description }}" class="mt-1 w-full border-gray-300 rounded-md" />
+                                        <input type="text" name="plans[{{ $plan->id }}][description]"
+                                            value="{{ $plan->description }}"
+                                            class="mt-1 w-full border-gray-300 rounded-md" />
                                     </div>
                                 </div>
 
@@ -48,14 +53,23 @@
                                     <div id="adv-{{ $plan->id }}" class="space-y-2">
                                         @forelse ($plan->advantages as $adv)
                                             <div class="flex items-center gap-2">
-                                                <input type="text" name="advantages[{{ $plan->id }}][]" value="{{ $adv->title }}" class="flex-1 border-gray-300 rounded-md" />
-                                                <button type="button" class="px-2 py-1 text-xs bg-gray-100 rounded" onclick="this.parentElement.remove()">Remover</button>
+                                                <input type="text" name="advantages[{{ $plan->id }}][]"
+                                                    value="{{ $adv->title }}"
+                                                    class="flex-1 border-gray-300 rounded-md" />
+                                                <button type="button"
+                                                    class="px-3 py-2 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid transition-all duration-200"
+                                                    onclick="this.parentElement.remove()">Remover</button>
                                             </div>
                                         @empty
-                                            <input type="text" name="advantages[{{ $plan->id }}][]" class="w-full border-gray-300 rounded-md" placeholder="Adicionar vantagem" />
+                                            <input type="text" name="advantages[{{ $plan->id }}][]"
+                                                class="w-full border-gray-300 rounded-md"
+                                                placeholder="Adicionar vantagem" />
                                         @endforelse
                                     </div>
-                                    <button type="button" class="mt-2 px-3 py-2 bg-gray-100 rounded hover:bg-gray-200" onclick="addAdv('{{ $plan->id }}')">+ Adicionar vantagem</button>
+
+                                    <button type="button"
+                                        class="mt-2 px-3 py-2 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid transition-all duration-200"
+                                        onclick="addAdv('{{ $plan->id }}')">+ Adicionar vantagem</button>
                                 </div>
                             </div>
                         @empty
@@ -63,7 +77,10 @@
                         @endforelse
 
                         <div class="flex justify-end">
-                            <button type="submit" class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded hover:bg-orange-700">Salvar</button>
+                            <button type="submit"
+                                class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded font-semibold text-sm uppercase tracking-wider hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border transition-all duration-200">
+                                Salvar
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -72,14 +89,17 @@
     </div>
 
     <script>
-        function addAdv(id){
-            const wrap = document.getElementById('adv-'+id);
+        function addAdv(id) {
+            const wrap = document.getElementById('adv-' + id);
             const div = document.createElement('div');
             div.className = 'flex items-center gap-2';
-            div.innerHTML = '<input type="text" name="advantages['+id+'][]" class="flex-1 border-gray-300 rounded-md" placeholder="Adicionar vantagem" />' +
-                '<button type="button" class="px-2 py-1 text-xs bg-gray-100 rounded" onclick="this.parentElement.remove()">Remover</button>';
+            div.innerHTML = `
+            <input type="text" name="advantages[${id}][]" class="flex-1 border-gray-300 rounded-md" placeholder="Adicionar vantagem" />
+            <button type="button"
+                class="px-3 py-2 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid transition-all duration-200"
+                onclick="this.parentElement.remove()">Remover</button>`;
             wrap.appendChild(div);
         }
     </script>
-</x-app-layout>
 
+</x-app-layout>

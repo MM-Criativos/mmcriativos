@@ -17,19 +17,11 @@
                     </p>
                 </a>
 
-                <a href="{{ route('admin.services.index') }}"
+                <a href="{{ route('admin.content.dashboard') }}"
                     class="block bg-white dark:bg-dark-800 hover:bg-gray-50 dark:hover:bg-dark-700 border rounded-lg p-6 shadow-sm">
-                    <div class="text-lg font-semibold">Serviços</div>
+                    <div class="text-lg font-semibold">Conteúdo</div>
                     <p class="text-sm text-gray-600">
-                        Gerencie serviços, informações, benefícios, características, processos e CTAs.
-                    </p>
-                </a>
-
-                <a href="{{ route('admin.skills.index') }}"
-                    class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm opacity-80 hover:bg-gray-50 dark:hover:bg-dark-700">
-                    <div class="text-lg font-semibold">Habilidades</div>
-                    <p class="text-sm text-gray-600">
-                        Defina e gerencie as habilidades que a MM Criativos possui, por área e tecnologia.
+                        Serviços e Habilidades em um só lugar.
                     </p>
                 </a>
 
@@ -41,27 +33,11 @@
                     </p>
                 </a>
 
-                <a href="{{ route('admin.clients.index') }}"
-                    class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm opacity-80 hover:bg-gray-50 dark:hover:bg-dark-700">
-                    <div class="text-lg font-semibold">Clientes</div>
-                    <p class="text-sm text-gray-600">
-                        Gerencie clientes, logotipos, contatos e informações comerciais.
-                    </p>
-                </a>
-
                 <a href="{{ route('admin.commercial.dashboard') }}"
                     class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-700">
                     <div class="text-lg font-semibold">Comercial</div>
                     <p class="text-sm text-gray-600">
-                        Orçamentos, planos, extras e templates de e-mail.
-                    </p>
-                </a>
-
-                <a href="{{ route('admin.testimonials.index') }}"
-                    class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm opacity-80 hover:bg-gray-50 dark:hover:bg-dark-700">
-                    <div class="text-lg font-semibold">Depoimentos</div>
-                    <p class="text-sm text-gray-600">
-                        Gerencie depoimentos de clientes e parceiros que fortalecem a marca.
+                        Clientes, depoimentos, orçamentos, planos, extras e e-mails.
                     </p>
                 </a>
 

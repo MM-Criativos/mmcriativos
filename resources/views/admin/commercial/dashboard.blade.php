@@ -9,6 +9,16 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @include('admin.commercial._tabs')
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{{ route('admin.clients.index') }}"
+                    class="block bg-white p-6 rounded shadow hover:shadow-md">
+                    <div class="text-gray-500 text-sm">Clientes</div>
+                    <div class="text-3xl font-bold text-gray-800">{{ $stats['clients'] ?? 0 }}</div>
+                </a>
+                <a href="{{ route('admin.testimonials.index') }}"
+                    class="block bg-white p-6 rounded shadow hover:shadow-md">
+                    <div class="text-gray-500 text-sm">Depoimentos</div>
+                    <div class="text-3xl font-bold text-gray-800">{{ $stats['testimonials'] ?? 0 }}</div>
+                </a>
                 <a href="{{ route('admin.commercial.budgets.index') }}"
                     class="block bg-white p-6 rounded shadow hover:shadow-md">
                     <div class="text-gray-500 text-sm">Orçamentos</div>

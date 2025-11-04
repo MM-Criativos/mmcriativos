@@ -22,28 +22,16 @@
                         {{ __('Layout') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('admin.services.index')" :active="request()->is('admin/services*')">
-                        {{ __('Serviços') }}
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('admin.skills.index')" :active="request()->is('admin/skills*')">
-                        {{ __('Habilidades') }}
+                    <x-nav-link :href="route('admin.content.dashboard')" :active="request()->is('admin/content*') || request()->is('admin/services*') || request()->is('admin/skills*')">
+                        {{ __('Conteúdo') }}
                     </x-nav-link>
 
                     <x-nav-link :href="route('admin.projects.index')" :active="request()->is('admin/projects*')">
                         {{ __('Projetos') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('admin.clients.index')" :active="request()->is('admin/clients*')">
-                        {{ __('Clientes') }}
-                    </x-nav-link>
-
                     <x-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*')">
                         {{ __('Comercial') }}
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('admin.testimonials.index')" :active="request()->is('admin/testimonials*')">
-                        {{ __('Depoimentos') }}
                     </x-nav-link>
 
                     @if (Auth::user()->role === 'admin')
@@ -138,8 +126,8 @@
             <x-responsive-nav-link :href="route('admin.services.index')" :active="request()->is('admin/services*')">
                 {{ __('Serviços') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.skills.index')" :active="request()->is('admin/skills*')">
-                {{ __('Habilidades') }}
+            <x-responsive-nav-link :href="route('admin.content.dashboard')" :active="request()->is('admin/content*') || request()->is('admin/services*') || request()->is('admin/skills*')">
+                {{ __('Conteúdo') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('admin.projects.index')" :active="request()->is('admin/projects*')">
                 {{ __('Projetos') }}

@@ -1,8 +1,26 @@
 <div class="mb-4 flex flex-wrap gap-2">
-    <a href="{{ route('admin.commercial.dashboard') }}" class="px-3 py-2 rounded {{ request()->routeIs('admin.commercial.dashboard') ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600' }}">Dashboard</a>
-    <a href="{{ route('admin.commercial.budgets.index') }}" class="px-3 py-2 rounded {{ request()->is('admin/commercial/budgets*') ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600' }}">Orçamentos</a>
-    <a href="{{ route('admin.commercial.plans.index') }}" class="px-3 py-2 rounded {{ request()->is('admin/commercial/plans*') ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600' }}">Planos</a>
-    <a href="{{ route('admin.commercial.extras.index') }}" class="px-3 py-2 rounded {{ request()->is('admin/commercial/extras*') ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600' }}">Extras</a>
-    <a href="{{ route('admin.commercial.email-templates.index') }}" class="px-3 py-2 rounded {{ request()->is('admin/commercial/email-templates*') ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600' }}">E-mails</a>
-    <a href="{{ route('admin.commercial.kpi.index') }}" class="px-3 py-2 rounded {{ request()->is('admin/commercial/kpi*') ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600' }}">KPI</a>
+    <a href="{{ route('admin.commercial.dashboard') }}"
+        class="px-3 py-2 bg-orange-600 text-black dark:text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid {{ request()->routeIs('admin.commercial.dashboard') ? '' : 'bg-white text-orange-600 border-orange-600 border-solid dark:bg-dark-800 dark:white' }}">
+        Dashboard
+    </a>
+    <a href="{{ route('admin.commercial.budgets.index') }}"
+        class="px-3 py-2 bg-orange-600 text-black dark:text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid {{ request()->is('admin/commercial/budgets*') ? '' : 'bg-white text-orange-600 border-orange-600 border-solid dark:bg-dark-800 dark:white' }}">
+        Orçamentos
+    </a>
+    <a href="{{ route('admin.commercial.plans.index') }}"
+        class="px-3 py-2 bg-orange-600 text-black dark:text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid {{ request()->is('admin/commercial/plans*') ? '' : 'bg-white text-orange-600 border-orange-600 border-solid dark:bg-dark-800 dark:white' }}">
+        Planos
+    </a>
+    <a href="{{ route('admin.commercial.extras.index') }}"
+        class="px-3 py-2 bg-orange-600 text-black dark:text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid {{ request()->is('admin/commercial/extras*') ? '' : 'bg-white text-orange-600 border-orange-600 border-solid dark:bg-dark-800 dark:white' }}">
+        Extras
+    </a>
+    <a href="{{ route('admin.commercial.email-templates.index') }}"
+        class="px-3 py-2 bg-orange-600 text-black dark:text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid {{ request()->is('admin/commercial/email-templates*') ? '' : 'bg-white text-orange-600 border-orange-600 border-solid dark:bg-dark-800 dark:white' }}">
+        E-mails
+    </a>
+    <a href="{{ route('admin.commercial.kpi.index') }}"
+        class="px-3 py-2 bg-orange-600 text-black dark:text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid {{ request()->is('admin/commercial/kpi*') ? '' : 'bg-white text-orange-600 border-orange-600 border-solid dark:bg-dark-800 dark:white' }}">
+        KPI
+    </a>
 </div>
