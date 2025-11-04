@@ -22,14 +22,36 @@ use App\Http\Controllers\Admin\ProjectImageController as AdminProjectImageContro
 use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectSkillCompetencyController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\TeamController as AdminTeamController;
+use App\Http\Controllers\Admin\ClasseController as AdminClasseController;
 use App\Http\Controllers\Admin\SkillInfoController as AdminSkillInfoController;
+use App\Http\Controllers\Admin\LayoutController as AdminLayoutController;
+use App\Http\Controllers\Admin\SliderController as AdminSliderController;
+use App\Http\Controllers\Admin\LineController as AdminLineController;
+use App\Http\Controllers\Admin\AboutUsController as AdminAboutUsController;
+use App\Http\Controllers\Admin\PriceController as AdminPriceController;
+use App\Http\Controllers\Site\ContactFormController;
+use App\Http\Controllers\Site\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Site\ModalController;
+use App\Http\Controllers\Site\PublicBudgetController;
+use App\Http\Controllers\Admin\Commercial\KpiController as CommercialKpiController;
+use App\Http\Controllers\Admin\Commercial\DashboardController as CommercialDashboardController;
+use App\Http\Controllers\Admin\Commercial\PlanController as CommercialPlanController;
+use App\Http\Controllers\Admin\Commercial\BudgetController as CommercialBudgetController;
+use App\Http\Controllers\Admin\Commercial\ExtraController as CommercialExtraController;
+use App\Http\Controllers\Admin\Commercial\EmailTemplateController as CommercialEmailTemplateController;
 
 // Site pÃºblico
 Route::get('/', function () {
     return view('pages.index');
 })->name('home');
+
+// Páginas estáticas
+Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+
+// Contato (site)
+Route::post('/contact', [ContactFormController::class, 'send'])->name('contact.send');
 
 
 
@@ -41,8 +63,11 @@ Route::get('/modal-process/{projectProcess}', [ModalController::class, 'process'
 
 // Rotas padrÃ£o do Breeze (dashboard e profile protegidos)
 Route::get('/dashboard', function () {
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
     return view('dashboard');
-})->middleware(['auth', 'verified', 'approved'])->name('dashboard');
+})->middleware(['verified', 'approved', 'auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -60,6 +85,13 @@ Route::get('/pending-approval', function () {
     return view('auth.pending');
 })->name('pending.approval');
 
+// Public budget routes (view, accept, decline)
+Route::prefix('budget')->name('budget.')->group(function () {
+    Route::get('/{token}', [PublicBudgetController::class, 'show'])->name('public');
+    Route::get('/{token}/accept', [PublicBudgetController::class, 'accept'])->name('accept');
+    Route::get('/{token}/decline', [PublicBudgetController::class, 'decline'])->name('decline');
+});
+
 // Admin painel (usa auth do Breeze)
 Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard pode continuar usando /dashboard padrÃ£o; aqui focamos nos CRUDs
@@ -76,6 +108,8 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
     Route::resource('services.processes', AdminServiceProcessController::class)
         ->only(['store', 'update', 'destroy'])
         ->shallow();
+    Route::post('services/{service}/processes/bulk', [AdminServiceProcessController::class, 'bulk'])
+        ->name('services.processes.bulk');
     Route::resource('services.ctas', AdminServiceCtaController::class)->only(['store', 'update', 'destroy'])->shallow();
 
     // Clients
@@ -103,6 +137,17 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
     Route::resource('skills.competencies', AdminSkillCompetencyController::class)
         ->only(['store', 'update', 'destroy'])
         ->shallow();
+
+    // Layout (UI)
+    Route::get('layout', [AdminLayoutController::class, 'index'])->name('layout.index');
+    Route::get('layout/slider', [AdminSliderController::class, 'edit'])->name('layout.slider.edit');
+    Route::put('layout/slider', [AdminSliderController::class, 'update'])->name('layout.slider.update');
+    Route::get('layout/lines', [AdminLineController::class, 'edit'])->name('layout.lines.edit');
+    Route::put('layout/lines', [AdminLineController::class, 'update'])->name('layout.lines.update');
+    Route::get('layout/aboutus', [AdminAboutUsController::class, 'edit'])->name('layout.aboutus.edit');
+    Route::put('layout/aboutus', [AdminAboutUsController::class, 'update'])->name('layout.aboutus.update');
+    Route::get('layout/price', [AdminPriceController::class, 'edit'])->name('layout.price.edit');
+    Route::put('layout/price', [AdminPriceController::class, 'update'])->name('layout.price.update');
 
     // Projects
     Route::resource('projects', AdminProjectController::class)->only(['index','create','store','edit','update','destroy']);
@@ -134,8 +179,43 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
 
     // Team (users)
     Route::get('team', [AdminTeamController::class, 'index'])->name('team.index');
+    Route::get('team/{user}/edit', [AdminTeamController::class, 'edit'])->name('team.edit');
+    Route::put('team/{user}', [AdminTeamController::class, 'update'])->name('team.update');
     Route::put('team/{user}/role', [AdminTeamController::class, 'updateRole'])->name('team.role');
     Route::put('team/{user}/approve', [AdminTeamController::class, 'approve'])->name('team.approve');
     Route::delete('team/{user}', [AdminTeamController::class, 'destroy'])->name('team.destroy');
+
+    // Classes (admin)
+    Route::get('classes', [AdminClasseController::class, 'index'])->name('classes.index');
+    Route::get('classes/{classe}/edit', [AdminClasseController::class, 'edit'])->name('classes.edit');
+    Route::put('classes/{classe}', [AdminClasseController::class, 'update'])->name('classes.update');
+
+    // Commercial module
+    Route::prefix('commercial')->name('commercial.')->group(function () {
+        // Dashboard
+        Route::get('/', [CommercialDashboardController::class, 'index'])->name('dashboard');
+
+        // Plans
+        Route::resource('plans', CommercialPlanController::class)->except(['show']);
+
+        // Budgets
+        Route::resource('budgets', CommercialBudgetController::class)->except(['show']);
+        Route::post('budgets/{budget}/send-email', [CommercialBudgetController::class, 'sendEmail'])->name('budgets.send-email');
+        Route::get('budgets/{budget}/preview', [CommercialBudgetController::class, 'preview'])->name('budgets.preview');
+        Route::post('budgets/{budget}/items/extra', [CommercialBudgetController::class, 'addExtra'])->name('budgets.items.extra');
+        Route::put('budget-items/{budgetItem}', [CommercialBudgetController::class, 'updateItem'])->name('budget-items.update');
+        Route::delete('budget-items/{budgetItem}', [CommercialBudgetController::class, 'destroyItem'])->name('budget-items.destroy');
+
+        // Extras
+        Route::resource('extras', CommercialExtraController::class)->except(['show']);
+        Route::get('extras/by-service', [CommercialExtraController::class, 'byService'])->name('extras.by-service');
+
+        // Email templates
+        Route::resource('email-templates', CommercialEmailTemplateController::class)->except(['show']);
+        Route::get('email-templates/{emailTemplate}/preview', [CommercialEmailTemplateController::class, 'preview'])->name('email-templates.preview');
+
+        // KPI
+        Route::get('kpi', [CommercialKpiController::class, 'index'])->name('kpi.index');
+    });
 });
 

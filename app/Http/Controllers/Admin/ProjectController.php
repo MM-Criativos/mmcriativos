@@ -10,6 +10,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
+use App\Services\Upload\ImageUploadService;
+use App\Services\Upload\VideoUploadService;
+use App\Support\StorageHelper;
 
 class ProjectController extends Controller
 {
@@ -60,18 +63,44 @@ class ProjectController extends Controller
             $data['slug'] = $slug;
         }
 
+        $slug = $data['slug'];
         if ($request->hasFile('cover')) {
-            $path = $request->file('cover')->store('projects', 'public');
-            $data['cover'] = 'storage/' . $path;
+            $file = $request->file('cover');
+            $mime = (string) $file->getMimeType();
+            if (str_starts_with($mime, 'image/')) {
+                /** @var ImageUploadService $uploader */
+                $uploader = app(ImageUploadService::class);
+                $basename = "project-{$slug}-cover";
+                $path = $uploader->store($file, 'projects', ['basename' => $basename]);
+                $data['cover'] = 'storage/' . $path;
+            } else if (str_starts_with($mime, 'video/')) {
+                /** @var VideoUploadService $vid */
+                $vid = app(VideoUploadService::class);
+                $basename = "project-{$slug}-cover";
+                $out = $vid->transcode($file, 'projects', ['basename' => $basename]);
+                $data['cover'] = 'storage/' . $out['video'];
+                if (empty($data['thumb']) && !empty($out['poster'])) {
+                    $data['thumb'] = 'storage/' . $out['poster'];
+                }
+            } else {
+                $path = $file->store('projects', 'public');
+                $data['cover'] = 'storage/' . $path;
+            }
         }
 
         if ($request->hasFile('thumb')) {
-            $path = $request->file('thumb')->store('projects/thumbs', 'public');
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = "project-{$slug}-thumb";
+            $path = $uploader->store($request->file('thumb'), 'projects/thumbs', ['basename' => $basename]);
             $data['thumb'] = 'storage/' . $path;
         }
 
         if ($request->hasFile('skill_cover')) {
-            $path = $request->file('skill_cover')->store('projects/skills', 'public');
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = "project-{$slug}-skill-cover";
+            $path = $uploader->store($request->file('skill_cover'), 'projects/skills', ['basename' => $basename]);
             $data['skill_cover'] = 'storage/' . $path;
         }
 
@@ -123,18 +152,46 @@ class ProjectController extends Controller
             'video' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $slug = $project->slug;
         if ($request->hasFile('cover')) {
-            $path = $request->file('cover')->store('projects', 'public');
-            $data['cover'] = 'storage/' . $path;
+            $file = $request->file('cover');
+            $mime = (string) $file->getMimeType();
+            if (str_starts_with($mime, 'image/')) {
+                /** @var ImageUploadService $uploader */
+                $uploader = app(ImageUploadService::class);
+                $basename = "project-{$slug}-cover";
+                $path = $uploader->store($file, 'projects', ['basename' => $basename]);
+                $data['cover'] = 'storage/' . $path;
+            } else if (str_starts_with($mime, 'video/')) {
+                /** @var VideoUploadService $vid */
+                $vid = app(VideoUploadService::class);
+                $basename = "project-{$slug}-cover";
+                $out = $vid->transcode($file, 'projects', ['basename' => $basename]);
+                $data['cover'] = 'storage/' . $out['video'];
+                if (empty($data['thumb']) && !empty($out['poster'])) {
+                    $data['thumb'] = 'storage/' . $out['poster'];
+                }
+            } else {
+                $path = $file->store('projects', 'public');
+                $data['cover'] = 'storage/' . $path;
+            }
         }
 
         if ($request->hasFile('thumb')) {
-            $path = $request->file('thumb')->store('projects/thumbs', 'public');
+            StorageHelper::deletePublic($project->thumb);
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = "project-{$slug}-thumb";
+            $path = $uploader->store($request->file('thumb'), 'projects/thumbs', ['basename' => $basename]);
             $data['thumb'] = 'storage/' . $path;
         }
 
         if ($request->hasFile('skill_cover')) {
-            $path = $request->file('skill_cover')->store('projects/skills', 'public');
+            StorageHelper::deletePublic($project->skill_cover);
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = "project-{$slug}-skill-cover";
+            $path = $uploader->store($request->file('skill_cover'), 'projects/skills', ['basename' => $basename]);
             $data['skill_cover'] = 'storage/' . $path;
         }
 

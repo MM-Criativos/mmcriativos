@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Services\Upload\ImageUploadService;
+use App\Services\Upload\VideoUploadService;
+use App\Support\StorageHelper;
 
 class ServiceController extends Controller
 {
@@ -41,10 +44,37 @@ class ServiceController extends Controller
             $data['slug'] = Str::slug($data['name']);
         }
 
+        $slug = $data['slug'];
+        $nowBase = date('Ymd-His');
         foreach (['thumb', 'cover'] as $field) {
             if ($request->hasFile($field)) {
-                $path = $request->file($field)->store('services', 'public');
-                $data[$field] = 'storage/' . $path;
+                if ($field === 'thumb') {
+                    /** @var ImageUploadService $img */
+                    $img = app(ImageUploadService::class);
+                    $basename = "service-{$slug}-thumb";
+                    $path = $img->store($request->file($field), 'services', ['basename' => $basename]);
+                    $data[$field] = 'storage/' . $path;
+                } else {
+                    $file = $request->file($field);
+                    $mime = (string) $file->getMimeType();
+                    if (str_starts_with($mime, 'video/')) {
+                        /** @var VideoUploadService $vid */
+                        $vid = app(VideoUploadService::class);
+                        $basename = "service-{$slug}-cover";
+                        $out = $vid->transcode($file, 'services', ['basename' => $basename]);
+                        $data[$field] = 'storage/' . $out['video'];
+                        // Se não veio thumb e gerou poster, usa como thumb
+                        if (empty($data['thumb']) && !empty($out['poster'])) {
+                            $data['thumb'] = 'storage/' . $out['poster'];
+                        }
+                    } else {
+                        /** @var ImageUploadService $img */
+                        $img = app(ImageUploadService::class);
+                        $basename = "service-{$slug}-cover";
+                        $path = $img->store($file, 'services', ['basename' => $basename]);
+                        $data[$field] = 'storage/' . $path;
+                    }
+                }
             }
         }
 
@@ -84,10 +114,41 @@ class ServiceController extends Controller
             'cover' => ['nullable', 'file', 'mimes:mp4,webm,ogg,mov'],
         ]);
 
+        $slug = $service->slug;
         foreach (['thumb', 'cover'] as $field) {
             if ($request->hasFile($field)) {
-                $path = $request->file($field)->store('services', 'public');
-                $data[$field] = 'storage/' . $path;
+                if ($field === 'thumb') {
+                    // apaga anterior
+                    StorageHelper::deletePublic($service->thumb);
+                    /** @var ImageUploadService $img */
+                    $img = app(ImageUploadService::class);
+                    $basename = "service-{$slug}-thumb";
+                    $path = $img->store($request->file($field), 'services', ['basename' => $basename]);
+                    $data[$field] = 'storage/' . $path;
+                } else {
+                    $file = $request->file($field);
+                    $mime = (string) $file->getMimeType();
+                    if (str_starts_with($mime, 'video/')) {
+                        StorageHelper::deletePublic($service->cover);
+                        /** @var VideoUploadService $vid */
+                        $vid = app(VideoUploadService::class);
+                        $basename = "service-{$slug}-cover";
+                        $out = $vid->transcode($file, 'services', ['basename' => $basename]);
+                        $data[$field] = 'storage/' . $out['video'];
+                        if (empty($data['thumb']) && !empty($out['poster'])) {
+                            // se vai substituir a thumb com o poster, apaga a atual
+                            StorageHelper::deletePublic($service->thumb);
+                            $data['thumb'] = 'storage/' . $out['poster'];
+                        }
+                    } else {
+                        StorageHelper::deletePublic($service->cover);
+                        /** @var ImageUploadService $img */
+                        $img = app(ImageUploadService::class);
+                        $basename = "service-{$slug}-cover";
+                        $path = $img->store($file, 'services', ['basename' => $basename]);
+                        $data[$field] = 'storage/' . $path;
+                    }
+                }
             }
         }
 

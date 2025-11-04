@@ -22,8 +22,18 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-2 overflow-x-auto sm:overflow-x-visible">
                             @foreach ($projects as $project)
                                 <div class="min-w-[260px] sm:min-w-0 border rounded-lg shadow-sm bg-white overflow-hidden flex flex-col transition-transform hover:scale-[1.02] hover:shadow-md">
-                                    @if ($project->cover)
-                                        <img src="{{ asset($project->cover) }}" alt="{{ $project->name }}" class="w-full h-36 object-cover" draggable="false">
+                                    @php
+                                        $cover = $project->cover;
+                                        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4','.webm','.ogg','.mov']);
+                                    @endphp
+                                    @if ($cover)
+                                        @if ($isVideo)
+                                            <video class="w-full h-36 object-cover" autoplay muted loop playsinline preload="auto">
+                                                <source src="{{ asset($cover) }}">
+                                            </video>
+                                        @else
+                                            <img src="{{ asset($cover) }}" alt="{{ $project->name }}" class="w-full h-36 object-cover" draggable="false">
+                                        @endif
                                     @endif
 
                                     <div class="p-4 flex-1 flex flex-col justify-between">
@@ -58,4 +68,3 @@
     </div>
 
 </x-app-layout>
-

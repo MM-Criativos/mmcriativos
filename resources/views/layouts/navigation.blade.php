@@ -13,8 +13,13 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('admin.layout.index')" :active="request()->is('admin/layout*')">
+                        {{ __('Layout') }}
                     </x-nav-link>
 
                     <x-nav-link :href="route('admin.services.index')" :active="request()->is('admin/services*')">
@@ -31,6 +36,10 @@
 
                     <x-nav-link :href="route('admin.clients.index')" :active="request()->is('admin/clients*')">
                         {{ __('Clientes') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*')">
+                        {{ __('Comercial') }}
                     </x-nav-link>
 
                     <x-nav-link :href="route('admin.testimonials.index')" :active="request()->is('admin/testimonials*')">
@@ -134,6 +143,12 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('admin.projects.index')" :active="request()->is('admin/projects*')">
                 {{ __('Projetos') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.layout.index')" :active="request()->is('admin/layout*')">
+                {{ __('Layout') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*')">
+                {{ __('Comercial') }}
             </x-responsive-nav-link>
             @if (Auth::user()->role === 'admin')
                 <x-responsive-nav-link :href="route('admin.team.index')" :active="request()->is('admin/team*')">

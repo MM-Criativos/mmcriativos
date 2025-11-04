@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Skill;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Services\Upload\ImageUploadService;
+use App\Services\Upload\VideoUploadService;
+use App\Support\StorageHelper;
 
 class SkillController extends Controller
 {
@@ -40,10 +43,30 @@ class SkillController extends Controller
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
         }
+        $slug = $data['slug'];
         foreach (['thumb', 'cover'] as $field) {
             if ($request->hasFile($field)) {
-                $path = $request->file($field)->store('skills', 'public');
-                $data[$field] = 'storage/' . $path;
+                $file = $request->file($field);
+                $mime = (string) $file->getMimeType();
+                if (str_starts_with($mime, 'image/')) {
+                    /** @var ImageUploadService $uploader */
+                    $uploader = app(ImageUploadService::class);
+                    $basename = "skill-{$slug}-{$field}";
+                    $path = $uploader->store($file, 'skills', ['basename' => $basename]);
+                    $data[$field] = 'storage/' . $path;
+                } elseif (str_starts_with($mime, 'video/')) {
+                    /** @var VideoUploadService $vid */
+                    $vid = app(VideoUploadService::class);
+                    $basename = "skill-{$slug}-{$field}";
+                    $out = $vid->transcode($file, 'skills', ['basename' => $basename]);
+                    $data[$field] = 'storage/' . $out['video'];
+                    if (empty($data['thumb']) && !empty($out['poster'])) {
+                        $data['thumb'] = 'storage/' . $out['poster'];
+                    }
+                } else {
+                    $path = $file->store('skills', 'public');
+                    $data[$field] = 'storage/' . $path;
+                }
             }
         }
         $skill = Skill::create($data);
@@ -69,10 +92,36 @@ class SkillController extends Controller
             // Accept image or video for cover
             'cover' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm,ogg,mov'],
         ]);
+        $slug = $skill->slug;
         foreach (['thumb', 'cover'] as $field) {
             if ($request->hasFile($field)) {
-                $path = $request->file($field)->store('skills', 'public');
-                $data[$field] = 'storage/' . $path;
+                $file = $request->file($field);
+                $mime = (string) $file->getMimeType();
+                if (str_starts_with($mime, 'image/')) {
+                    if ($field === 'thumb') StorageHelper::deletePublic($skill->thumb);
+                    if ($field === 'cover') StorageHelper::deletePublic($skill->cover);
+                    /** @var ImageUploadService $uploader */
+                    $uploader = app(ImageUploadService::class);
+                    $basename = "skill-{$slug}-{$field}";
+                    $path = $uploader->store($file, 'skills', ['basename' => $basename]);
+                    $data[$field] = 'storage/' . $path;
+                } elseif (str_starts_with($mime, 'video/')) {
+                    if ($field === 'cover') StorageHelper::deletePublic($skill->cover);
+                    /** @var VideoUploadService $vid */
+                    $vid = app(VideoUploadService::class);
+                    $basename = "skill-{$slug}-{$field}";
+                    $out = $vid->transcode($file, 'skills', ['basename' => $basename]);
+                    $data[$field] = 'storage/' . $out['video'];
+                    if (empty($data['thumb']) && !empty($out['poster'])) {
+                        StorageHelper::deletePublic($skill->thumb);
+                        $data['thumb'] = 'storage/' . $out['poster'];
+                    }
+                } else {
+                    if ($field === 'thumb') StorageHelper::deletePublic($skill->thumb);
+                    if ($field === 'cover') StorageHelper::deletePublic($skill->cover);
+                    $path = $file->store('skills', 'public');
+                    $data[$field] = 'storage/' . $path;
+                }
             }
         }
         $skill->update($data);

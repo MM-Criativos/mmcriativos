@@ -77,11 +77,20 @@
 
                                     @php
                                         $cover = $service->cover;
-                                        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4', '.webm', '.ogg', '.mov']);
+                                        $isVideo =
+                                            $cover &&
+                                            \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), [
+                                                '.mp4',
+                                                '.webm',
+                                                '.ogg',
+                                                '.mov',
+                                            ]);
                                     @endphp
                                     @if ($service->cover)
                                         @if ($isVideo)
-                                            <video id="preview-cover" src="{{ asset($service->cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition" controls muted></video>
+                                            <video id="preview-cover" src="{{ asset($service->cover) }}"
+                                                class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition"
+                                                controls muted></video>
                                         @else
                                             <img id="preview-cover" src="{{ asset($service->cover) }}" alt="Cover"
                                                 class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
@@ -120,8 +129,51 @@
                                 if (!file) return;
                                 const url = URL.createObjectURL(file);
                                 const el = document.getElementById('preview-cover');
-                                el.outerHTML = `
+                                el.outerHTML =
+                                    `
                     <video id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>`;
+                            }
+                        </script>
+
+                        <script>
+                            async function bulkUpdateProcesses(url) {
+                                try {
+                                    const root = document.getElementById('processesDnd');
+                                    if (!root) return;
+                                    const fd = new FormData();
+                                    fd.append('_token', '{{ csrf_token() }}');
+                                    root.querySelectorAll('.dnd-item').forEach((wrap) => {
+                                        const id = wrap.getAttribute('data-id');
+                                        const title = wrap.querySelector('input[name="title"]')?.value || '';
+                                        const order = wrap.querySelector('input[name="order"]')?.value || '';
+                                        const desc = wrap.querySelector('textarea[name="description"]')?.value || '';
+                                        const file = wrap.querySelector('input[type="file"][name="image"]')?.files?.[0];
+                                        fd.append(`processes[${id}][title]`, title);
+                                        fd.append(`processes[${id}][order]`, order);
+                                        fd.append(`processes[${id}][description]`, desc);
+                                        if (file) fd.append(`processes[${id}][image]`, file);
+                                    });
+                                    const btn = document.getElementById('bulkUpdateProcessesBtn');
+                                    if (btn) {
+                                        btn.disabled = true;
+                                        btn.classList.add('opacity-60');
+                                    }
+                                    const res = await fetch(url, {
+                                        method: 'POST',
+                                        body: fd
+                                    });
+                                    if (!res.ok) throw new Error('bulk update failed');
+                                    location.reload();
+                                } catch (e) {
+                                    alert('Não foi possível atualizar os processos.');
+                                    console.warn(e);
+                                } finally {
+                                    const btn = document.getElementById('bulkUpdateProcessesBtn');
+                                    if (btn) {
+                                        btn.disabled = false;
+                                        btn.classList.remove('opacity-60');
+                                    }
+                                }
                             }
                         </script>
 
@@ -135,9 +187,11 @@
                         </div>
                     </form>
 
-                    <hr class="my-8">
+
+
                     <h3 class="text-lg font-semibold mb-2">Informações do Serviço</h3>
-                    <form method="POST" action="{{ route('admin.services.info.update', $service) }}" class="space-y-4">
+                    <form method="POST" action="{{ route('admin.services.info.update', $service) }}"
+                        class="space-y-4">
                         @csrf
                         @method('PUT')
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -401,18 +455,12 @@
 
                                         {{-- Coluna 3: Botões --}}
                                         <div class="col-span-1 flex flex-col gap-2 justify-start items-end">
-                                            <button type="submit"
-                                                class="inline-flex items-center justify-center p-2 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200"
-                                                title="Atualizar">
-                                                <i class="fa-solid fa-rotate-right"></i>
-                                            </button>
 
-                                            <button type="submit"
-                                                form="delete-process-{{ $process->id }}"
+
+                                            <button type="submit" form="delete-process-{{ $process->id }}"
                                                 formnovalidate
                                                 class="inline-flex items-center justify-center p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                                                title="Apagar"
-                                                onclick="return confirm('Remover processo?');">
+                                                title="Apagar" onclick="return confirm('Remover processo?');">
                                                 <i class="fa-regular fa-trash-can"></i>
                                             </button>
                                         </div>
@@ -426,6 +474,16 @@
                                 </form>
                             </div>
                         @endforeach
+
+
+                        <div class="flex items-center justify-end mb-2">
+                            <button type="button" id="bulkUpdateProcessesBtn"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200"
+                                onclick="bulkUpdateProcesses('{{ route('admin.services.processes.bulk', $service) }}')">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                <span>Atualizar todos</span>
+                            </button>
+                        </div>
 
                         <h3 class="text-md font-semibold mb-2">Adicionar novo processo</h3>
 

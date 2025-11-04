@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Contact;
 use Illuminate\Http\Request;
+use App\Services\Upload\ImageUploadService;
+use App\Support\StorageHelper;
 
 class ContactController extends Controller
 {
@@ -39,7 +41,11 @@ class ContactController extends Controller
         ]);
         $data['is_primary'] = (bool)($data['is_primary'] ?? false);
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('clients/contacts', 'public');
+            // sem anterior para novo contato
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = 'client-' . ($client->slug ?? 'client') . '-contact-' . \Illuminate\Support\Str::slug($data['name'] ?? 'contact', '-') . '-photo';
+            $path = $uploader->store($request->file('photo'), 'clients/contacts', ['basename' => $basename]);
             $data['photo'] = 'storage/' . $path;
         }
         $contact = $client->contacts()->create($data);
@@ -69,7 +75,12 @@ class ContactController extends Controller
         ]);
         $data['is_primary'] = (bool)($data['is_primary'] ?? false);
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('clients/contacts', 'public');
+            // apaga anterior
+            StorageHelper::deletePublic($contact->photo);
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = 'client-' . ($contact->client->slug ?? 'client') . '-contact-' . \Illuminate\Support\Str::slug($data['name'] ?? $contact->name ?? 'contact', '-') . '-photo';
+            $path = $uploader->store($request->file('photo'), 'clients/contacts', ['basename' => $basename]);
             $data['photo'] = 'storage/' . $path;
         }
         $contact->update($data);

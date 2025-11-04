@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\SocialMedia;
 use Illuminate\Http\Request;
+use App\Services\Upload\ImageUploadService;
+use App\Support\StorageHelper;
 
 class TeamController extends Controller
 {
@@ -23,6 +26,59 @@ class TeamController extends Controller
     {
         $users = User::query()->orderBy('name')->get();
         return view('admin.team.index', compact('users'));
+    }
+
+    public function edit(User $user)
+    {
+        $socialMedias = SocialMedia::orderBy('name')->get();
+        $classes = \App\Models\Classe::orderBy('hierarquia')->orderBy('classe')->get();
+        $user->load(['socialMedias', 'classes']);
+        return view('admin.team.edit', compact('user', 'socialMedias', 'classes'));
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'cargo' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'photo' => ['nullable', 'image'],
+            'socials' => ['nullable', 'array'],
+            'socials.*' => ['nullable', 'string', 'max:2048'],
+            'classes' => ['nullable', 'array'],
+            'classes.*' => ['integer', 'exists:classes,id'],
+        ]);
+
+        if ($request->hasFile('photo')) {
+            StorageHelper::deletePublic($user->photo);
+            /** @var ImageUploadService $img */
+            $img = app(ImageUploadService::class);
+            $basename = 'user-' . \Illuminate\Support\Str::slug($user->name ?: 'user', '-') . '-photo';
+            $path = $img->store($request->file('photo'), 'users', ['basename' => $basename]);
+            $data['photo'] = 'storage/' . $path;
+        } else {
+            unset($data['photo']);
+        }
+
+        // Atualiza dados básicos
+        $user->update($data);
+
+        // Sincroniza redes sociais (id => url)
+        $sync = [];
+        foreach ((array) ($data['socials'] ?? []) as $socialId => $url) {
+            $url = trim((string) $url);
+            if ($url !== '') {
+                $sync[(int) $socialId] = ['url' => $url];
+            }
+        }
+        $user->socialMedias()->sync($sync);
+
+        // Sincroniza classes
+        $classIds = collect($data['classes'] ?? [])->filter()->map(fn ($id) => (int) $id)->all();
+        $user->classes()->sync($classIds);
+
+        return redirect()->route('admin.team.edit', $user)->with('status', 'Usuário atualizado.');
     }
 
     public function updateRole(Request $request, User $user)
@@ -56,4 +112,3 @@ class TeamController extends Controller
         return back()->with('status', 'Usuário excluído.');
     }
 }
-

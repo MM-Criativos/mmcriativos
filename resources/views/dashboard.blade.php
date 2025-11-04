@@ -8,6 +8,15 @@
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <a href="{{ route('admin.layout.index') }}"
+                    class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm opacity-80 hover:bg-gray-50 dark:hover:bg-dark-700">
+                    <div class="text-lg font-semibold">Layout</div>
+                    <p class="text-sm text-gray-600">
+                        Acesse configurações de layout como o Slider.
+                    </p>
+                </a>
+
                 <a href="{{ route('admin.services.index') }}"
                     class="block bg-white dark:bg-dark-800 hover:bg-gray-50 dark:hover:bg-dark-700 border rounded-lg p-6 shadow-sm">
                     <div class="text-lg font-semibold">Serviços</div>
@@ -37,6 +46,14 @@
                     <div class="text-lg font-semibold">Clientes</div>
                     <p class="text-sm text-gray-600">
                         Gerencie clientes, logotipos, contatos e informações comerciais.
+                    </p>
+                </a>
+
+                <a href="{{ route('admin.commercial.dashboard') }}"
+                    class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-700">
+                    <div class="text-lg font-semibold">Comercial</div>
+                    <p class="text-sm text-gray-600">
+                        Orçamentos, planos, extras e templates de e-mail.
                     </p>
                 </a>
 

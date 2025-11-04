@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Service;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Validation\Rules\Email;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,6 +27,13 @@ class DatabaseSeeder extends Seeder
             ServiceFeatureSeeder::class,
             ServiceProcessSeeder::class,
             ServiceCtaSeeder::class,
+            ClassSeeder::class,
+            AboutUsSeeder::class,
+            PlanSeeder::class,
+            PlanAdvantageSeeder::class,
+            ExtrasSeeder::class,
+            ExtraServiceSeeder::class,
+            EmailTemplateSeeder::class,
         ]);
     }
 }

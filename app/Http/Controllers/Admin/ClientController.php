@@ -8,6 +8,8 @@ use App\Models\SocialMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Services\Upload\ImageUploadService;
+use App\Support\StorageHelper;
 
 class ClientController extends Controller
 {
@@ -44,9 +46,13 @@ class ClientController extends Controller
             $data['slug'] = Str::slug($data['name']);
         }
 
-        // Upload da logo
+        // Upload da logo (otimizada)
         if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('clients/logos', 'public');
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $slug = $data['slug'];
+            $basename = "client-{$slug}-logo";
+            $path = $uploader->store($request->file('logo'), 'clients/logos', ['basename' => $basename]);
             $data['logo'] = $path; // salva o caminho relativo
         }
 
@@ -87,7 +93,10 @@ class ClientController extends Controller
                 Storage::disk('public')->delete($client->logo);
             }
 
-            $path = $request->file('logo')->store('clients/logos', 'public');
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = "client-{$client->slug}-logo";
+            $path = $uploader->store($request->file('logo'), 'clients/logos', ['basename' => $basename]);
             $data['logo'] = $path;
         }
 

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Skill;
 use Illuminate\Http\Request;
+use App\Services\Upload\ImageUploadService;
+use App\Support\StorageHelper;
 
 class SkillInfoController extends Controller
 {
@@ -18,7 +20,13 @@ class SkillInfoController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('skills', 'public');
+            // apaga anterior, se existir
+            if ($skill->info) {
+                StorageHelper::deletePublic($skill->info->image);
+            }
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $path = $uploader->store($request->file('image'), 'skills');
             $data['image'] = 'storage/' . $path;
         }
 
@@ -27,4 +35,3 @@ class SkillInfoController extends Controller
         return back()->with('status', 'Informações da Skill salvas.');
     }
 }
-

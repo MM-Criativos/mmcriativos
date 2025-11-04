@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ProjectImage;
 use App\Models\ProjectProcess;
 use Illuminate\Http\Request;
+use App\Services\Upload\ImageUploadService;
+use App\Support\StorageHelper;
 
 class ProjectImageController extends Controller
 {
@@ -17,8 +19,14 @@ class ProjectImageController extends Controller
         ]);
 
         $created = [];
-        foreach ($request->file('images', []) as $file) {
-            $path = $file->store('projects/processes', 'public');
+        /** @var ImageUploadService $uploader */
+        $uploader = app(ImageUploadService::class);
+        $projectProcess->loadMissing(['project', 'process']);
+        $projSlug = optional($projectProcess->project)->slug ?: 'project';
+        $procSlug = \Illuminate\Support\Str::slug(optional($projectProcess->process)->name ?: 'process', '-');
+        foreach ($request->file('images', []) as $i => $file) {
+            $basename = "project-{$projSlug}-process-{$procSlug}-img";
+            $path = $uploader->store($file, 'projects/processes', ['basename' => $basename]);
             $img = $projectProcess->images()->create([
                 'image' => 'storage/' . $path,
                 'order' => 0,
@@ -64,6 +72,8 @@ class ProjectImageController extends Controller
     public function destroy(ProjectImage $projectImage)
     {
         $id = $projectImage->id;
+        // remove arquivo do storage
+        StorageHelper::deletePublic($projectImage->image);
         $projectImage->delete();
         if (request()->ajax()) {
             return response()->json(['status' => 'ok', 'removed' => true, 'id' => $id]);

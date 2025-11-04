@@ -54,31 +54,37 @@
             position: absolute;
             inset: 0;
             display: grid;
-            place-items: center; /* center in both axes */
-            pointer-events: none; /* allow menu/buttons to remain clickable */
+            place-items: center;
+            /* center in both axes */
+            pointer-events: none;
+            /* allow menu/buttons to remain clickable */
         }
+
         .hero-diff {
             color: #fff;
             font-weight: 600;
             line-height: 1.15;
             font-size: clamp(24px, 5vw, 56px);
-            text-shadow: 0 2px 24px rgba(0,0,0,.45);
-            opacity: 0; /* GSAP controls */
+            text-shadow: 0 2px 24px rgba(0, 0, 0, .45);
+            opacity: 0;
+            /* GSAP controls */
             pointer-events: none;
             text-align: center;
-            padding: 0 20px; /* mobile safe gutters */
-            grid-area: 1 / 1; /* stack all items centered */
+            padding: 0 20px;
+            /* mobile safe gutters */
+            grid-area: 1 / 1;
+            /* stack all items centered */
             width: 100%;
             max-width: 1000px;
             margin: 0 auto;
         }
 
         /* Lock sticky header while hero is pinned */
-        body.hero-sticky-lock .stricky-header { 
-            opacity: 0 !important; 
-            visibility: hidden !important; 
-            transform: translateY(-100%) !important; 
-            pointer-events: none !important; 
+        body.hero-sticky-lock .stricky-header {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transform: translateY(-100%) !important;
+            pointer-events: none !important;
         }
 
         /* Glassmorphism controls (social + phone) */
@@ -127,8 +133,15 @@
     </style>
     <div class="video-hero">
         <div class="video-hero__media">
-            <video autoplay muted loop playsinline poster="{{ asset('assets/video/MMConnect.mp4') }}">
-                <source src="{{ asset($video ?? 'assets/video/MMConnect.mp4') }}" type="video/mp4">
+            @php
+                $sliderRec = \App\Models\Slider::first();
+                $videoPath = $sliderRec?->video ? asset($sliderRec->video) : asset('assets/video/MMConnect.mp4');
+                $t1 = $sliderRec?->text_1 ?: 'Diferencial 1';
+                $t2 = $sliderRec?->text_2 ?: 'Diferencial 2';
+                $t3 = $sliderRec?->text_3 ?: 'Diferencial 3';
+            @endphp
+            <video autoplay muted loop playsinline>
+                <source src="{{ $videoPath }}" type="video/mp4">
             </video>
         </div>
         <div class="video-hero__overlay"></div>
@@ -136,9 +149,9 @@
             <div class="row w-100">
                 <div class="col-xl-12">
                     <div class="main-slider__two__content text-center hero-diffs">
-                        <div class="hero-diff" data-overlay="0.2">Diferencial 1</div>
-                        <div class="hero-diff" data-overlay="0.3">Diferencial 2</div>
-                        <div class="hero-diff" data-overlay="0.4">Diferencial 3</div>
+                        <div class="hero-diff" data-overlay="0.2">{{ $t1 }}</div>
+                        <div class="hero-diff" data-overlay="0.4">{{ $t2 }}</div>
+                        <div class="hero-diff" data-overlay="0.6">{{ $t3 }}</div>
                     </div>
                 </div>
             </div>
@@ -149,12 +162,13 @@
         $setting = \App\Models\Setting::query()->first();
         $socials = [
             'instagram' => ['icon' => 'fa-brands fa-instagram', 'label' => 'Instagram'],
-            'x' => ['icon' => 'fa-brands fa-x-twitter', 'label' => 'X'],
             'whatsapp' => ['icon' => 'fa-brands fa-whatsapp', 'label' => 'WhatsApp'],
             'linkedin' => ['icon' => 'fa-brands fa-linkedin-in', 'label' => 'LinkedIn'],
+            'behance' => ['icon' => 'fa-brands fa-behance', 'label' => 'Behance'],
             'github' => ['icon' => 'fa-brands fa-github', 'label' => 'GitHub'],
         ];
     @endphp
+
     <div class="main-slider__socails">
         @foreach ($socials as $field => $meta)
             @php $url = optional($setting)->{$field}; @endphp
@@ -166,16 +180,13 @@
             @endif
         @endforeach
     </div>
+
     <!-- social end -->
-    <!-- phone start -->
-    <div class="main-slider__phone"><a class="glass-pill" href="tel:+926668880000"><i class="fa-brands fa-github"></i>
-            <span>+92 666 888 0000</span></a></div>
-    <!-- phone end -->
 </section>
 <!--Main Slider End-->
 
 <script>
-    (function () {
+    (function() {
         function loadScript(src) {
             return new Promise(function(resolve, reject) {
                 var s = document.createElement('script');
@@ -188,7 +199,9 @@
 
         function initHeroScroll() {
             var startTimeline = function() {
-                try { gsap.registerPlugin(ScrollTrigger); } catch (e) {}
+                try {
+                    gsap.registerPlugin(ScrollTrigger);
+                } catch (e) {}
 
                 // Pin the whole slider section so its absolutely-positioned
                 // children (social/phone) stay aligned during the pin.
@@ -197,17 +210,24 @@
                 var diffs = gsap.utils.toArray('.hero-diff');
                 if (!section || !overlay || !diffs.length) return;
 
-                gsap.set(overlay, { backgroundColor: 'rgba(0,0,0,0)' });
-                gsap.set(diffs, { autoAlpha: 0, y: 40 });
+                gsap.set(overlay, {
+                    backgroundColor: 'rgba(0,0,0,0)'
+                });
+                gsap.set(diffs, {
+                    autoAlpha: 0,
+                    y: 40
+                });
 
                 // Evita que qualquer margem residual crie "gap" ao refrescar/recarregar
                 try {
-                    ScrollTrigger.addEventListener('refreshInit', function () {
-                        gsap.set(section, { clearProps: 'margin' });
+                    ScrollTrigger.addEventListener('refreshInit', function() {
+                        gsap.set(section, {
+                            clearProps: 'margin'
+                        });
                     });
                 } catch (e) {}
 
-                var lockSticky = function(flag){
+                var lockSticky = function(flag) {
                     document.body.classList.toggle('hero-sticky-lock', !!flag);
                 };
 
@@ -216,42 +236,70 @@
                         trigger: section,
                         start: 'top top',
                         end: '+=' + (diffs.length * 100) + '%',
-                        pin: true,                 // pin the slider section
+                        pin: true, // pin the slider section
                         // Use padding (padrão) para evitar colapso de margens que causa espaço em branco
                         pinSpacing: true,
                         scrub: 1,
                         anticipatePin: 1,
                         invalidateOnRefresh: true,
-                        onEnter: function(){ lockSticky(true); },
-                        onEnterBack: function(){ lockSticky(true); },
-                        onLeave: function(){ lockSticky(false); },
-                        onLeaveBack: function(){ lockSticky(false); }
+                        onEnter: function() {
+                            lockSticky(true);
+                        },
+                        onEnterBack: function() {
+                            lockSticky(true);
+                        },
+                        onLeave: function() {
+                            lockSticky(false);
+                        },
+                        onLeaveBack: function() {
+                            lockSticky(false);
+                        }
                     }
                 });
 
                 diffs.forEach(function(el, i) {
                     var targetOverlay = parseFloat(el.getAttribute('data-overlay') || '0.2');
-                    tl.to(overlay, { duration: 0.4, backgroundColor: 'rgba(0,0,0,' + targetOverlay + ')' });
-                    tl.fromTo(el, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '<');
+                    tl.to(overlay, {
+                        duration: 0.4,
+                        backgroundColor: 'rgba(0,0,0,' + targetOverlay + ')'
+                    });
+                    tl.fromTo(el, {
+                        autoAlpha: 0,
+                        y: 40
+                    }, {
+                        autoAlpha: 1,
+                        y: 0,
+                        duration: 0.5,
+                        ease: 'power2.out'
+                    }, '<');
                     if (i < diffs.length - 1) {
-                        tl.to(el, { autoAlpha: 0, y: -30, duration: 0.45, ease: 'power2.in' }, '+=0.5');
+                        tl.to(el, {
+                            autoAlpha: 0,
+                            y: -30,
+                            duration: 0.45,
+                            ease: 'power2.in'
+                        }, '+=0.5');
                     }
                 });
                 // Hold a beat with the 3º diferencial visível antes de liberar o pin
-                tl.to({}, { duration: 0.4 });
+                tl.to({}, {
+                    duration: 0.4
+                });
             };
 
-            var afterGSAP = function(){
+            var afterGSAP = function() {
                 if (window.ScrollTrigger) {
                     startTimeline();
                     // make sure positions are correct after assets load
-                    window.addEventListener('load', function(){
-                        try { ScrollTrigger.refresh(); } catch(e){}
+                    window.addEventListener('load', function() {
+                        try {
+                            ScrollTrigger.refresh();
+                        } catch (e) {}
                     });
                 } else {
                     loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js')
                         .then(startTimeline)
-                        .catch(function(){});
+                        .catch(function() {});
                 }
             };
 
@@ -260,7 +308,7 @@
             } else {
                 loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js')
                     .then(afterGSAP)
-                    .catch(function(){});
+                    .catch(function() {});
             }
         }
 

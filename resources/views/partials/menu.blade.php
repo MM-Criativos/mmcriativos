@@ -18,6 +18,16 @@
         .glass-btn:hover {
             background: rgba(255, 255, 255, .14);
             border-color: rgba(255, 255, 255, .35);
+            color: #ff8800;
+        }
+
+        /* WhatsApp button: só aparece no header fixo (sticky) */
+        .glass-whatsapp {
+            display: none;
+        }
+
+        .stricky-header .glass-whatsapp {
+            display: inline-flex;
         }
 
         .site-menu-overlay {
@@ -108,6 +118,20 @@
                     <i class="fa-solid fa-bars"></i>
                     <span class="d-none d-md-inline">Menu</span>
                 </button>
+
+                <!-- WhatsApp (apenas no sticky header) -->
+                @php
+                    $setting = $setting ?? \App\Models\Setting::query()->first();
+                    $rawWa = optional($setting)->whatsapp;
+                    $isUrl = is_string($rawWa) && preg_match('/^https?:\/\//i', $rawWa);
+                    $waHref = $isUrl ? $rawWa : ($rawWa ? 'https://wa.me/' . preg_replace('/\D+/', '', $rawWa) : null);
+                @endphp
+                @if ($waHref)
+                    <a class="glass-btn glass-whatsapp" href="{{ $waHref }}" target="_blank" rel="noopener"
+                        aria-label="Abrir WhatsApp">
+                        <i class="fa-brands fa-whatsapp fa-2x"></i>
+                    </a>
+                @endif
             </div>
         </div>
     </nav>
@@ -118,14 +142,40 @@
             <button class="glass-btn site-menu-close js-close-menu" aria-label="Fechar menu"><i
                     class="fa-solid fa-xmark"></i></button>
             <ul class="site-menu-list">
-                <li><a href="#">Sobre</a></li>
-                <li><a href="#">Valores</a></li>
-                <li><a href="#">Contato</a></li>
+                <li><a href="{{ route('about') }}">Sobre</a></li>
+                <li><a href="{{ route('contact') }}">Contato</a></li>
             </ul>
             <div class="site-menu-sub">
-                <a href="#">Contact</a>
-                <a href="#">Latest</a>
-                <a href="#">Careers</a>
+                @php $setting = $setting ?? \App\Models\Setting::query()->first(); @endphp
+                @php
+                    $socials = [
+                        'instagram' => ['icon' => 'fab fa-instagram'],
+                        'whatsapp' => ['icon' => 'fab fa-whatsapp'],
+                        'linkedin' => ['icon' => 'fab fa-linkedin-in'],
+                        'behance' => ['icon' => 'fab fa-behance'],
+                        'github' => ['icon' => 'fab fa-github'],
+                    ];
+                @endphp
+                @foreach ($socials as $field => $meta)
+                    @php
+                        if ($field === 'whatsapp') {
+                            $wa = optional($setting)->whatsapp;
+                            $url =
+                                is_string($wa) && preg_match('/^https?:\/\//i', $wa)
+                                    ? $wa
+                                    : ($wa
+                                        ? 'https://wa.me/' . preg_replace('/\D+/', '', $wa)
+                                        : null);
+                        } else {
+                            $url = optional($setting)->{$field};
+                        }
+                    @endphp
+                    @if (!empty($url))
+                        <a href="{{ $url }}" target="_blank" aria-label="{{ ucfirst($field) }}">
+                            <i class="{{ $meta['icon'] }}"></i>
+                        </a>
+                    @endif
+                @endforeach
             </div>
         </div>
     </div>

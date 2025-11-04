@@ -23,6 +23,9 @@ class User extends Authenticatable
         'password',
         'role',
         'is_approved',
+        'cargo',
+        'photo',
+        'description',
     ];
 
     /**
@@ -47,5 +50,18 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_approved' => 'boolean',
         ];
+    }
+
+    public function socialMedias()
+    {
+        return $this->belongsToMany(SocialMedia::class, 'social_media_user')
+            ->withPivot('url')
+            ->withTimestamps();
+    }
+
+    public function classes()
+    {
+        return $this->belongsToMany(Classe::class, 'class_user', 'user_id', 'class_id')
+            ->withTimestamps();
     }
 }

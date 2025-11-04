@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\ServiceCta;
 use Illuminate\Http\Request;
+use App\Services\Upload\ImageUploadService;
+use App\Support\StorageHelper;
 
 class ServiceCtaController extends Controller
 {
@@ -17,7 +19,10 @@ class ServiceCtaController extends Controller
             'image' => ['nullable', 'image'],
         ]);
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('services/ctas', 'public');
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = 'service-' . ($service->slug ?? 'service') . '-cta-image';
+            $path = $uploader->store($request->file('image'), 'services/ctas', ['basename' => $basename]);
             $data['image'] = 'storage/' . $path;
         }
         $service->ctas()->create($data);
@@ -32,7 +37,11 @@ class ServiceCtaController extends Controller
             'image' => ['nullable', 'image'],
         ]);
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('services/ctas', 'public');
+            StorageHelper::deletePublic($cta->image);
+            /** @var ImageUploadService $uploader */
+            $uploader = app(ImageUploadService::class);
+            $basename = 'service-' . ($cta->service->slug ?? 'service') . '-cta-image';
+            $path = $uploader->store($request->file('image'), 'services/ctas', ['basename' => $basename]);
             $data['image'] = 'storage/' . $path;
         }
         $cta->update($data);
@@ -45,4 +54,3 @@ class ServiceCtaController extends Controller
         return back()->with('status', 'CTA removida.');
     }
 }
-
