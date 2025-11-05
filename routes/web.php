@@ -20,6 +20,8 @@ use App\Http\Controllers\Admin\ProjectSolutionController as AdminProjectSolution
 use App\Http\Controllers\Admin\ProjectProcessController as AdminProjectProcessController;
 use App\Http\Controllers\Admin\ProjectImageController as AdminProjectImageController;
 use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectSkillCompetencyController;
+use App\Http\Controllers\Admin\ProjectPlanningController as AdminProjectPlanningController;
+use App\Http\Controllers\Site\PublicBriefingController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\TeamController as AdminTeamController;
 use App\Http\Controllers\Admin\ClasseController as AdminClasseController;
@@ -93,6 +95,14 @@ Route::prefix('budget')->name('budget.')->group(function () {
     Route::get('/{token}/decline', [PublicBudgetController::class, 'decline'])->name('decline');
 });
 
+// Public signed routes for client briefing (no auth)
+Route::middleware('signed')->group(function () {
+    Route::get('briefing/{project}/perception', [PublicBriefingController::class, 'perception'])
+        ->name('public.briefing.perception');
+    Route::post('briefing/{project}/perception', [PublicBriefingController::class, 'savePerception'])
+        ->name('public.briefing.perception.save');
+});
+
 // Admin painel (usa auth do Breeze)
 Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard pode continuar usando /dashboard padrÃ£o; aqui focamos nos CRUDs
@@ -160,6 +170,12 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
     Route::prefix('projects')->name('projects.')->group(function () {
         Route::get('progress', [AdminProjectController::class, 'progress'])->name('progress.index');
         Route::get('completed', [AdminProjectController::class, 'completed'])->name('completed.index');
+        Route::get('{project}/steps', [AdminProjectController::class, 'steps'])->name('steps.show');
+        // Planning: scale responses
+        Route::post('{project}/planning/scale', [AdminProjectPlanningController::class, 'saveScale'])
+            ->name('planning.scale.save');
+        Route::post('{project}/planning/scale/email', [AdminProjectPlanningController::class, 'sendScaleEmail'])
+            ->name('planning.scale.email');
     });
     Route::resource('projects', AdminProjectController::class)->only(['index','create','store','edit','update','destroy']);
 

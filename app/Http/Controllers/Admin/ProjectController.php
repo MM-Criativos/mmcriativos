@@ -61,9 +61,7 @@ class ProjectController extends Controller
             'slug' => ['nullable', 'string', 'max:255', 'unique:projects,slug'],
             'client_id' => ['nullable', 'exists:clients,id'],
             'service_id' => ['nullable', 'exists:services,id'],
-            'summary' => ['nullable', 'string'],
             // Cover pode ser imagem ou vídeo
-            'cover' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,mp4,webm,ogg,mov'],
             'thumb' => ['nullable', 'image'], // ✅ novo campo
             'skill_cover' => ['nullable', 'image'],
             'video' => ['nullable', 'string', 'max:255'],
@@ -79,51 +77,16 @@ class ProjectController extends Controller
             $data['slug'] = $slug;
         }
 
-        $slug = $data['slug'];
-        if ($request->hasFile('cover')) {
-            $file = $request->file('cover');
-            $mime = (string) $file->getMimeType();
-            if (str_starts_with($mime, 'image/')) {
-                /** @var ImageUploadService $uploader */
-                $uploader = app(ImageUploadService::class);
-                $basename = "project-{$slug}-cover";
-                $path = $uploader->store($file, 'projects', ['basename' => $basename]);
-                $data['cover'] = 'storage/' . $path;
-            } else if (str_starts_with($mime, 'video/')) {
-                /** @var VideoUploadService $vid */
-                $vid = app(VideoUploadService::class);
-                $basename = "project-{$slug}-cover";
-                $out = $vid->transcode($file, 'projects', ['basename' => $basename]);
-                $data['cover'] = 'storage/' . $out['video'];
-                if (empty($data['thumb']) && !empty($out['poster'])) {
-                    $data['thumb'] = 'storage/' . $out['poster'];
-                }
-            } else {
-                $path = $file->store('projects', 'public');
-                $data['cover'] = 'storage/' . $path;
-            }
-        }
+        // Campos de mídia serão definidos na etapa de apresentação.
 
-        if ($request->hasFile('thumb')) {
-            /** @var ImageUploadService $uploader */
-            $uploader = app(ImageUploadService::class);
-            $basename = "project-{$slug}-thumb";
-            $path = $uploader->store($request->file('thumb'), 'projects/thumbs', ['basename' => $basename]);
-            $data['thumb'] = 'storage/' . $path;
-        }
+        
 
-        if ($request->hasFile('skill_cover')) {
-            /** @var ImageUploadService $uploader */
-            $uploader = app(ImageUploadService::class);
-            $basename = "project-{$slug}-skill-cover";
-            $path = $uploader->store($request->file('skill_cover'), 'projects/skills', ['basename' => $basename]);
-            $data['skill_cover'] = 'storage/' . $path;
-        }
+        
 
         $project = Project::create($data);
 
         return redirect()
-            ->route('admin.projects.edit', $project)
+            ->route('admin.projects.steps.show', $project)
             ->with('status', 'Projeto criado com sucesso.');
     }
 
@@ -238,5 +201,38 @@ class ProjectController extends Controller
     {
         $project->delete();
         return redirect()->route('admin.projects.index')->with('status', 'Projeto removido.');
+    }
+
+    public function steps(Project $project)
+    {
+        $project->load(['client','service','planning']);
+
+        // Garante respostas padrão (centro) para a régua quando ainda não houver
+        try {
+            if ($project->client_id) {
+                $hasResponses = \App\Models\PlanningBriefingResponse::where('project_id', $project->id)->exists();
+                if (!$hasResponses) {
+                    $reguas = \App\Models\PlanningBriefingRegua::orderBy('id')->get();
+                    foreach ($reguas as $regua) {
+                        $min = (int) ($regua->min ?? 0);
+                        $max = (int) ($regua->max ?? 10);
+                        $step = max(1, (int) ($regua->step ?? 1));
+                        $default = $regua->default_value ?? intdiv($min + $max, 2);
+                        $mid = (int) $default;
+                        \App\Models\PlanningBriefingResponse::firstOrCreate([
+                            'project_id' => $project->id,
+                            'client_id' => $project->client_id,
+                            'briefing_regua_id' => $regua->id,
+                        ], [
+                            'value' => $mid,
+                        ]);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Evita quebra da tela em caso de migrações pendentes
+        }
+        $tab = request()->query('tab', 'planning');
+        return view('admin.projects.steps.show', compact('project','tab'));
     }
 }

@@ -81,4 +81,30 @@ class Project extends Model
     {
         return $this->hasMany(ProjectSkillCompetency::class);
     }
+
+    public function planning()
+    {
+        return $this->hasOne(ProjectPlanning::class);
+    }
+
+    protected static function booted()
+    {
+        static::created(function (Project $project) {
+            // Cria registro padrão de planejamento ao criar o projeto
+            // Requer client_id para respeitar FK em project_plannings
+            if (!$project->client_id) {
+                return;
+            }
+
+            \App\Models\ProjectPlanning::firstOrCreate(
+                ['project_id' => $project->id],
+                [
+                    'client_id'   => $project->client_id,
+                    'status'      => 'not_started',
+                    'started_at'  => $project->created_at,
+                    'completed_at'=> null,
+                ]
+            );
+        });
+    }
 }
