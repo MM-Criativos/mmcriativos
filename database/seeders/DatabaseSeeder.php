@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Plan;
 use App\Models\Service;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Process;
@@ -34,6 +35,8 @@ class DatabaseSeeder extends Seeder
             ExtrasSeeder::class,
             ExtraServiceSeeder::class,
             EmailTemplateSeeder::class,
+            PlanningBriefingReguaSeeder::class,
+            QualitativeTemplateSeeder::class,
         ]);
     }
 }

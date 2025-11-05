@@ -23,12 +23,28 @@ class ProjectController extends Controller
 
     public function index()
     {
+        return view('admin.projects.index');
+    }
+
+    public function progress()
+    {
         $projects = Project::with('client')
+            ->whereNull('finished_at')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.projects.progress.index', compact('projects'));
+    }
+
+    public function completed()
+    {
+        $projects = Project::with('client')
+            ->whereNotNull('finished_at')
             ->orderByDesc('finished_at')
             ->orderBy('name')
             ->get();
 
-        return view('admin.projects.index', compact('projects'));
+        return view('admin.projects.completed.index', compact('projects'));
     }
 
     public function create()

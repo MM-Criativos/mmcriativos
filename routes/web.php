@@ -156,6 +156,11 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
     });
 
     // Projects
+    // Sub-sections: progress (em andamento) and completed (concluídos)
+    Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('progress', [AdminProjectController::class, 'progress'])->name('progress.index');
+        Route::get('completed', [AdminProjectController::class, 'completed'])->name('completed.index');
+    });
     Route::resource('projects', AdminProjectController::class)->only(['index','create','store','edit','update','destroy']);
 
     // Projects: challenges & solutions
