@@ -7,7 +7,7 @@
 @endphp
 
 @php
-    $action = $action ?? route('public.briefing.perception.save', $project);
+    $action = $action ?? secure_url(route('public.briefing.perception.save', $project, false));
 @endphp
 <form method="POST" action="{{ $action }}" class="space-y-6">
     @csrf

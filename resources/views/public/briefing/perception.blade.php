@@ -1,4 +1,5 @@
 <x-guest-layout>
+    <x-slot name="title">MM Criativos | Briefing inicial - Percepção</x-slot>
     <div class="w-full max-w-none py-10 px-8">
 
         <h1 class="text-2xl font-semibold text-gray-900 mb-2">Régua de Percepção</h1>

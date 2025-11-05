@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\SkillController as AdminSkillController;
 use App\Http\Controllers\Admin\SkillCompetencyController as AdminSkillCompetencyController;
 use App\Http\Controllers\Admin\ServiceInfoController as AdminServiceInfoController;
+use App\Http\Controllers\Admin\ProjectPlanningQualitativeController;
 use App\Http\Controllers\Admin\ServiceBenefitController as AdminServiceBenefitController;
 use App\Http\Controllers\Admin\ServiceFeatureController as AdminServiceFeatureController;
 use App\Http\Controllers\Admin\ServiceProcessController as AdminServiceProcessController;
@@ -95,16 +96,19 @@ Route::prefix('budget')->name('budget.')->group(function () {
     Route::get('/{token}/decline', [PublicBudgetController::class, 'decline'])->name('decline');
 });
 
-// Public signed routes for client briefing (no auth)
-Route::middleware('signed')->group(function () {
-    Route::get('briefing/{project}/perception', [PublicBriefingController::class, 'perception'])
-        ->name('public.briefing.perception');
-    Route::post('briefing/{project}/perception', [PublicBriefingController::class, 'savePerception'])
-        ->name('public.briefing.perception.save');
-});
+// Public signed route for client briefing view (no auth).
+// The GET view requires a signed URL, but the POST that saves the form
+// should not require the signature — it only needs CSRF protection.
+Route::get('briefing/{project}/perception', [PublicBriefingController::class, 'perception'])
+    ->middleware('signed')
+    ->name('public.briefing.perception');
+
+// Allow form submission without URL signature (CSRF handled in the form)
+Route::post('briefing/{project}/perception', [PublicBriefingController::class, 'savePerception'])
+    ->name('public.briefing.perception.save');
 
 // Admin painel (usa auth do Breeze)
-Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard pode continuar usando /dashboard padrÃ£o; aqui focamos nos CRUDs
 
     // ServiÃ§os
@@ -176,15 +180,23 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
             ->name('planning.scale.save');
         Route::post('{project}/planning/scale/email', [AdminProjectPlanningController::class, 'sendScaleEmail'])
             ->name('planning.scale.email');
+
+        // Planning: qualitative questionnaire
+        Route::get('{project}/planning/qualitative/templates', [ProjectPlanningQualitativeController::class, 'templates'])
+            ->name('planning.qualitative.templates');
+        Route::post('{project}/planning/qualitative/save', [ProjectPlanningQualitativeController::class, 'save'])
+            ->name('planning.qualitative.save');
+        Route::post('{project}/planning/qualitative/email', [ProjectPlanningQualitativeController::class, 'sendEmail'])
+            ->name('planning.qualitative.email');
     });
-    Route::resource('projects', AdminProjectController::class)->only(['index','create','store','edit','update','destroy']);
+    Route::resource('projects', AdminProjectController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
     // Projects: challenges & solutions
     Route::resource('projects.challenges', AdminProjectChallengeController::class)
-        ->only(['store','update','destroy'])
+        ->only(['store', 'update', 'destroy'])
         ->shallow();
     Route::resource('projects.solutions', AdminProjectSolutionController::class)
-        ->only(['store','update','destroy'])
+        ->only(['store', 'update', 'destroy'])
         ->shallow();
 
     // Projects: processes (pivot) and images
@@ -245,4 +257,3 @@ Route::middleware(['auth','approved'])->prefix('admin')->name('admin.')->group(f
         Route::get('kpi', [CommercialKpiController::class, 'index'])->name('kpi.index');
     });
 });
-

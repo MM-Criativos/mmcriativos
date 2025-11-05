@@ -207,31 +207,9 @@ class ProjectController extends Controller
     {
         $project->load(['client','service','planning']);
 
-        // Garante respostas padrão (centro) para a régua quando ainda não houver
-        try {
-            if ($project->client_id) {
-                $hasResponses = \App\Models\PlanningBriefingResponse::where('project_id', $project->id)->exists();
-                if (!$hasResponses) {
-                    $reguas = \App\Models\PlanningBriefingRegua::orderBy('id')->get();
-                    foreach ($reguas as $regua) {
-                        $min = (int) ($regua->min ?? 0);
-                        $max = (int) ($regua->max ?? 10);
-                        $step = max(1, (int) ($regua->step ?? 1));
-                        $default = $regua->default_value ?? intdiv($min + $max, 2);
-                        $mid = (int) $default;
-                        \App\Models\PlanningBriefingResponse::firstOrCreate([
-                            'project_id' => $project->id,
-                            'client_id' => $project->client_id,
-                            'briefing_regua_id' => $regua->id,
-                        ], [
-                            'value' => $mid,
-                        ]);
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // Evita quebra da tela em caso de migrações pendentes
-        }
+        // Removido: não preenche mais respostas automaticamente.
+        // A tabela planning_briefing_responses deve ser preenchida apenas quando o cliente
+        // responder o formulário público enviado por e-mail.
         $tab = request()->query('tab', 'planning');
         return view('admin.projects.steps.show', compact('project','tab'));
     }

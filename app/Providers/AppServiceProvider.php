@@ -28,9 +28,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Garantir que o gerador de URL use o APP_URL (evita assinatura inválida por host/esquema)
+        //
+        // Força HTTPS em desenvolvimento local e produção
+        if (app()->environment('production') || (bool) env('FORCE_HTTPS', false)) {
+            URL::forceScheme('https');
+        }
+
+        // Garantir esquema do APP_URL e forçar root apenas em produção
         if (config('app.url')) {
-            URL::forceRootUrl(config('app.url'));
+            $appUrl = config('app.url');
+
+            // Forçar a raiz completa somente em produção (ou quando explicitamente habilitado)
+            if (app()->environment('production') || (bool) env('FORCE_ROOT_URL', false)) {
+                URL::forceRootUrl($appUrl);
+            }
         }
 
         // Register event listeners for budget lifecycle
