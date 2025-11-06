@@ -205,54 +205,7 @@
                 </form>
             </div>
 
-            <hr class="my-8">
-
-            <hr class="my-8">
-
-            <h3 class="text-lg font-semibold mb-2">Skills e Competências</h3>
-            <div class="bg-white p-4 rounded shadow-sm border border-gray-100 mb-4">
-                <form id="attachSkillsForm" method="POST"
-                    action="{{ route('admin.projects.skills.attach', $project) }}" class="space-y-3">
-                    @csrf
-                    <div class="grid grid-cols-12 gap-3 items-end">
-                        <div class="col-span-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Skill</label>
-                            <select id="skillSelect" name="skill_id"
-                                class="w-full border-gray-300 rounded-md text-sm" required>
-                                <option value="">Selecione...</option>
-                                @foreach ($skills as $sk)
-                                    <option value="{{ $sk->id }}">{{ $sk->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-span-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Competências</label>
-                            <div id="competencyBadges" class="flex flex-wrap gap-2"></div>
-                        </div>
-                    </div>
-                    <div id="competencyInputs"></div>
-                    <div class="flex justify-end">
-                        <button
-                            class="inline-flex items-center gap-1 px-5 py-3 bg-orange-600 text-white rounded text-sm hover:bg-orange-700">
-                            <i class="fa-solid fa-plus"></i> Adicionar
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="bg-white p-4 rounded shadow-sm border border-gray-100">
-                <h4 class="font-medium text-gray-800 mb-3">Competências vinculadas</h4>
-                <div id="psc-container">
-                    @include('admin.projects.partials.skill_links', ['project' => $project])
-                </div>
-            </div>
-
             <script>
-                const skillsData = @json($skills);
-                const skillSelect = document.getElementById('skillSelect');
-                const badges = document.getElementById('competencyBadges');
-                const inputs = document.getElementById('competencyInputs');
-                const pscContainer = document.getElementById('psc-container');
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
                 function openUploadModal(id) {
@@ -262,90 +215,6 @@
                 function closeUploadModal(id) {
                     document.getElementById(id)?.classList.add('hidden');
                 }
-
-                function renderCompetencies(skillId) {
-                    badges.innerHTML = '';
-                    inputs.innerHTML = '';
-                    if (!skillId) return;
-                    const skill = skillsData.find(s => String(s.id) === String(skillId));
-                    (skill?.competencies || []).forEach(c => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'px-3 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200';
-                        btn.textContent = c.competency;
-                        btn.dataset.id = c.id;
-                        btn.dataset.selected = 'false';
-                        btn.addEventListener('click', () => {
-                            const selected = btn.dataset.selected === 'true';
-                            btn.dataset.selected = String(!selected);
-                            btn.className = 'px-3 py-1 rounded-full border text-xs ' + (!selected ?
-                                'bg-orange-600 text-white border-orange-600' : 'bg-gray-100 hover:bg-gray-200');
-                            syncInputs();
-                        });
-                        badges.appendChild(btn);
-                    });
-                }
-
-                function syncInputs() {
-                    inputs.innerHTML = '';
-                    badges.querySelectorAll('button').forEach(btn => {
-                        if (btn.dataset.selected === 'true') {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = 'competencies[]';
-                            input.value = btn.dataset.id;
-                            inputs.appendChild(input);
-                        }
-                    });
-                }
-
-                // Show selected skill name above badges
-                const selectedSkillNameEl = document.createElement('div');
-                selectedSkillNameEl.className = 'text-sm font-semibold text-gray-800 mb-1';
-                badges.parentElement.prepend(selectedSkillNameEl);
-
-                skillSelect?.addEventListener('change', e => {
-                    const id = e.target.value;
-                    const skill = skillsData.find(s => String(s.id) === String(id));
-                    selectedSkillNameEl.textContent = skill ? skill.name : '';
-                    renderCompetencies(id);
-                });
-
-                // AJAX: attach skills
-                document.getElementById('attachSkillsForm')?.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const form = e.currentTarget;
-                    const res = await fetch(form.action, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: new FormData(form)
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.html) pscContainer.innerHTML = data.html;
-                    }
-                });
-
-                // Delegate delete of PSC without reload
-                pscContainer?.addEventListener('submit', async (e) => {
-                    const form = e.target;
-                    if (form.matches('.js-psc-delete')) {
-                        e.preventDefault();
-                        const res = await fetch(form.action, {
-                            method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: new FormData(form)
-                        });
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.html) pscContainer.innerHTML = data.html;
-                        }
-                    }
-                });
 
                 // AJAX: update image metadata
                 document.addEventListener('submit', async (e) => {

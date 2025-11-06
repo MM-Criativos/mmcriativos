@@ -22,7 +22,7 @@
                         {{ __('Layout') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('admin.content.dashboard')" :active="request()->is('admin/content*') || request()->is('admin/services*') || request()->is('admin/skills*')">
+                    <x-nav-link :href="route('admin.content.dashboard')" :active="request()->is('admin/content*') || request()->is('admin/services*') || request()->is('admin/skills*') || request()->is('admin/processes*')">
                         {{ __('Conteúdo') }}
                     </x-nav-link>
 
@@ -128,7 +128,7 @@
             <x-responsive-nav-link :href="route('admin.services.index')" :active="request()->is('admin/services*')">
                 {{ __('Serviços') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.content.dashboard')" :active="request()->is('admin/content*') || request()->is('admin/services*') || request()->is('admin/skills*')">
+            <x-responsive-nav-link :href="route('admin.content.dashboard')" :active="request()->is('admin/content*') || request()->is('admin/services*') || request()->is('admin/skills*') || request()->is('admin/processes*')">
                 {{ __('Conteúdo') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('admin.projects.index')" :active="request()->is('admin/projects*')">

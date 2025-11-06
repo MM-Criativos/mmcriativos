@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Content;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\Skill;
+use App\Models\Process;
 
 class DashboardController extends Controller
 {
@@ -18,9 +19,9 @@ class DashboardController extends Controller
         $stats = [
             'services' => Service::count(),
             'skills' => Skill::count(),
+            'processes' => Process::count(),
         ];
 
         return view('admin.content.dashboard', compact('stats'));
     }
 }
-

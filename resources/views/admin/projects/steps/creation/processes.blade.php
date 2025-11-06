@@ -1,6 +1,11 @@
 <div class="mt-6">
-    <div class="mb-4">
+    <div class="mb-4 flex items-center justify-between gap-3">
         <h3 class="text-lg font-semibold text-gray-800">Processos do Projeto</h3>
+        <a href="{{ route('admin.processes.index') }}" target="_blank"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-white text-orange-600 rounded border border-orange-600 text-xs uppercase tracking-widest hover:bg-orange-600 hover:text-white">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Gerenciar processos</span>
+        </a>
     </div>
 
     <form method="POST" action="{{ route('admin.projects.processes.store', $project) }}"

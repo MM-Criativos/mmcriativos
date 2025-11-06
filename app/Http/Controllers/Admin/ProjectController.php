@@ -9,6 +9,8 @@ use App\Models\Service;
 use App\Models\Process;
 use App\Models\GlobalPage;
 use App\Models\StorytellingComponent;
+use App\Models\User;
+use App\Models\Skill;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -243,6 +245,11 @@ class ProjectController extends Controller
                 'components' => fn($componentQuery) => $componentQuery->orderBy('project_page_component.order'),
                 'globalPage',
             ]),
+            'skillLinks' => fn($q) => $q->with(['skill', 'competency'])->orderBy('order')->orderBy('id'),
+            'tasks' => fn($q) => $q
+                ->with(['skill', 'competency', 'assignedUser'])
+                ->orderBy('skill_id')
+                ->orderBy('id'),
         ]);
 
         // Removido: não preenche mais respostas automaticamente.
@@ -264,12 +271,37 @@ class ProjectController extends Controller
             ->orderBy('name')
             ->get();
 
+        $teamMembers = User::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $skillOptions = Skill::with(['competencies' => fn($q) => $q->orderBy('competency')])
+            ->orderBy('name')
+            ->get()
+            ->map(function (Skill $skill) {
+                return [
+                    'id' => $skill->id,
+                    'name' => $skill->name,
+                    'competencies' => $skill->competencies
+                        ->map(fn($competency) => [
+                            'id' => $competency->id,
+                            'name' => $competency->competency,
+                        ])
+                        ->values()
+                        ->toArray(),
+                ];
+            })
+            ->filter(fn($skill) => count($skill['competencies']) > 0)
+            ->values();
+
         return view('admin.projects.steps.show', compact(
             'project',
             'tab',
             'processes',
             'availablePages',
-            'availableComponents'
+            'availableComponents',
+            'teamMembers',
+            'skillOptions'
         ));
     }
 

@@ -5,7 +5,7 @@
                 Etapas do Projeto · {{ $project->name }}
             </h2>
             <a href="{{ route('admin.projects.edit', $project) }}"
-               class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
+                class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
                 Editar Projeto
             </a>
         </div>
@@ -16,11 +16,12 @@
             'planning' => 'Planejamento',
             'creation' => 'Criação',
             'development' => 'Desenvolvimento',
-            'tests' => 'Testes',
             'delivery' => 'Entrega',
         ];
         $active = $tab ?? request('tab', 'planning');
-        if (!array_key_exists($active, $tabs)) { $active = 'planning'; }
+        if (!array_key_exists($active, $tabs)) {
+            $active = 'planning';
+        }
     @endphp
 
     <div class="py-6">
@@ -34,7 +35,7 @@
                         @foreach ($tabs as $key => $label)
                             @php $isActive = $active === $key; @endphp
                             <a href="{{ route('admin.projects.steps.show', [$project, 'tab' => $key]) }}"
-                               class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium {{ $isActive ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                                class="whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium {{ $isActive ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                                 {{ $label }}
                             </a>
                         @endforeach
@@ -50,8 +51,12 @@
                         @includeIf('admin.projects.steps.planning.kickoff', ['project' => $project])
                     @elseif ($active === 'creation')
                         @includeIf('admin.projects.steps.creation.project-summary', ['project' => $project])
-                        @includeIf('admin.projects.steps.creation.project-challenges', ['project' => $project])
-                        @includeIf('admin.projects.steps.creation.project-solutions', ['project' => $project])
+                        @includeIf('admin.projects.steps.creation.project-challenges', [
+                            'project' => $project,
+                        ])
+                        @includeIf('admin.projects.steps.creation.project-solutions', [
+                            'project' => $project,
+                        ])
                         @includeIf('admin.projects.steps.creation.project-pages', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.processes', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.wireframe', ['project' => $project])
@@ -59,6 +64,11 @@
                         @includeIf('admin.projects.steps.creation.moodboard', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.prototype', ['project' => $project])
                     @elseif ($active === 'development')
+                        @includeIf('admin.projects.steps.develepoment.tasks', [
+                            'project' => $project,
+                            'teamMembers' => $teamMembers ?? collect(),
+                            'skillOptions' => $skillOptions ?? collect(),
+                        ])
                         @includeIf('admin.projects.steps.develepoment.frontend', ['project' => $project])
                         @includeIf('admin.projects.steps.develepoment.backend', ['project' => $project])
                         @includeIf('admin.projects.steps.develepoment.automations', ['project' => $project])

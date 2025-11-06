@@ -710,10 +710,12 @@
                             }'>
 
                             @php
-                                $projectSkillGroups = $project->skillLinks
+                                $projectSkillGroups = $project->tasks
+                                    ->filter(fn($task) => $task->skill)
                                     ->groupBy('skill_id')
-                                    ->map(function ($items) {
-                                        $skill = optional($items->first())->skill;
+                                    ->map(function ($tasks) {
+                                        $skill = optional($tasks->first()->skill);
+
                                         return [
                                             'id' => $skill?->id,
                                             'name' => $skill?->name ?? 'Skill',
@@ -721,9 +723,10 @@
                                             'cover' => $skill?->cover ?? null,
                                             'description' =>
                                                 $skill?->description ?? 'Competências associadas à habilidade.',
-                                            'competencies' => $items
-                                                ->map(fn($it) => optional($it->competency)->competency)
+                                            'competencies' => $tasks
+                                                ->map(fn($task) => optional($task->competency)->competency)
                                                 ->filter()
+                                                ->unique()
                                                 ->values(),
                                         ];
                                     })

@@ -95,6 +95,13 @@ class Project extends Model
         return $this->hasMany(ProjectSkillCompetency::class);
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(ProjectTask::class)
+            ->orderBy('skill_id')
+            ->orderBy('id');
+    }
+
     public function planning()
     {
         return $this->hasOne(ProjectPlanning::class);

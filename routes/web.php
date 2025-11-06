@@ -21,9 +21,11 @@ use App\Http\Controllers\Admin\ProjectSolutionController as AdminProjectSolution
 use App\Http\Controllers\Admin\ProjectProcessController as AdminProjectProcessController;
 use App\Http\Controllers\Admin\ProjectImageController as AdminProjectImageController;
 use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectSkillCompetencyController;
+use App\Http\Controllers\Admin\ProjectTaskController as AdminProjectTaskController;
 use App\Http\Controllers\Admin\ProjectPlanningController as AdminProjectPlanningController;
 use App\Http\Controllers\Admin\ProjectPageController as AdminProjectPageController;
 use App\Http\Controllers\Admin\ProjectPageComponentController as AdminProjectPageComponentController;
+use App\Http\Controllers\Admin\ProcessController as AdminProcessController;
 use App\Http\Controllers\Site\PublicBriefingController;
 use App\Http\Controllers\Site\PublicBriefingQualitativeController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
@@ -158,6 +160,9 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
         ->only(['store', 'update', 'destroy'])
         ->shallow();
 
+    // Processes library
+    Route::resource('processes', AdminProcessController::class);
+
     // Layout (UI)
     Route::get('layout', [AdminLayoutController::class, 'index'])->name('layout.index');
     Route::get('layout/slider', [AdminSliderController::class, 'edit'])->name('layout.slider.edit');
@@ -201,6 +206,8 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
             ->name('planning.qualitative.save');
         Route::post('{project}/planning/qualitative/email', [ProjectPlanningQualitativeController::class, 'sendEmail'])
             ->name('planning.qualitative.email');
+
+        Route::post('{project}/tasks', [AdminProjectTaskController::class, 'store'])->name('tasks.store');
     });
     Route::resource('projects', AdminProjectController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
@@ -235,6 +242,10 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     // Projects: skills + competencies
     Route::post('projects/{project}/skills/attach', [AdminProjectSkillCompetencyController::class, 'attach'])->name('projects.skills.attach');
     Route::delete('project-skill-competency/{projectSkillCompetency}', [AdminProjectSkillCompetencyController::class, 'destroy'])->name('project-skill-competency.destroy');
+
+    // Projects: tasks
+    Route::put('project-tasks/{projectTask}', [AdminProjectTaskController::class, 'update'])->name('project-tasks.update');
+    Route::delete('project-tasks/{projectTask}', [AdminProjectTaskController::class, 'destroy'])->name('project-tasks.destroy');
 
     // Settings
     Route::get('settings', [AdminSettingController::class, 'index'])->name('settings.index');

@@ -47,6 +47,10 @@ class ModalController extends Controller
                 'skillLinks' => fn($q) => $q->orderBy('order'),
                 'skillLinks.skill',
                 'skillLinks.competency',
+                'tasks' => fn($q) => $q
+                    ->with(['skill', 'competency'])
+                    ->orderBy('skill_id')
+                    ->orderBy('id'),
             ]);
 
             // Agrupar as competências por Skill

@@ -93,9 +93,14 @@ class ImageUploadService
     private function buildFileName(?string $basename, string $ext, bool $withTimestamp = true): string
     {
         $name = $basename ? Str::slug($basename, '-') : Str::uuid()->toString();
+
         if ($withTimestamp) {
             $name .= '-' . date('Ymd-His');
         }
+
+        // Garante unicidade mesmo quando múltiplos arquivos são enviados no mesmo segundo
+        $name .= '-' . Str::lower(Str::random(6));
+
         return strtolower($name . '.' . $ext);
     }
 
