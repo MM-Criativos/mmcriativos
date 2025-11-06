@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\ProjectImageController as AdminProjectImageContro
 use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectSkillCompetencyController;
 use App\Http\Controllers\Admin\ProjectPlanningController as AdminProjectPlanningController;
 use App\Http\Controllers\Site\PublicBriefingController;
+use App\Http\Controllers\Site\PublicBriefingQualitativeController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\TeamController as AdminTeamController;
 use App\Http\Controllers\Admin\ClasseController as AdminClasseController;
@@ -96,14 +97,16 @@ Route::prefix('budget')->name('budget.')->group(function () {
     Route::get('/{token}/decline', [PublicBudgetController::class, 'decline'])->name('decline');
 });
 
+// Rotas para o questionário qualitativo
+Route::get('projects/{project}/planning/qualitative/create', [ProjectPlanningQualitativeController::class, 'create'])
+    ->name('admin.projects.planning.qualitative.create');
+
 // Public signed route for client briefing view (no auth).
 // The GET view requires a signed URL, but the POST that saves the form
 // should not require the signature — it only needs CSRF protection.
 Route::get('briefing/{project}/perception', [PublicBriefingController::class, 'perception'])
     ->middleware('signed')
-    ->name('public.briefing.perception');
-
-// Allow form submission without URL signature (CSRF handled in the form)
+    ->name('public.briefing.perception'); // Allow form submission without URL signature (CSRF handled in the form)
 Route::post('briefing/{project}/perception', [PublicBriefingController::class, 'savePerception'])
     ->name('public.briefing.perception.save');
 
@@ -182,8 +185,12 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
             ->name('planning.scale.email');
 
         // Planning: qualitative questionnaire
+        Route::get('{project}/planning/qualitative/edit', [ProjectPlanningQualitativeController::class, 'edit'])
+            ->name('planning.qualitative.edit');
         Route::get('{project}/planning/qualitative/templates', [ProjectPlanningQualitativeController::class, 'templates'])
             ->name('planning.qualitative.templates');
+        Route::get('{project}/planning/qualitative/preview', [ProjectPlanningQualitativeController::class, 'preview'])
+            ->name('planning.qualitative.preview');
         Route::post('{project}/planning/qualitative/save', [ProjectPlanningQualitativeController::class, 'save'])
             ->name('planning.qualitative.save');
         Route::post('{project}/planning/qualitative/email', [ProjectPlanningQualitativeController::class, 'sendEmail'])
@@ -256,4 +263,14 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
         // KPI
         Route::get('kpi', [CommercialKpiController::class, 'index'])->name('kpi.index');
     });
+});
+
+// Rotas publicas para briefings assinados
+Route::name('public.')->group(function () {
+    Route::get('briefing/qualitative/{project}', [PublicBriefingQualitativeController::class, 'show'])
+        ->name('briefing.qualitative')
+        ->middleware('signed');
+
+    Route::post('briefing/qualitative/{project}/save', [PublicBriefingQualitativeController::class, 'save'])
+        ->name('briefing.qualitative.save');
 });

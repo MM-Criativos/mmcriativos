@@ -24,9 +24,12 @@ class PlanningBriefingQualitativeResponse extends Model
     ];
 
     protected $casts = [
-        'answer' => 'array',
         'is_completed' => 'boolean',
         'answered_at' => 'datetime',
+    ];
+
+    protected $appends = [
+        'answer_value',
     ];
 
     /* 🔗 RELACIONAMENTOS */
@@ -49,5 +52,32 @@ class PlanningBriefingQualitativeResponse extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Accessor that returns the normalized answer value.
+     *
+     * @return array|string|null
+     */
+    public function getAnswerValueAttribute()
+    {
+        $raw = $this->attributes['answer'] ?? null;
+
+        if (is_null($raw)) {
+            return null;
+        }
+
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        // Attempt to decode JSON; if it fails, fall back to the raw string.
+        $decoded = json_decode($raw, true);
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $decoded;
+        }
+
+        return $raw;
     }
 }

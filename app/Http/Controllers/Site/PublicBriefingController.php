@@ -52,6 +52,6 @@ class PublicBriefingController extends Controller
             }
         });
 
-        return redirect()->to('https://mmcriativos.test')->with('status', 'Obrigado! Suas respostas foram salvas.');
+        return redirect(config('app.url'))->with('status', 'Obrigado! Suas respostas foram salvas.');
     }
 }

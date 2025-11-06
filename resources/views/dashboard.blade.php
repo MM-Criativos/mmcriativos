@@ -33,15 +33,17 @@
                     </p>
                 </a>
 
-                <a href="{{ route('admin.commercial.dashboard') }}"
-                    class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-700">
-                    <div class="text-lg font-semibold">Comercial</div>
-                    <p class="text-sm text-gray-600">
-                        Clientes, depoimentos, orçamentos, planos, extras e e-mails.
-                    </p>
-                </a>
+                @if (Route::has('admin.commercial.dashboard'))
+                    <a href="{{ route('admin.commercial.dashboard') }}"
+                        class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-700">
+                        <div class="text-lg font-semibold">Comercial</div>
+                        <p class="text-sm text-gray-600">
+                            Clientes, depoimentos, orçamentos, planos, extras e e-mails.
+                        </p>
+                    </a>
+                @endif
 
-                @if (Auth::user()->role === 'admin')
+                @if (Auth::user()->role === 'admin' && Route::has('admin.team.index'))
                     <a href="{{ route('admin.team.index') }}"
                         class="block bg-white dark:bg-dark-800 border rounded-lg p-6 shadow-sm opacity-80 hover:bg-gray-50 dark:hover:bg-dark-700">
                         <div class="text-lg font-semibold">Equipe</div>

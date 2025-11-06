@@ -34,7 +34,7 @@
                         {{ __('Comercial') }}
                     </x-nav-link>
 
-                    @if (Auth::user()->role === 'admin')
+                    @if (Auth::user()->role === 'admin' && Route::has('admin.team.index'))
                         <x-nav-link :href="route('admin.team.index')" :active="request()->is('admin/team*')">
                             {{ __('Equipe') }}
                         </x-nav-link>
@@ -75,10 +75,12 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        {{-- Novo item: Configurações --}}
-                        <x-dropdown-link :href="route('admin.settings.index')">
-                            <i class="fa-solid fa-gear mr-2 text-gray-400"></i> {{ __('Configurações') }}
-                        </x-dropdown-link>
+                        @if (Route::has('admin.settings.index'))
+                            {{-- Novo item: Configurações --}}
+                            <x-dropdown-link :href="route('admin.settings.index')">
+                                <i class="fa-solid fa-gear mr-2 text-gray-400"></i> {{ __('Configurações') }}
+                            </x-dropdown-link>
+                        @endif
 
                         <div class="border-t border-gray-100 my-1"></div>
 
@@ -138,7 +140,7 @@
             <x-responsive-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*')">
                 {{ __('Comercial') }}
             </x-responsive-nav-link>
-            @if (Auth::user()->role === 'admin')
+            @if (Auth::user()->role === 'admin' && Route::has('admin.team.index'))
                 <x-responsive-nav-link :href="route('admin.team.index')" :active="request()->is('admin/team*')">
                     {{ __('Equipe') }}
                 </x-responsive-nav-link>

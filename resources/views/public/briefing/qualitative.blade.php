@@ -10,7 +10,8 @@
                 </p>
             </div>
 
-            <form method="POST" action="{{ route('public.briefing.qualitative.save', $project) }}" class="space-y-8">
+            <form method="POST" action="{{ route('public.briefing.qualitative.save', $project) }}" class="space-y-8"
+                enctype="multipart/form-data">
                 @csrf
 
                 @foreach ($qualitatives->groupBy('template.category') as $category => $questions)

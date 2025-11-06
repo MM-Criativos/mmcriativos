@@ -115,4 +115,32 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown Mail Settings
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure your settings for Markdown based email rendering.
+    | You can customize the theme and component colors used in the mailables.
+    |
+    */
+
+    'markdown' => [
+        'theme' => 'default',
+
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+
+        'colors' => [
+            'primary' => '#ff8800', // laranja da MM Criativos
+        ],
+
+        'components' => [
+            'mail::button' => [
+                'align' => 'center', // centraliza o botão
+            ],
+        ],
+    ],
+
 ];
