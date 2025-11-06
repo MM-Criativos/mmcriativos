@@ -22,6 +22,8 @@ use App\Http\Controllers\Admin\ProjectProcessController as AdminProjectProcessCo
 use App\Http\Controllers\Admin\ProjectImageController as AdminProjectImageController;
 use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectSkillCompetencyController;
 use App\Http\Controllers\Admin\ProjectPlanningController as AdminProjectPlanningController;
+use App\Http\Controllers\Admin\ProjectPageController as AdminProjectPageController;
+use App\Http\Controllers\Admin\ProjectPageComponentController as AdminProjectPageComponentController;
 use App\Http\Controllers\Site\PublicBriefingController;
 use App\Http\Controllers\Site\PublicBriefingQualitativeController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
@@ -215,9 +217,20 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::put('project-processes/{projectProcess}', [AdminProjectProcessController::class, 'update'])->name('project-processes.update');
     Route::delete('project-processes/{projectProcess}', [AdminProjectProcessController::class, 'destroy'])->name('project-processes.destroy');
 
+    Route::post('projects/{project}/summary', [AdminProjectController::class, 'updateSummary'])->name('projects.summary.update');
+
     Route::post('project-processes/{projectProcess}/images', [AdminProjectImageController::class, 'store'])->name('project-processes.images.store');
     Route::put('project-images/{projectImage}', [AdminProjectImageController::class, 'update'])->name('project-images.update');
     Route::delete('project-images/{projectImage}', [AdminProjectImageController::class, 'destroy'])->name('project-images.destroy');
+
+    // Projects: pages and storytelling components
+    Route::post('projects/{project}/pages', [AdminProjectPageController::class, 'store'])->name('projects.pages.store');
+    Route::put('project-pages/{projectPage}', [AdminProjectPageController::class, 'update'])->name('project-pages.update');
+    Route::delete('project-pages/{projectPage}', [AdminProjectPageController::class, 'destroy'])->name('project-pages.destroy');
+
+    Route::post('project-pages/{projectPage}/components', [AdminProjectPageComponentController::class, 'store'])->name('project-pages.components.store');
+    Route::put('project-page-components/{projectPageComponent}', [AdminProjectPageComponentController::class, 'update'])->name('project-page-components.update');
+    Route::delete('project-page-components/{projectPageComponent}', [AdminProjectPageComponentController::class, 'destroy'])->name('project-page-components.destroy');
 
     // Projects: skills + competencies
     Route::post('projects/{project}/skills/attach', [AdminProjectSkillCompetencyController::class, 'attach'])->name('projects.skills.attach');

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             SkillSeeder::class,
             SkillCompetencySeeder::class,
+            SkillInfoSeeder::class,
             SocialMediaSeeder::class,
             ProcessSeeder::class,
             ServiceInfoSeeder::class,
@@ -39,7 +40,6 @@ class DatabaseSeeder extends Seeder
             QualitativeTemplateSeeder::class,
             GlobalPagesSeeder::class,
             StorytellingComponentsSeeder::class,
-            GlobalPageComponentSeeder::class,
         ]);
     }
 }

@@ -10,21 +10,22 @@ return new class extends Migration {
         Schema::create('project_pages', function (Blueprint $table) {
             $table->id();
 
-            // 🔗 Relaciona com o projeto principal
+            // 🔗 Projeto dono da página
             $table->foreignId('project_id')
-                ->constrained('projects') // se já tiver tabela de projetos
+                ->constrained('projects')
                 ->onDelete('cascade');
 
-            // 🔗 Referência ao blueprint global
+            // 🧩 Referência opcional à biblioteca global (página modelo)
             $table->foreignId('global_page_id')
                 ->nullable()
                 ->constrained('global_pages')
                 ->onDelete('set null');
 
+            // 📄 Informações básicas da página
             $table->string('name');
             $table->string('slug')->unique();
 
-            // Campos de controle e customização
+            // ⚙️ Controle de status e ordenação
             $table->boolean('is_active')->default(true);
             $table->integer('order')->default(0);
 

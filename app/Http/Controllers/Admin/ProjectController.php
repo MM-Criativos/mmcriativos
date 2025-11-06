@@ -7,10 +7,12 @@ use App\Models\Client;
 use App\Models\Project;
 use App\Models\Service;
 use App\Models\Process;
+use App\Models\GlobalPage;
+use App\Models\StorytellingComponent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use App\Services\Upload\ImageUploadService;
 use App\Services\Upload\VideoUploadService;
 use App\Support\StorageHelper;
@@ -204,6 +206,26 @@ class ProjectController extends Controller
         return redirect()->route('admin.projects.index')->with('status', 'Projeto removido.');
     }
 
+    public function updateSummary(Request $request, Project $project)
+    {
+        $data = $request->validate([
+            'summary' => ['nullable', 'string'],
+        ]);
+
+        $project->update([
+            'summary' => $data['summary'] ?? null,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'ok',
+                'project' => $project->only(['id', 'summary']),
+            ]);
+        }
+
+        return back()->with('status', 'Resumo do projeto atualizado.');
+    }
+
     public function steps(Project $project)
     {
         $project->load([
@@ -217,16 +239,38 @@ class ProjectController extends Controller
             'projectProcesses' => fn($q) => $q->orderBy('order'),
             'projectProcesses.process',
             'projectProcesses.images' => fn($q) => $q->orderBy('order'),
+            'pages' => fn($query) => $query->orderBy('order')->with([
+                'components' => fn($componentQuery) => $componentQuery->orderBy('project_page_component.order'),
+                'globalPage',
+            ]),
         ]);
 
         // Removido: não preenche mais respostas automaticamente.
         // A tabela planning_briefing_responses deve ser preenchida apenas quando o cliente
         // responder o formulário público enviado por e-mail.
         $tab = request()->query('tab', 'planning');
+
         $processes = Process::query()
             ->orderBy('order')
             ->orderBy('name')
             ->get(['id', 'name']);
-        return view('admin.projects.steps.show', compact('project','tab','processes'));
+
+        $availablePages = GlobalPage::query()
+            ->orderBy('name')
+            ->get();
+
+        $availableComponents = StorytellingComponent::query()
+            ->orderBy('layer')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.projects.steps.show', compact(
+            'project',
+            'tab',
+            'processes',
+            'availablePages',
+            'availableComponents'
+        ));
     }
+
 }

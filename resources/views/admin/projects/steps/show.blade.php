@@ -52,6 +52,7 @@
                         @includeIf('admin.projects.steps.creation.project-summary', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.project-challenges', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.project-solutions', ['project' => $project])
+                        @includeIf('admin.projects.steps.creation.project-pages', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.processes', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.wireframe', ['project' => $project])
                         @includeIf('admin.projects.steps.creation.content', ['project' => $project])

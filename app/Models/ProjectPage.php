@@ -20,23 +20,48 @@ class ProjectPage extends Model
         'order',
     ];
 
-    // 🔗 Pertence a um projeto
+    /**
+     * 🔗 Página pertence a um projeto.
+     */
     public function project()
     {
         return $this->belongsTo(Project::class);
     }
 
-    // 🔗 Referência ao blueprint global
+    /**
+     * 🔗 Referência opcional à página modelo na biblioteca global.
+     *
+     * Permite saber de qual template global essa página foi importada.
+     */
     public function globalPage()
     {
         return $this->belongsTo(GlobalPage::class, 'global_page_id');
     }
 
-    // 🔗 Componentes personalizados dessa página
+    /**
+     * 🔗 Componentes reais dessa página de projeto.
+     *
+     * Agora a relação usa a tabela correta (plural) e considera o novo campo global_component_id.
+     */
     public function components()
     {
-        return $this->belongsToMany(StorytellingComponent::class, 'project_page_component')
-            ->withPivot('order', 'settings', 'is_visible')
-            ->orderBy('order');
+        return $this->belongsToMany(
+            StorytellingComponent::class,
+            'project_page_component',
+            'project_page_id',
+            'component_id'
+        )
+            ->withPivot('id', 'order', 'settings', 'is_visible', 'global_component_id')
+            ->withTimestamps()
+            ->orderBy('project_page_component.order');
+    }
+
+    /**
+     * 🧩 Atalho: lista de instâncias específicas de ProjectPageComponent
+     * (caso queira acessar diretamente os registros pivot como modelos).
+     */
+    public function pageComponents()
+    {
+        return $this->hasMany(ProjectPageComponent::class, 'project_page_id');
     }
 }

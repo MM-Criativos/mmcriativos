@@ -20,11 +20,13 @@ class Project extends Model
         'service_id',
         'budget_id',
         'video',
+        'pages_seeded',
         'finished_at',
     ];
 
     protected $casts = [
         'finished_at' => 'date',
+        'pages_seeded' => 'boolean',
     ];
 
     public function budget()
@@ -63,6 +65,11 @@ class Project extends Model
     public function projectProcesses()
     {
         return $this->hasMany(ProjectProcess::class);
+    }
+
+    public function pages()
+    {
+        return $this->hasMany(ProjectPage::class)->orderBy('order');
     }
 
     public function images()
