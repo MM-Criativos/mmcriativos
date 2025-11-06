@@ -52,6 +52,15 @@ class PublicBriefingController extends Controller
             }
         });
 
-        return redirect(config('app.url'))->with('status', 'Obrigado! Suas respostas foram salvas.');
+        $redirectUrl = config('app.url');
+        $redirectDelay = 5000;
+        $message = 'Seu formulário foi preenchido com sucesso! Muito obrigado por preencher, em breve entraremos em contato com você!';
+
+        return view('public.briefing.perception-success', [
+            'redirectUrl' => $redirectUrl,
+            'redirectDelay' => $redirectDelay,
+            'message' => $message,
+            'project' => $project,
+        ]);
     }
 }

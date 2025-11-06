@@ -30,7 +30,7 @@
                         {{ __('Projetos') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*')">
+                    <x-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*') || request()->is('admin/clients*') || request()->is('admin/testimonials*')">
                         {{ __('Comercial') }}
                     </x-nav-link>
 
@@ -137,7 +137,7 @@
             <x-responsive-nav-link :href="route('admin.layout.index')" :active="request()->is('admin/layout*')">
                 {{ __('Layout') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*')">
+            <x-responsive-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*') || request()->is('admin/clients*') || request()->is('admin/testimonials*')">
                 {{ __('Comercial') }}
             </x-responsive-nav-link>
             @if (Auth::user()->role === 'admin' && Route::has('admin.team.index'))
