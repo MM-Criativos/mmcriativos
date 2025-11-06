@@ -414,32 +414,45 @@
                     }
                 </style>
 
-                <!-- Grid (desktop/tablet): 1 card por challenge -->
-                <div class="row d-none d-md-flex">
-                    @forelse(($project->challenges ?? []) as $index => $challenge)
-                        <div class="col-lg-4 col-md-6 wow fadeInUp animated"
-                            data-wow-delay="{{ ($index + 1) * 100 }}ms">
+                <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                    data-owl-options='{
+                        "items": 3,
+                        "margin": 30,
+                        "smartSpeed": 700,
+                        "loop": false,
+                        "autoplay": false,
+                        "dots": true,
+                        "responsive": {
+                            "0": { "items": 1, "margin": 10 },
+                            "576": { "items": 1, "margin": 15 },
+                            "768": { "items": 2, "margin": 20 },
+                            "1200": { "items": 3, "margin": 30 }
+                        }
+                    }'>
+                    @forelse(($project->challenges ?? []) as $challenge)
+                        <div class="item wow fadeInUp animated" data-wow-delay="{{ $loop->iteration * 100 }}ms">
                             <div class="pixel-card" style="max-height: 200px; margin-bottom:30px;">
-                                <!-- Frente -->
                                 <div class="pixel-card__content front">
                                     <div class="service-one__item" style="margin-bottom:30px; position:relative;">
                                         <span class="holo-pixels" aria-hidden="true"></span>
-                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
-                                                style="color:#ff8800;"></span></div>
-                                        <h3 class="service-one__item__title" style="max-height: 20px;"><a
-                                                href="javascript:void(0)">{{ $challenge->title }}</a></h3>
+                                        <div class="service-one__item__icon">
+                                            <span class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
+                                        </div>
+                                        <h3 class="service-one__item__title" style="max-height: 20px;">
+                                            <a href="javascript:void(0)">{{ $challenge->title }}</a>
+                                        </h3>
                                         <p class="service-one__item__text" style="min-height: 110px;">&nbsp;</p>
-                                        <a class="service-one__item__btn js-details-open" style="max-heigh: 20px;"
+                                        <a class="service-one__item__btn js-details-open" style="max-height: 20px;"
                                             href="javascript:void(0)">Explorar
                                             <span class="icon-down-right"></span></a>
                                     </div>
                                 </div>
-                                <!-- Verso (detalhe) -->
                                 <div class="pixel-card__content back">
                                     <div class="service-one__item" style="margin-bottom:30px; position:relative;">
                                         <span class="holo-pixels" aria-hidden="true"></span>
-                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
-                                                style="color:#ff8800;"></span></div>
+                                        <div class="service-one__item__icon">
+                                            <span class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
+                                        </div>
                                         <p class="service-one__item__text" style="min-height: 130px;">
                                             {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
                                         </p>
@@ -451,62 +464,10 @@
                             </div>
                         </div>
                     @empty
-                        <div class="col-12 text-center">
-                            <p>Nenhum desafio cadastrado.</p>
+                        <div class="item">
+                            <p class="text-center">Nenhum desafio cadastrado.</p>
                         </div>
                     @endforelse
-                </div>
-
-                <!-- Carousel (mobile): 1 card por challenge -->
-                <div class="d-md-none">
-                    <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
-                        data-owl-options='{
-                        "items": 1,
-                        "margin": 10,
-                        "smartSpeed": 700,
-                        "loop": true,
-                        "autoplay": true,
-                        "nav": false,
-                        "dots": true
-                    }'>
-                        @forelse(($project->challenges ?? []) as $challenge)
-                            <div class="item">
-                                <div class="pixel-card">
-                                    <div class="pixel-card__content front">
-                                        <div class="service-one__item" style="position: relative;">
-                                            <span class="holo-pixels" aria-hidden="true"></span>
-                                            <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
-                                                    style="color:#ff8800;"></span></div>
-                                            <h3 class="service-one__item__title"><a
-                                                    href="javascript:void(0)">{{ $challenge->title }}</a></h3>
-                                            <p class="service-one__item__text">&nbsp;</p>
-                                            <a class="service-one__item__btn js-details-open"
-                                                href="javascript:void(0)">Explorar
-                                                <span class="icon-down-right"></span></a>
-                                        </div>
-                                    </div>
-                                    <div class="pixel-card__content back">
-                                        <div class="service-one__item" style="position: relative;">
-                                            <span class="holo-pixels" aria-hidden="true"></span>
-                                            <div class="service-one__item__icon"><span
-                                                    class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
-                                            </div>
-                                            <p class="service-one__item__text">
-                                                {{ \Illuminate\Support\Str::limit((string) ($challenge->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
-                                            </p>
-                                            <a class="service-one__item__btn js-details-close"
-                                                href="javascript:void(0)">Voltar
-                                                <span class="icon-left-arrow"></span></a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="item">
-                                <p class="text-center">Nenhum desafio cadastrado.</p>
-                            </div>
-                        @endforelse
-                    </div>
                 </div>
             </div>
         </section>
@@ -527,144 +488,45 @@
 
                     </div>
                 </div>
-                <style>
-                    /* Pixel swap card (sem flip 3D) para Challenges */
-                    .pixel-card {
-                        position: relative;
-                        min-height: 320px;
-                    }
-
-                    .pixel-card__content {
-                        position: absolute;
-                        inset: 0;
-                        height: 100%;
-                        transition: opacity .18s linear, visibility .18s linear;
-                    }
-
-                    .pixel-card__content.front {
-                        opacity: 1;
-                        visibility: visible;
-                    }
-
-                    .pixel-card__content.back {
-                        opacity: 0;
-                        visibility: hidden;
-                    }
-
-                    .pixel-card.is-details .pixel-card__content.front {
-                        opacity: 0;
-                        visibility: hidden;
-                    }
-
-                    .pixel-card.is-details .pixel-card__content.back {
-                        opacity: 1;
-                        visibility: visible;
-                    }
-
-                    .pixel-card .service-one__item {
-                        height: 100%;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: flex-start;
-                        border-radius: 14px;
-                    }
-
-                    .pixel-card .service-one__item__title {
-                        margin-bottom: 8px;
-                    }
-
-                    .pixel-card .holo-pixels {
-                        position: absolute;
-                        inset: -2px;
-                        border-radius: 14px;
-                        pointer-events: none;
-                        opacity: 0;
-                        mix-blend-mode: screen;
-                        background-image: radial-gradient(rgba(255, 136, 0, .35) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 136, 0, .15) 0%, transparent 60%);
-                        background-size: 4px 4px, 100% 100%;
-                        filter: blur(.2px);
-                    }
-
-                    /* Efeitos de desmontar/montar em pixels (opcional, usado se adicionar classes via JS) */
-                    .pixel-card.is-opening .holo-pixels {
-                        animation: pixDisperse .5s ease-out both;
-                    }
-
-                    .pixel-card.is-closing .holo-pixels {
-                        animation: pixAssemble .5s ease-out both;
-                    }
-
-                    @keyframes pixDisperse {
-                        0% {
-                            opacity: .8;
-                            background-size: 6px 6px, 100% 100%;
-                            filter: blur(.3px);
-                            transform: translateY(0) scale(1);
+                <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                    data-owl-options='{
+                        "items": 3,
+                        "margin": 30,
+                        "smartSpeed": 700,
+                        "loop": false,
+                        "autoplay": false,
+                        "dots": true,
+                        "responsive": {
+                            "0": { "items": 1, "margin": 10 },
+                            "576": { "items": 1, "margin": 15 },
+                            "768": { "items": 2, "margin": 20 },
+                            "1200": { "items": 3, "margin": 30 }
                         }
-
-                        60% {
-                            opacity: .4;
-                            background-size: 12px 12px, 120% 100%;
-                            filter: blur(.6px);
-                        }
-
-                        100% {
-                            opacity: 0;
-                            background-size: 18px 18px, 140% 100%;
-                            filter: blur(1px);
-                            transform: translateY(3px) scale(1.02);
-                        }
-                    }
-
-                    @keyframes pixAssemble {
-                        0% {
-                            opacity: 0;
-                            background-size: 18px 18px, 140% 100%;
-                            filter: blur(1px);
-                            transform: translateY(-3px) scale(.98);
-                        }
-
-                        40% {
-                            opacity: .4;
-                            background-size: 12px 12px, 115% 100%;
-                            filter: blur(.6px);
-                        }
-
-                        100% {
-                            opacity: .55;
-                            background-size: 4px 4px, 100% 100%;
-                            filter: blur(.2px);
-                            transform: translateY(0) scale(1);
-                        }
-                    }
-                </style>
-
-                <!-- Grid (desktop/tablet): 1 card por challenge -->
-                <div class="row d-none d-md-flex">
-                    @forelse(($project->solutions ?? []) as $index => $solution)
-                        <div class="col-lg-4 col-md-6 wow fadeInUp animated"
-                            data-wow-delay="{{ ($index + 1) * 100 }}ms">
+                    }'>
+                    @forelse(($project->solutions ?? []) as $solution)
+                        <div class="item wow fadeInUp animated" data-wow-delay="{{ $loop->iteration * 100 }}ms">
                             <div class="pixel-card" style="max-height: 200px; margin-bottom:30px;">
-                                <!-- Frente -->
                                 <div class="pixel-card__content front">
                                     <div class="service-one__item" style="margin-bottom:30px; position:relative;">
                                         <span class="holo-pixels" aria-hidden="true"></span>
-                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
-                                                style="color:#ff8800;"></span></div>
-                                        <h3 class="service-one__item__title" style="max-height: 20px;"><a
-                                                href="javascript:void(0)">{{ $solution->title }}</a></h3>
+                                        <div class="service-one__item__icon">
+                                            <span class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
+                                        </div>
+                                        <h3 class="service-one__item__title" style="max-height: 20px;">
+                                            <a href="javascript:void(0)">{{ $solution->title }}</a>
+                                        </h3>
                                         <p class="service-one__item__text" style="min-height: 110px;">&nbsp;</p>
-                                        <a class="service-one__item__btn js-details-open" style="max-heigh: 20px;"
+                                        <a class="service-one__item__btn js-details-open" style="max-height: 20px;"
                                             href="javascript:void(0)">Explorar
                                             <span class="icon-down-right"></span></a>
                                     </div>
                                 </div>
-                                <!-- Verso (detalhe) -->
                                 <div class="pixel-card__content back">
                                     <div class="service-one__item" style="margin-bottom:30px; position:relative;">
                                         <span class="holo-pixels" aria-hidden="true"></span>
-                                        <div class="service-one__item__icon"><span class="fa fa-exclamation-circle"
-                                                style="color:#ff8800;"></span></div>
+                                        <div class="service-one__item__icon">
+                                            <span class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
+                                        </div>
                                         <p class="service-one__item__text" style="min-height: 130px;">
                                             {{ \Illuminate\Support\Str::limit((string) ($solution->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
                                         </p>
@@ -676,63 +538,10 @@
                             </div>
                         </div>
                     @empty
-                        <div class="col-12 text-center">
-                            <p>Nenhum desafio cadastrado.</p>
+                        <div class="item">
+                            <p class="text-center">Nenhuma solução cadastrada.</p>
                         </div>
                     @endforelse
-                </div>
-
-                <!-- Carousel (mobile): 1 card por solution -->
-                <div class="d-md-none">
-                    <div class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
-                        data-owl-options='{
-                        "items": 1,
-                        "margin": 10,
-                        "smartSpeed": 700,
-                        "loop": true,
-                        "autoplay": true,
-                        "nav": false,
-                        "dots": true
-                    }'>
-                        @forelse(($project->solutions ?? []) as $solution)
-                            <div class="item">
-                                <div class="pixel-card">
-                                    <div class="pixel-card__content front">
-                                        <div class="service-one__item" style="position: relative;">
-                                            <span class="holo-pixels" aria-hidden="true"></span>
-                                            <div class="service-one__item__icon"><span
-                                                    class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
-                                            </div>
-                                            <h3 class="service-one__item__title"><a
-                                                    href="javascript:void(0)">{{ $solution->title }}</a></h3>
-                                            <p class="service-one__item__text">&nbsp;</p>
-                                            <a class="service-one__item__btn js-details-open"
-                                                href="javascript:void(0)">Explorar
-                                                <span class="icon-down-right"></span></a>
-                                        </div>
-                                    </div>
-                                    <div class="pixel-card__content back">
-                                        <div class="service-one__item" style="position: relative;">
-                                            <span class="holo-pixels" aria-hidden="true"></span>
-                                            <div class="service-one__item__icon"><span
-                                                    class="fa fa-exclamation-circle" style="color:#ff8800;"></span>
-                                            </div>
-                                            <p class="service-one__item__text">
-                                                {{ \Illuminate\Support\Str::limit((string) ($solution->description ?? ''), 180) ?: 'Em breve mais detalhes.' }}
-                                            </p>
-                                            <a class="service-one__item__btn js-details-close"
-                                                href="javascript:void(0)">Voltar
-                                                <span class="icon-left-arrow"></span></a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="item">
-                                <p class="text-center">Nenhum desafio cadastrado.</p>
-                            </div>
-                        @endforelse
-                    </div>
                 </div>
             </div>
         </section>
