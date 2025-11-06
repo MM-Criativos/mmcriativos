@@ -183,6 +183,10 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
             ->name('planning.scale.save');
         Route::post('{project}/planning/scale/email', [AdminProjectPlanningController::class, 'sendScaleEmail'])
             ->name('planning.scale.email');
+        Route::post('{project}/planning/interpretation', [AdminProjectPlanningController::class, 'saveInterpretation'])
+            ->name('planning.interpretation.save');
+        Route::post('{project}/planning/kickoff', [AdminProjectPlanningController::class, 'saveKickoff'])
+            ->name('planning.kickoff.save');
 
         // Planning: qualitative questionnaire
         Route::get('{project}/planning/qualitative/edit', [ProjectPlanningQualitativeController::class, 'edit'])

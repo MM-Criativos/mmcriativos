@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\Service;
+use App\Models\Process;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -205,12 +206,27 @@ class ProjectController extends Controller
 
     public function steps(Project $project)
     {
-        $project->load(['client','service','planning']);
+        $project->load([
+            'client',
+            'service',
+            'planning.briefingResponses',
+            'planning.interpretacao',
+            'planning.kickoff',
+            'challenges',
+            'solutions',
+            'projectProcesses' => fn($q) => $q->orderBy('order'),
+            'projectProcesses.process',
+            'projectProcesses.images' => fn($q) => $q->orderBy('order'),
+        ]);
 
         // Removido: não preenche mais respostas automaticamente.
         // A tabela planning_briefing_responses deve ser preenchida apenas quando o cliente
         // responder o formulário público enviado por e-mail.
         $tab = request()->query('tab', 'planning');
-        return view('admin.projects.steps.show', compact('project','tab'));
+        $processes = Process::query()
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        return view('admin.projects.steps.show', compact('project','tab','processes'));
     }
 }

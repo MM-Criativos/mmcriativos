@@ -5,7 +5,33 @@
 
             @php
                 $planning = $project->planning;
-                $status = $planning?->status ?? 'not_started';
+                $timezone = config('app.timezone') ?: date_default_timezone_get();
+
+                $responses = collect();
+                if ($planning && $planning->relationLoaded('briefingResponses')) {
+                    $responses = $planning->briefingResponses->where('client_id', $project->client_id);
+                }
+
+                $kickoff = $planning?->kickoff;
+
+                $status = 'not_started';
+                $startedAt = optional($project->created_at)->timezone($timezone);
+                $completedAt = null;
+
+                if ($responses->count() > 0) {
+                    $status = 'in_progress';
+                    $firstResponse = $responses->sortBy('created_at')->first();
+                    $startedAt = optional($firstResponse?->created_at)->timezone($timezone) ?? $startedAt;
+                }
+
+                if ($kickoff) {
+                    $status = 'completed';
+                    $completedAt = optional($kickoff->approved_at ?? $kickoff->updated_at)->timezone($timezone);
+                    if (!$startedAt && $kickoff->created_at) {
+                        $startedAt = $kickoff->created_at->timezone($timezone);
+                    }
+                }
+
                 $map = [
                     'not_started' => [
                         'label' => 'Não iniciado',
@@ -31,8 +57,8 @@
         </div>
 
         <div class="text-right text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-            <div>Início: {{ optional($planning?->started_at ?? $project->created_at)->format('d/m/Y H:i') }}</div>
-            <div>Conclusão: {{ optional($planning?->completed_at)->format('d/m/Y H:i') ?? '—' }}</div>
+            <div>Início: {{ optional($startedAt)->format('d/m/Y') ?? '—' }}</div>
+            <div>Conclusão: {{ optional($completedAt)->format('d/m/Y') ?? '—' }}</div>
         </div>
     </div>
 </div>

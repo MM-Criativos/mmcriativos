@@ -33,7 +33,6 @@
                                 <input type="text" name="slug" value="{{ old('slug', $project->slug) }}"
                                     class="mt-1 block w-full border-gray-300 rounded-md" required>
                             </div>
-                        </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -56,7 +55,6 @@
                                     @endforeach
                                 </select>
                             </div>
-                        </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Descrição</label>
@@ -74,11 +72,20 @@
 
                                     @php
                                         $cover = $project->cover;
-                                        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4', '.webm', '.ogg', '.mov']);
+                                        $isVideo =
+                                            $cover &&
+                                            \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), [
+                                                '.mp4',
+                                                '.webm',
+                                                '.ogg',
+                                                '.mov',
+                                            ]);
                                     @endphp
                                     @if ($project->cover)
                                         @if ($isVideo)
-                                            <video id="preview-cover" src="{{ asset($project->cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition" controls muted></video>
+                                            <video id="preview-cover" src="{{ asset($project->cover) }}"
+                                                class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition"
+                                                controls muted></video>
                                         @else
                                             <img id="preview-cover" src="{{ asset($project->cover) }}" alt="Cover"
                                                 class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
@@ -89,7 +96,6 @@
                                             <i class="fa-regular fa-file-video text-base mr-1"></i> Cover
                                         </div>
                                     @endif
-                                </div>
                             </div>
 
                             {{-- Thumb --}}
@@ -109,7 +115,6 @@
                                             <i class="fa-regular fa-image text-base mr-1"></i> Thumb
                                         </div>
                                     @endif
-                                </div>
                             </div>
 
                             {{-- Skill Cover --}}
@@ -121,7 +126,8 @@
                                         onchange="previewImage(event, 'skill_cover')">
 
                                     @if ($project->skill_cover)
-                                        <img id="preview-skill_cover" src="{{ asset($project->skill_cover) }}" alt="Skill Cover"
+                                        <img id="preview-skill_cover" src="{{ asset($project->skill_cover) }}"
+                                            alt="Skill Cover"
                                             class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
                                     @else
                                         <div id="preview-skill_cover"
@@ -129,7 +135,6 @@
                                             <i class="fa-regular fa-image text-base mr-1"></i> Skill Cover
                                         </div>
                                     @endif
-                                </div>
                             </div>
 
                             {{-- Vídeo --}}
@@ -172,135 +177,23 @@
                             const isVideo = /^video\//.test(file.type);
                             const el = document.getElementById('preview-cover');
                             if (isVideo) {
-                                el.outerHTML = `<video id=\"preview-cover\" src=\"${url}\" class=\"w-40 h-40 object-cover rounded border border-gray-200\" controls muted></video>`;
+                                el.outerHTML =
+                                    `<video id=\"preview-cover\" src=\"${url}\" class=\"w-40 h-40 object-cover rounded border border-gray-200\" controls muted></video>`;
                             } else {
-                                el.outerHTML = `<img id=\"preview-cover\" src=\"${url}\" class=\"w-40 h-40 object-cover rounded border border-gray-200\" />`;
+                                el.outerHTML =
+                                    `<img id=\"preview-cover\" src=\"${url}\" class=\"w-40 h-40 object-cover rounded border border-gray-200\" />`;
                             }
                         }
                     </script>
 
-                    <hr class="my-8">
-
-                    <h3 class="text-lg font-semibold mb-2">Desafios</h3>
-                    <div id="challenges-list" class="space-y-3">
-                        @foreach ($project->challenges as $challenge)
-                            <div id="challenge-{{ $challenge->id }}"
-                                class="bg-white p-4 rounded shadow-sm border border-gray-100">
-                                <form method="POST" action="{{ route('admin.challenges.update', $challenge) }}"
-                                    class="grid grid-cols-12 gap-3 js-challenge-update" data-id="{{ $challenge->id }}">
-                                    @csrf @method('PUT')
-                                    <div class="col-span-5">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                                        <input type="text" name="title" value="{{ $challenge->title }}"
-                                            class="w-full border-gray-300 rounded-md text-sm" required>
-                                    </div>
-                                    <div class="col-span-6">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                        <input type="text" name="description" value="{{ $challenge->description }}"
-                                            class="w-full border-gray-300 rounded-md text-sm">
-                                    </div>
-                                    <div class="col-span-1 flex items-end gap-2 justify-end">
-                                        <button
-                                            class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm"
-                                            title="Atualizar">
-                                            <i class="fa-solid fa-rotate-right"></i>
-                                        </button>
-                                </form>
-                                <form method="POST" action="{{ route('admin.challenges.destroy', $challenge) }}"
-                                    class="js-challenge-destroy" data-id="{{ $challenge->id }}"
-                                    onsubmit="return confirm('Remover desafio?');">
-                                    @csrf @method('DELETE')
-                                    <button
-                                        class="inline-flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                                        title="Apagar">
-                                        <i class="fa-regular fa-trash-can"></i>
-                                    </button>
-                                </form>
-                            </div>
-                    </div>
-                    @endforeach
-
-                    <form method="POST" action="{{ route('admin.projects.challenges.store', $project) }}"
-                        class="bg-white p-4 rounded shadow-sm border border-gray-100 js-challenge-store">
-                        @csrf
-                        <h4 class="font-medium text-gray-800 mb-3">Adicionar novo desafio</h4>
-                        <div class="grid grid-cols-12 gap-3 items-end">
-                            <div class="col-span-5">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                                <input type="text" name="title"
-                                    class="w-full border-gray-300 rounded-md text-sm" placeholder="Novo desafio"
-                                    required>
-                            </div>
-                            <div class="col-span-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                <input type="text" name="description"
-                                    class="w-full border-gray-300 rounded-md text-sm" placeholder="Descrição">
-                            </div>
-                            <div class="col-span-1 flex items-end justify-end">
-                                <button
-                                    class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
                 <hr class="my-8">
 
-                <h3 class="text-lg font-semibold mb-2">Soluções</h3>
-                <div id="solutions-list" class="space-y-3">
-                    @foreach ($project->solutions as $solution)
-                        <div id="solution-{{ $solution->id }}"
-                            class="bg-white p-4 rounded shadow-sm border border-gray-100">
-                            <form method="POST" action="{{ route('admin.solutions.update', $solution) }}"
-                                class="grid grid-cols-12 gap-3 js-solution-update" data-id="{{ $solution->id }}">
-                                @csrf @method('PUT')
-                                <div class="col-span-5">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                                    <input type="text" name="title" value="{{ $solution->title }}"
-                                        class="w-full border-gray-300 rounded-md text-sm" required>
                                 </div>
-                                <div class="col-span-6">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                    <input type="text" name="description" value="{{ $solution->description }}"
-                                        class="w-full border-gray-300 rounded-md text-sm">
                                 </div>
-                                <div class="col-span-1 flex items-end gap-2 justify-end">
-                                    <button
-                                        class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm"
-                                        title="Atualizar">
-                                        <i class="fa-solid fa-rotate-right"></i>
-                                    </button>
-                            </form>
-                            <form method="POST" action="{{ route('admin.solutions.destroy', $solution) }}"
-                                class="js-solution-destroy" data-id="{{ $solution->id }}"
-                                onsubmit="return confirm('Remover solução?');">
-                                @csrf @method('DELETE')
-                                <button
-                                    class="inline-flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                                    title="Apagar">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </form>
                         </div>
                 </div>
-                @endforeach
 
-                <form method="POST" action="{{ route('admin.projects.solutions.store', $project) }}"
-                    class="bg-white p-4 rounded shadow-sm border border-gray-100 js-solution-store">
-                    @csrf
-                    <h4 class="font-medium text-gray-800 mb-3">Adicionar nova solução</h4>
-                    <div class="grid grid-cols-12 gap-3 items-end">
-                        <div class="col-span-5">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                            <input type="text" name="title" class="w-full border-gray-300 rounded-md text-sm"
-                                placeholder="Nova solução" required>
                         </div>
-                        <div class="col-span-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                            <input type="text" name="description"
-                                class="w-full border-gray-300 rounded-md text-sm" placeholder="Descrição">
                         </div>
                         <div class="col-span-1 flex items-end justify-end">
                             <button
@@ -313,194 +206,6 @@
             </div>
 
             <hr class="my-8">
-
-            <h3 class="text-lg font-semibold mb-2">Processos</h3>
-            <form method="POST" action="{{ route('admin.projects.processes.store', $project) }}"
-                class="bg-white p-4 rounded shadow-sm border border-gray-100 mb-4 grid grid-cols-12 gap-3 items-end js-process-store"
-                data-update-base="/admin/project-processes/__ID__" data-destroy-base="/admin/project-processes/__ID__"
-                data-images-store-base="/admin/project-processes/__ID__/images"
-                data-image-update-base="/admin/project-images/__ID__">
-                @csrf
-                <div class="col-span-11">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Selecionar Processo</label>
-                    <select name="process_id" class="w-full border-gray-300 rounded-md text-sm" required>
-                        <option value="">Selecione...</option>
-                        @foreach ($processes as $p)
-                            <option value="{{ $p->id }}">{{ $p->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-span-1 flex items-end justify-end">
-                    <button
-                        class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                </div>
-            </form>
-
-            <div id="processes-list" class="space-y-4">
-                @foreach ($project->projectProcesses as $pp)
-                    <div id="process-card-{{ $pp->id }}"
-                        class="bg-white p-4 rounded shadow-sm border border-gray-200">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="font-semibold text-gray-800">{{ $pp->process->name }}</div>
-                            <div class="flex items-center gap-2">
-                                <button type="button" onclick="openUploadModal('upload-pp-{{ $pp->id }}')"
-                                    class="inline-flex items-center gap-1 px-4 py-2 bg-orange-600 text-white rounded text-sm hover:bg-orange-700">
-                                    <i class="fa-regular fa-image"></i> Adicionar Imagens
-                                </button>
-                                <form method="POST" action="{{ route('admin.project-processes.destroy', $pp) }}"
-                                    class="js-process-destroy" data-id="{{ $pp->id }}"
-                                    onsubmit="return confirm('Remover processo deste projeto?');">
-                                    @csrf @method('DELETE')
-                                    <button
-                                        class="inline-flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700">
-                                        <i class="fa-regular fa-trash"></i> Remover
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <form method="POST" action="{{ route('admin.project-processes.update', $pp) }}"
-                            class="grid grid-cols-12 gap-3 items-start mb-3 js-process-update"
-                            data-id="{{ $pp->id }}">
-                            @csrf @method('PUT')
-                            <div class="col-span-10">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                <textarea name="description" rows="2" class="w-full border-gray-300 rounded-md text-sm">{{ $pp->description }}</textarea>
-                            </div>
-                            <div class="col-span-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Ordem</label>
-                                <input type="number" name="order" value="{{ $pp->order }}"
-                                    class="w-full border-gray-300 rounded-md text-sm">
-                            </div>
-                            <div class="col-span-1 flex items-end">
-                                <button
-                                    class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm"
-                                    title="Salvar">
-                                    <i class="fa-solid fa-rotate-right"></i>
-                                </button>
-                            </div>
-                        </form>
-
-                        <div id="pp-{{ $pp->id }}-images"
-                            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            @foreach ($pp->images as $img)
-                                <div id="img-card-{{ $img->id }}" class="border rounded overflow-hidden">
-                                    <img src="{{ asset($img->image) }}"
-                                        class="w-full h-28 object-cover cursor-pointer"
-                                        onclick="openUploadModal('edit-img-{{ $img->id }}')">
-                                    <div id="img-cap-{{ $img->id }}" class="p-2 text-xs text-gray-600 truncate">
-                                        {{ $img->title ?: 'Sem título' }}</div>
-                                </div>
-
-                                <!-- Modal editar imagem -->
-                                <div id="edit-img-{{ $img->id }}"
-                                    class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                                    <div class="bg-white rounded shadow-lg w-full max-w-lg p-6">
-                                        <div class="flex items-center justify-between mb-4">
-                                            <h4 class="font-semibold">Editar Imagem</h4>
-                                            <button type="button"
-                                                onclick="closeUploadModal('edit-img-{{ $img->id }}')">
-                                                <i class="fa-solid fa-xmark"></i>
-                                            </button>
-                                        </div>
-                                        <form id="img-form-{{ $img->id }}" method="POST"
-                                            action="{{ route('admin.project-images.update', $img) }}"
-                                            class="space-y-3 js-image-update" data-img-id="{{ $img->id }}">
-                                            @csrf @method('PUT')
-                                            <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                                                <input type="text" name="title" value="{{ $img->title }}"
-                                                    class="w-full border-gray-300 rounded-md text-sm">
-                                            </div>
-                                            <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                                                <textarea name="description" rows="3" class="w-full border-gray-300 rounded-md text-sm">{{ $img->description }}</textarea>
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Solução
-                                                    Relacionada</label>
-                                                <select name="solution"
-                                                    class="w-full border-gray-300 rounded-md text-sm">
-                                                    <option value="">Selecione...</option>
-                                                    @foreach ($project->solutions as $sol)
-                                                        <option value="{{ $sol->title }}"
-                                                            @selected($img->solution === $sol->title)>{{ $sol->title }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 mb-1">Ordem</label>
-                                                <input type="number" name="order" value="{{ $img->order }}"
-                                                    class="w-full border-gray-300 rounded-md text-sm">
-                                            </div>
-                                        </form>
-                                        <div class="flex items-center justify-between mt-4">
-                                            <button type="button"
-                                                onclick="closeUploadModal('edit-img-{{ $img->id }}')"
-                                                class="px-4 py-2 text-sm rounded border">Cancelar</button>
-                                            <div class="flex items-center gap-2">
-                                                <button form="img-form-{{ $img->id }}"
-                                                    class="px-4 py-2 text-sm bg-orange-600 text-white rounded">Salvar</button>
-                                                <form class="js-image-destroy" method="POST"
-                                                    action="{{ route('admin.project-images.destroy', $img) }}"
-                                                    onsubmit="return confirm('Excluir esta imagem?');">
-                                                    @csrf @method('DELETE')
-                                                    <button
-                                                        class="px-4 py-2 text-sm bg-red-600 text-white rounded">Excluir</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <!-- Modal upload imagens -->
-                        <div id="upload-pp-{{ $pp->id }}"
-                            class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                            <div class="bg-white rounded shadow-lg w-full max-w-lg p-6">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h4 class="font-semibold">Adicionar Imagens</h4>
-                                    <button type="button"
-                                        onclick="closeUploadModal('upload-pp-{{ $pp->id }}')">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                </div>
-                                <form method="POST"
-                                    action="{{ route('admin.project-processes.images.store', $pp) }}"
-                                    enctype="multipart/form-data" class="space-y-4 js-images-store"
-                                    data-pp-id="{{ $pp->id }}">
-                                    @csrf
-                                    <input type="file" name="images[]" multiple accept="image/*"
-                                        class="block w-full border border-dashed border-gray-300 rounded p-4 cursor-pointer">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button type="button"
-                                            onclick="closeUploadModal('upload-pp-{{ $pp->id }}')"
-                                            class="px-4 py-2 text-sm rounded border">Cancelar</button>
-                                        <button
-                                            class="px-4 py-2 text-sm bg-orange-600 text-white rounded">Salvar</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <script>
-                function openUploadModal(id) {
-                    document.getElementById(id)?.classList.remove('hidden');
-                }
-
-                function closeUploadModal(id) {
-                    document.getElementById(id)?.classList.add('hidden');
-                }
-            </script>
 
             <hr class="my-8">
 
@@ -549,6 +254,14 @@
                 const inputs = document.getElementById('competencyInputs');
                 const pscContainer = document.getElementById('psc-container');
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+                function openUploadModal(id) {
+                    document.getElementById(id)?.classList.remove('hidden');
+                }
+
+                function closeUploadModal(id) {
+                    document.getElementById(id)?.classList.add('hidden');
+                }
 
                 function renderCompetencies(skillId) {
                     badges.innerHTML = '';
