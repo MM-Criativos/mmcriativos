@@ -143,4 +143,6 @@ return [
         ],
     ],
 
+
+    'sales_notification' => env('MAIL_SALES_NOTIFICATION', 'comercial@mmcriativos.com.br'),
 ];

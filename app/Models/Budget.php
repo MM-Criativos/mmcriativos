@@ -63,6 +63,11 @@ class Budget extends Model
         return $this->belongsTo(Service::class);
     }
 
+    public function project()
+    {
+        return $this->hasOne(\App\Models\Project::class);
+    }
+
     public function items()
     {
         return $this->hasMany(BudgetItem::class)->orderBy('sort');

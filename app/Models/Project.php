@@ -18,6 +18,7 @@ class Project extends Model
         'summary',
         'client_id',
         'service_id',
+        'budget_id',
         'video',
         'finished_at',
     ];
@@ -25,6 +26,11 @@ class Project extends Model
     protected $casts = [
         'finished_at' => 'date',
     ];
+
+    public function budget()
+    {
+        return $this->belongsTo(\App\Models\Budget::class);
+    }
 
     public function client()
     {
@@ -108,3 +114,4 @@ class Project extends Model
         });
     }
 }
+

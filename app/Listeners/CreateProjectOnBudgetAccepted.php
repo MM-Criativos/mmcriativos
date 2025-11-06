@@ -13,40 +13,55 @@ class CreateProjectOnBudgetAccepted
 {
     public function handle(BudgetAccepted $event): void
     {
-        $budget = $event->budget;
-        if (!$budget->client_id || !$budget->service_id) {
+        $budget = $event->budget->loadMissing(['project', 'service', 'client']);
+
+        if (! $budget->client_id || ! $budget->service_id) {
             return;
         }
 
-        $serviceName = $budget->service->name ?? 'Serviço';
-        $clientName  = $budget->client->name ?? $budget->client_name ?? '';
-        $name = trim($serviceName . ' ' . $clientName);
+        if ($budget->project) {
+            $project = $budget->project;
+        } else {
+            $serviceName = $budget->service->name ?? 'ServiÃ§o';
+            $clientName  = $budget->client->name ?? $budget->client_name ?? '';
+            $name = trim($serviceName . ' ' . $clientName);
 
-        $baseSlug = Str::slug($name);
-        $slug = $baseSlug;
-        $i = 2;
-        while (Project::where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $i++;
+            $baseSlug = Str::slug($name) ?: 'projeto';
+            $slug = $baseSlug;
+            $i = 2;
+            while (Project::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $i++;
+            }
+
+            $project = Project::firstOrCreate(
+                ['budget_id' => $budget->id],
+                [
+                    'name'       => $name,
+                    'slug'       => $slug,
+                    'client_id'  => $budget->client_id,
+                    'service_id' => $budget->service_id,
+                ]
+            );
         }
 
-        $project = Project::create([
-            'name'       => $name,
-            'slug'       => $slug,
-            'client_id'  => $budget->client_id,
-            'service_id' => $budget->service_id,
-        ]);
-
-        // Envia e-mail com link assinado para a régua de percepção
         try {
-            $to = $budget->client->email ?? $budget->email ?? null;
+            $to = $budget->client->email ?? $budget->client_email ?? null;
             if ($to) {
                 $link = URL::temporarySignedRoute(
-                    'public.briefing.perception', now()->addDays(14), ['project' => $project->id]
+                    'public.briefing.perception',
+                    now()->addDays(14),
+                    ['project' => $project->id]
                 );
-                Mail::to($to)->send(new ProjectPerceptionBriefingMail($clientName ?: 'cliente', $link));
+
+                Mail::to($to)->send(
+                    new ProjectPerceptionBriefingMail(
+                        $budget->client->name ?? $budget->client_name ?? 'cliente',
+                        $link
+                    )
+                );
             }
         } catch (\Throwable $e) {
-            // Silencia falhas de envio para não interromper a criação do projeto
+            // Ignore e-mail failures
         }
     }
 }
