@@ -37,6 +37,9 @@ class DatabaseSeeder extends Seeder
             EmailTemplateSeeder::class,
             PlanningBriefingReguaSeeder::class,
             QualitativeTemplateSeeder::class,
+            GlobalPagesSeeder::class,
+            StorytellingComponentsSeeder::class,
+            GlobalPageComponentSeeder::class,
         ]);
     }
 }
