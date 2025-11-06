@@ -75,10 +75,10 @@
                                         <td class="py-3 pr-4">{{ $b->client_name }}</td>
                                         <td class="py-3 pr-4">{{ $b->service->name ?? '-' }}</td>
                                         <td class="py-3 pr-4">{{ $b->plan->category ?? '-' }}</td>
-                                        @php($sym = ['BRL'=>'R$','USD'=>'$','EUR'=>'€'][$b->currency] ?? $b->currency)
-                                        @php($baseGrand = (float)$b->total_one_time + ((float)$b->total_monthly * 12) + (float)$b->total_yearly)
-                                        @php($displayTotal = (float) optional($b->selectedPayment)->total_with_interest ?: $baseGrand)
-                                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($displayTotal, 2, ',', '.') }}</td>
+                                        @php($currencySymbols = ['BRL'=>'R$','USD'=>'$','EUR'=>'€'])
+                                        @php($sym = $currencySymbols[$b->currency] ?? $b->currency)
+                                        @php($displayTotal = optional($b->selectedPayment)->total_with_interest ?? $b->grand_total)
+                                        <td class="py-3 pr-4">{{ $sym }} {{ number_format((float) $displayTotal, 2, ',', '.') }}</td>
                                         <td class="py-3 pr-4">{!! $b->statusBadge() !!}</td>
                                         <td class="py-3 pr-4 text-sm flex gap-3">
                                             <a href="{{ route('admin.commercial.budgets.edit', $b) }}" class="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">Editar</a>

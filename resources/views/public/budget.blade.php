@@ -11,7 +11,7 @@
     <div class="w-full max-w-3xl bg-white shadow sm:rounded-lg p-6">
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-xl font-semibold">Orçamento #{{ $budget->id }}</h1>
-            <span class="text-sm text-gray-500">{{ $budget->status }}</span>
+            <span class="text-sm text-gray-500">{{ ucfirst($budget->status) }}</span>
         </div>
 
         @if (session('status'))
@@ -34,7 +34,8 @@
             </div>
         </div>
 
-        @php($sym = ['BRL'=>'R$','USD'=>'$','EUR'=>'€'][$budget->currency] ?? $budget->currency)
+        @php($symbols = ['BRL'=>'R$','USD'=>'$','EUR'=>'€'])
+        @php($sym = $symbols[$budget->currency] ?? $budget->currency)
 
         <h2 class="font-semibold mb-2">Itens</h2>
         <div class="overflow-x-auto mb-6">
@@ -50,7 +51,6 @@
                 </tr>
                 </thead>
                 <tbody>
-                {{-- Produto (primeiro item) --}}
                 @php($productName = $budget->plan ? $budget->plan->category . ' — ' . ($budget->service->name ?? '') : $budget->service->name ?? 'Produto')
                 @php($productUnit = (float) $budget->base_price_snapshot)
                 @php($productDiscount = (float) ($budget->discount_amount ?? 0))
@@ -64,15 +64,15 @@
                     <td class="py-3 pr-4">{{ $sym }} {{ number_format($productTotal, 2, ',', '.') }}</td>
                 </tr>
 
-                {{-- Extras --}}
-                @forelse ($budget->items as $i)
+                @forelse ($budget->items as $item)
+                    @php($periodMap = ['one_time' => 'Único', 'monthly' => 'Mensal', 'yearly' => 'Anual'])
                     <tr class="border-b">
-                        <td class="py-3 pr-4">{{ $i->name }}</td>
-                        <td class="py-3 pr-4">{{ $i->qty }}</td>
-                        <td class="py-3 pr-4">{{ ['one_time' => 'Único', 'monthly' => 'Mensal', 'yearly' => 'Anual'][$i->billing_period] ?? $i->billing_period }}</td>
-                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($i->unit_price, 2, ',', '.') }}</td>
-                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($i->discount_amount, 2, ',', '.') }}</td>
-                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($i->total, 2, ',', '.') }}</td>
+                        <td class="py-3 pr-4">{{ $item->name }}</td>
+                        <td class="py-3 pr-4">{{ $item->qty }}</td>
+                        <td class="py-3 pr-4">{{ $periodMap[$item->billing_period] ?? $item->billing_period }}</td>
+                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($item->unit_price, 2, ',', '.') }}</td>
+                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($item->discount_amount, 2, ',', '.') }}</td>
+                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($item->total, 2, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr><td class="py-3 pr-4 text-gray-600" colspan="6">Nenhum extra listado.</td></tr>
@@ -82,11 +82,12 @@
         </div>
 
         @php($servicesTotal = 0.0)
-        @foreach ($budget->items as $it)
-            @php($servicesTotal += (float) $it->total * ($it->billing_period === 'monthly' ? 12 : 1))
+        @foreach ($budget->items as $item)
+            @php($servicesTotal += (float) $item->total * ($item->billing_period === 'monthly' ? 12 : 1))
         @endforeach
         @php($product = max((float) $budget->base_price_snapshot - (float) ($budget->discount_amount ?? 0), 0))
         @php($grand = $product + $servicesTotal)
+
         @php($ratePercent = $installmentRates[$installments] ?? 0)
         @php($grandWithInterest = round($grand * (1 + $ratePercent / 100), 2))
         @php($perInstallment = round($grandWithInterest / max($installments, 1), 2))
@@ -96,9 +97,9 @@
             <form method="GET" action="{{ route('budget.public', $budget->public_token) }}" class="flex items-center gap-2">
                 <label class="text-sm text-gray-600">Parcelamento</label>
                 <select name="installments" class="border-gray-300 rounded">
-                    @foreach (($installmentRates ?? []) as $n => $rate)
-                        @php($label = $n . 'x' . ($rate>0 ? ' ('.$rate.'%)' : ' (sem juros)'))
-                        <option value="{{ $n }}" @selected(($installments ?? 1)==$n)>{{ $label }}</option>
+                    @foreach ($installmentRates ?? [] as $n => $rate)
+                        @php($label = $n . 'x' . ($rate > 0 ? ' (' . $rate . '%)' : ' (sem juros)'))
+                        <option value="{{ $n }}" @selected(($installments ?? 1) == $n)>{{ $label }}</option>
                     @endforeach
                 </select>
                 <button class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Aplicar</button>
@@ -135,10 +136,17 @@
             @endif
         </div>
 
-        <div class="flex flex-wrap gap-3">
-            <a href="{{ route('budget.accept', ['token' => $budget->public_token, 'installments' => $installments]) }}" class="px-5 py-3 bg-green-600 text-white rounded">Aprovar orçamento</a>
-            <a href="{{ route('budget.decline', ['token' => $budget->public_token, 'installments' => $installments]) }}" class="px-5 py-3 bg-red-600 text-white rounded">Recusar orçamento</a>
-        </div>
+        @if ($isExpired ?? false)
+            <div class="p-4 bg-red-50 text-red-600 rounded">
+                Este orçamento expirou em {{ optional($budget->valid_until)->format('d/m/Y') ?? 'data não informada' }}.
+                Entre em contato com nossa equipe para solicitar uma nova proposta.
+            </div>
+        @else
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ route('budget.accept', ['token' => $budget->public_token, 'installments' => $installments]) }}" class="px-5 py-3 bg-green-600 text-white rounded">Aprovar orçamento</a>
+                <a href="{{ route('budget.decline', ['token' => $budget->public_token, 'installments' => $installments]) }}" class="px-5 py-3 bg-red-600 text-white rounded">Recusar orçamento</a>
+            </div>
+        @endif
     </div>
     <p class="mt-6 text-xs text-gray-500">MM Criativos</p>
 </div>

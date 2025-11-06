@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\BudgetAccepted;
 use App\Events\BudgetDeclined;
+use App\Events\BudgetExpired;
 use App\Events\BudgetOpened;
 use App\Events\BudgetSent;
 use App\Models\BudgetEvent as BudgetEventModel;
@@ -23,6 +24,7 @@ class RegisterBudgetEvent
             $event instanceof BudgetOpened => 'opened',
             $event instanceof BudgetAccepted => 'accepted',
             $event instanceof BudgetDeclined => 'declined',
+            $event instanceof BudgetExpired => 'expired',
             default => 'unknown',
         };
 

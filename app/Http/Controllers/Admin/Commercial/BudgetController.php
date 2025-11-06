@@ -182,7 +182,7 @@ class BudgetController extends Controller
             'budget_id' => $budget->id,
             'valid_until' => optional($budget->valid_until)->format('d/m/Y'),
             'public_link' => $publicLink,
-            'company_name' => 'MM Criativos',
+            'company_name' => config('app.name', 'MM Criativos'),
         ];
 
         EmailTemplateService::send('budget_sent', $to, $vars);

@@ -183,4 +183,14 @@ class Budget extends Model
         [$class, $label] = $map[$status] ?? ['secondary', ucfirst($status)];
         return '<span class="badge bg-' . $class . '">' . e($label) . '</span>';
     }
+
+    public function getGrandTotalAttribute(): float
+    {
+        $oneTime = (float) $this->total_one_time;
+        $monthly = (float) $this->total_monthly;
+        $yearly = (float) $this->total_yearly;
+        $base = (float) $this->base_price_snapshot;
+
+        return round($base + $oneTime + ($monthly * 12) + $yearly, 2);
+    }
 }
