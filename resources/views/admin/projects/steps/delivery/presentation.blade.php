@@ -12,7 +12,7 @@
     </div>
 
     <form id="project-presentation-form" method="POST" action="{{ route('admin.projects.update', $project) }}"
-          enctype="multipart/form-data" class="space-y-6">
+        enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
 
@@ -20,7 +20,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nome do projeto</label>
                 <input type="text" name="name" value="{{ old('name', $project->name) }}"
-                       class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                 @error('name')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -28,7 +28,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
                 <input type="text" name="slug" value="{{ old('slug', $project->slug) }}"
-                       class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                 @error('slug')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -36,7 +36,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
                 <select name="client_id"
-                        class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                     <option value="">Selecione...</option>
                     @foreach ($clients as $client)
                         <option value="{{ $client->id }}" @selected(old('client_id', $project->client_id) == $client->id)>
@@ -51,7 +51,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Serviço</label>
                 <select name="service_id"
-                        class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                     <option value="">Selecione...</option>
                     @foreach ($services as $service)
                         <option value="{{ $service->id }}" @selected(old('service_id', $project->service_id) == $service->id)>
@@ -70,17 +70,28 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
                 @php
                     $cover = $project->cover;
-                    $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4','.webm','.ogg','.mov']);
+                    $isVideo =
+                        $cover &&
+                        \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), [
+                            '.mp4',
+                            '.webm',
+                            '.ogg',
+                            '.mov',
+                        ]);
                 @endphp
                 <div class="w-40 h-40 mb-2">
                     @if ($cover)
                         @if ($isVideo)
-                            <video src="{{ asset($cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>
+                            <video src="{{ asset($cover) }}"
+                                class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>
                         @else
-                            <img src="{{ asset($cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200" />
+                            <img src="{{ asset($cover) }}"
+                                class="w-40 h-40 object-cover rounded border border-gray-200" />
                         @endif
                     @else
-                        <div class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs">Sem cover</div>
+                        <div
+                            class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs">
+                            Sem cover</div>
                     @endif
                 </div>
                 <input type="file" name="cover" accept="image/*,video/*" class="block w-full text-sm" />
@@ -90,9 +101,12 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Thumb</label>
                 <div class="w-40 h-40 mb-2">
                     @if ($project->thumb)
-                        <img src="{{ asset($project->thumb) }}" class="w-40 h-40 object-cover rounded border border-gray-200" />
+                        <img src="{{ asset($project->thumb) }}"
+                            class="w-40 h-40 object-cover rounded border border-gray-200" />
                     @else
-                        <div class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs">Sem thumb</div>
+                        <div
+                            class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs">
+                            Sem thumb</div>
                     @endif
                 </div>
                 <input type="file" name="thumb" accept="image/*" class="block w-full text-sm" />
@@ -102,9 +116,12 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Skill cover</label>
                 <div class="w-40 h-40 mb-2">
                     @if ($project->skill_cover)
-                        <img src="{{ asset($project->skill_cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200" />
+                        <img src="{{ asset($project->skill_cover) }}"
+                            class="w-40 h-40 object-cover rounded border border-gray-200" />
                     @else
-                        <div class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs">Sem skill cover</div>
+                        <div
+                            class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs">
+                            Sem skill cover</div>
                     @endif
                 </div>
                 <input type="file" name="skill_cover" accept="image/*" class="block w-full text-sm" />
@@ -112,8 +129,8 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Vídeo (URL)</label>
-                <input type="text" name="video" value="{{ old('video', $project->video) }}" placeholder="https://..."
-                       class="mt-1 block w-full border-gray-300 rounded-md">
+                <input type="text" name="video" value="{{ old('video', $project->video) }}"
+                    placeholder="https://..." class="mt-1 block w-full border-gray-300 rounded-md">
                 @error('video')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -123,20 +140,34 @@
 
     <div class="flex flex-wrap items-center gap-3">
         <button type="submit" form="project-presentation-form"
-                class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm transition-colors duration-200">
+            class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm transition-colors duration-200">
             Salvar apresentação
         </button>
 
-        <form method="POST" action="{{ route('admin.projects.finish', $project) }}"
-              onsubmit="return confirm('Marcar este projeto como finalizado?')">
-            @csrf
-            <button type="submit"
-                class="inline-flex items-center px-6 py-3 rounded border text-sm font-medium transition-colors duration-200
-                {{ $project->finished_at ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}"
-                {{ $project->finished_at ? 'disabled' : '' }}>
-                {{ $project->finished_at ? 'Projeto finalizado' : 'Finalizar projeto' }}
-            </button>
-        </form>
+        <div class="flex items-center gap-3">
+            <form method="POST" action="{{ route('admin.projects.finish', $project) }}"
+                onsubmit="return confirm('Marcar este projeto como finalizado?')">
+                @csrf
+                <button type="submit"
+                    class="inline-flex items-center px-6 py-3 rounded border text-sm font-medium transition-colors duration-200
+                    {{ $project->finished_at ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}"
+                    {{ $project->finished_at ? 'disabled' : '' }}>
+                    {{ $project->finished_at ? 'Projeto finalizado' : 'Finalizar projeto' }}
+                </button>
+            </form>
+
+            @if ($project->finished_at)
+                <form method="POST" action="{{ route('admin.projects.resume', $project) }}"
+                    onsubmit="return confirm('Deseja reabrir este projeto e voltar para produção?');">
+                    @csrf
+                    <button type="submit"
+                        class="inline-flex items-center px-6 py-3 rounded border text-sm font-medium transition-colors duration-200
+                        border-orange-600 text-orange-600 bg-white hover:bg-orange-600 hover:text-white">
+                        Voltar para produção
+                    </button>
+                </form>
+            @endif
+        </div>
 
         @if ($project->finished_at)
             <span class="text-xs text-gray-500">

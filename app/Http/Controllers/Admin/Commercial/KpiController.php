@@ -15,6 +15,12 @@ class KpiController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'approved']);
+        $this->middleware(function ($request, $next) {
+            if (auth()->user()?->role !== 'admin') {
+                abort(403);
+            }
+            return $next($request);
+        });
     }
 
     public function index()

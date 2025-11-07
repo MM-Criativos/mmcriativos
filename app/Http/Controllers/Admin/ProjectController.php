@@ -226,7 +226,13 @@ class ProjectController extends Controller
             ]),
             'skillLinks' => fn($q) => $q->with(['skill', 'competency'])->orderBy('order')->orderBy('id'),
             'tasks' => fn($q) => $q
-                ->with(['skill', 'competency', 'assignedUser'])
+                ->with([
+                    'skill',
+                    'competency',
+                    'assignedUser',
+                    'items.assignedUser',
+                    'items.competency',
+                ])
                 ->orderBy('skill_id')
                 ->orderBy('id'),
         ]);
@@ -302,6 +308,16 @@ class ProjectController extends Controller
         }
 
         return back()->with('status', 'Projeto finalizado com sucesso.');
+    }
+
+    public function resume(Project $project): RedirectResponse
+    {
+        if ($project->finished_at) {
+            $project->finished_at = null;
+            $project->save();
+        }
+
+        return back()->with('status', 'Projeto retornou para produção.');
     }
 
 }

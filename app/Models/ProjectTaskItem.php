@@ -5,35 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ProjectTask extends Model
+class ProjectTaskItem extends Model
 {
     use HasFactory;
 
-    public const STATUS_PENDING = 'pending';
-    public const STATUS_IN_PROGRESS = 'in_progress';
-    public const STATUS_DONE = 'done';
-
-    public const STATUSES = [
-        self::STATUS_PENDING => 'Pendente',
-        self::STATUS_IN_PROGRESS => 'Em andamento',
-        self::STATUS_DONE => 'Concluído',
-    ];
-
     protected $fillable = [
         'project_id',
+        'project_task_id',
         'skill_id',
         'skill_competency_id',
+        'assigned_to',
         'title',
         'description',
-        'status',
-        'assigned_to',
-        'planned_at',
-        'completed_at',
+        'is_done',
+        'done_at',
+        'order',
     ];
 
     protected $casts = [
-        'completed_at' => 'datetime',
-        'planned_at' => 'datetime',
+        'is_done' => 'boolean',
+        'done_at' => 'datetime',
     ];
 
     /*
@@ -45,6 +36,11 @@ class ProjectTask extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function task()
+    {
+        return $this->belongsTo(ProjectTask::class, 'project_task_id');
     }
 
     public function skill()
@@ -62,45 +58,30 @@ class ProjectTask extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function items()
-    {
-        return $this->hasMany(ProjectTaskItem::class, 'project_task_id')
-            ->orderBy('order')
-            ->orderBy('id');
-    }
-
     /*
     |--------------------------------------------------------------------------
     | 🧠 MÉTODOS AUXILIARES
     |--------------------------------------------------------------------------
     */
 
+    public function markAsDone(): void
+    {
+        $this->update([
+            'is_done' => true,
+            'done_at' => now(),
+        ]);
+    }
+
+    public function markAsUndone(): void
+    {
+        $this->update([
+            'is_done' => false,
+            'done_at' => null,
+        ]);
+    }
+
     public function isCompleted(): bool
     {
-        return $this->status === 'done';
-    }
-
-    public function markAsCompleted(): void
-    {
-        $this->update([
-            'status' => 'done',
-            'completed_at' => now(),
-        ]);
-    }
-
-    public function markInProgress(): void
-    {
-        $this->update([
-            'status' => 'in_progress',
-            'completed_at' => null,
-        ]);
-    }
-
-    public function markPending(): void
-    {
-        $this->update([
-            'status' => 'pending',
-            'completed_at' => null,
-        ]);
+        return $this->is_done === true;
     }
 }

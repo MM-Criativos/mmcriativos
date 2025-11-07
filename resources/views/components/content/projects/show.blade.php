@@ -562,7 +562,8 @@
         <!-- ====== Versão Desktop / Tablet ====== -->
         <div class="feature-one d-none d-md-block">
             <div class="container">
-                <div id="project-processes-carousel" class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                <div id="project-processes-carousel"
+                    class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
                     data-owl-options='{
                         "items": 3,
                         "margin": 24,
@@ -599,14 +600,8 @@
                         @endphp
 
                         <div class="item">
-                            <x-project-process-item
-                                :titulo="$proc?->name ?? 'Etapa'"
-                                :icone="($proc?->icon_class ?: $proc?->icon) ?? 'icon-idea'"
-                                :imagem="$image"
-                                :descricao="$pp->description ?? ''"
-                                :categoria="$proc?->slug ?? 'proc-' . $pp->id"
-                                :slides="$slides"
-                                :etapa="$proc?->name ?? null"
+                            <x-project-process-item :titulo="$proc?->name ?? 'Etapa'" :icone="($proc?->icon_class ?: $proc?->icon) ?? 'icon-idea'" :imagem="$image"
+                                :descricao="$pp->description ?? ''" :categoria="$proc?->slug ?? 'proc-' . $pp->id" :slides="$slides" :etapa="$proc?->name ?? null"
                                 :process-id="$pp->id" />
                         </div>
                     @endforeach
@@ -712,7 +707,7 @@
         <!-- ====== Modal Global (Competências) ====== -->
         <x-competencies-modal />
 
-        <!-- Call To Action Start -->
+        <!-- Skills Start -->
         <div class="cta-two" id="project-skills">
             <div class="cta-two__bg"
                 style="background-image: url('{{ $project->skill_cover ? asset($project->skill_cover) : asset('assets/images/backgrounds/cta-bg-2.jpg') }}');">
@@ -748,24 +743,45 @@
                             }'>
 
                             @php
-                                $projectSkillGroups = $project->tasks
+                                $project->loadMissing([
+                                    'tasks.skill',
+                                    'tasks.competency',
+                                    'taskItems.skill',
+                                    'taskItems.competency',
+                                ]);
+
+                                $taskGroups = $project->tasks
                                     ->filter(fn($task) => $task->skill)
-                                    ->groupBy('skill_id')
-                                    ->map(function ($tasks) {
-                                        $skill = optional($tasks->first()->skill);
+                                    ->groupBy('skill_id');
+
+                                $itemGroups = $project->taskItems
+                                    ->filter(fn($item) => $item->skill)
+                                    ->groupBy('skill_id');
+
+                                $skillIds = $taskGroups->keys()->merge($itemGroups->keys())->unique()->values();
+
+                                $projectSkillGroups = $skillIds
+                                    ->map(function ($skillId) use ($taskGroups, $itemGroups) {
+                                        $tasks = $taskGroups->get($skillId, collect());
+                                        $items = $itemGroups->get($skillId, collect());
+
+                                        $skillModel = optional($tasks->first()?->skill ?? $items->first()?->skill);
+
+                                        $competencies = $tasks
+                                            ->map(fn($task) => optional($task->competency)->competency)
+                                            ->merge($items->map(fn($item) => optional($item->competency)->competency))
+                                            ->filter()
+                                            ->unique()
+                                            ->values();
 
                                         return [
-                                            'id' => $skill?->id,
-                                            'name' => $skill?->name ?? 'Skill',
-                                            'icon' => $skill?->icon ?? 'icon-idea',
-                                            'cover' => $skill?->cover ?? null,
+                                            'id' => $skillModel?->id,
+                                            'name' => $skillModel?->name ?? 'Skill',
+                                            'icon' => $skillModel?->icon ?? 'icon-idea',
+                                            'cover' => $skillModel?->cover ?? null,
                                             'description' =>
-                                                $skill?->description ?? 'Competências associadas à habilidade.',
-                                            'competencies' => $tasks
-                                                ->map(fn($task) => optional($task->competency)->competency)
-                                                ->filter()
-                                                ->unique()
-                                                ->values(),
+                                                $skillModel?->description ?? 'Competências associadas à habilidade.',
+                                            'competencies' => $competencies,
                                         ];
                                     })
                                     ->values();

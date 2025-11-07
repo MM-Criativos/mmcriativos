@@ -34,6 +34,10 @@
                         {{ __('Comercial') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('admin.tasks.index')" :active="request()->is('admin/tasks*')">
+                        {{ __('Tarefas') }}
+                    </x-nav-link>
+
                     @if (Auth::user()->role === 'admin' && Route::has('admin.team.index'))
                         <x-nav-link :href="route('admin.team.index')" :active="request()->is('admin/team*')">
                             {{ __('Equipe') }}
@@ -139,6 +143,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('admin.commercial.dashboard')" :active="request()->is('admin/commercial*') || request()->is('admin/clients*') || request()->is('admin/testimonials*')">
                 {{ __('Comercial') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.tasks.index')" :active="request()->is('admin/tasks*')">
+                {{ __('Tarefas') }}
             </x-responsive-nav-link>
             @if (Auth::user()->role === 'admin' && Route::has('admin.team.index'))
                 <x-responsive-nav-link :href="route('admin.team.index')" :active="request()->is('admin/team*')">

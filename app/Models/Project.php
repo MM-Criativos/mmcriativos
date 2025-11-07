@@ -107,6 +107,11 @@ class Project extends Model
         return $this->hasOne(ProjectPlanning::class);
     }
 
+    public function taskItems()
+    {
+        return $this->hasMany(ProjectTaskItem::class);
+    }
+
     protected static function booted()
     {
         static::created(function (Project $project) {
@@ -122,10 +127,9 @@ class Project extends Model
                     'client_id'   => $project->client_id,
                     'status'      => 'not_started',
                     'started_at'  => $project->created_at,
-                    'completed_at'=> null,
+                    'completed_at' => null,
                 ]
             );
         });
     }
 }
-

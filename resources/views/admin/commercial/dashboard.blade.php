@@ -39,11 +39,13 @@
                     <div class="text-gray-500 text-sm">Templates de E-mail</div>
                     <div class="text-3xl font-bold text-gray-800">{{ $stats['email_templates'] ?? 0 }}</div>
                 </a>
-                <a href="{{ route('admin.commercial.kpi.index') }}"
-                    class="block bg-white p-6 rounded shadow hover:shadow-md">
-                    <div class="text-gray-500 text-sm">KPI</div>
-                    <div class="text-3xl font-bold text-gray-800">{{ $stats['kpi'] ?? 0 }}</div>
-                </a>
+                @if (auth()->user()?->role === 'admin' && Route::has('admin.commercial.kpi.index'))
+                    <a href="{{ route('admin.commercial.kpi.index') }}"
+                        class="block bg-white p-6 rounded shadow hover:shadow-md">
+                        <div class="text-gray-500 text-sm">KPI</div>
+                        <div class="text-3xl font-bold text-gray-800">{{ $stats['kpi'] ?? 0 }}</div>
+                    </a>
+                @endif
             </div>
         </div>
     </div>

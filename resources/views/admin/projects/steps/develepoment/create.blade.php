@@ -1,6 +1,22 @@
 @php
     $statusOptions = \App\Models\ProjectTask::STATUSES;
     $skillOptions = $skillOptions instanceof \Illuminate\Support\Collection ? $skillOptions : collect($skillOptions ?? []);
+    $initialTaskItems = collect(old('items', []))
+        ->map(function ($item, $index) {
+            return [
+                'uid' => $item['uid'] ?? ($item['id'] ?? ('tmp_' . $index . '_' . uniqid())),
+                'id' => $item['id'] ?? null,
+                'title' => $item['title'] ?? '',
+                'description' => $item['description'] ?? '',
+                'skill_competency_id' => isset($item['skill_competency_id']) ? (string) $item['skill_competency_id'] : '',
+                'assigned_to' => isset($item['assigned_to']) ? (string) $item['assigned_to'] : '',
+            ];
+        })
+        ->values()
+        ->toArray();
+    $taskItemsErrors = collect(optional($errors->getBag('projectTasksStore'))->getMessages() ?? [])
+        ->filter(fn($messages, $key) => str_starts_with($key, 'items.'))
+        ->flatten();
 @endphp
 
 <div x-cloak x-show="createTaskModal" x-transition.opacity
@@ -31,6 +47,8 @@
                         options: @js($skillOptions),
                         skill: @js(old('skill_id')),
                         competency: @js(old('skill_competency_id')),
+                        items: @js($initialTaskItems),
+                        nextUid: Date.now(),
                         get competencies() {
                             const selected = this.options.find(option => String(option.id) === String(this.skill));
                             return selected ? selected.competencies : [];
@@ -39,6 +57,44 @@
                             if (!this.competencies.some(option => String(option.id) === String(this.competency))) {
                                 this.competency = '';
                             }
+                            this.ensureItemsCompetencies();
+                        },
+                        ensureItemsCompetencies() {
+                            const competencyIds = this.competencies.map(option => String(option.id));
+                            this.items = this.items.map(item => {
+                                if (!competencyIds.includes(String(item.skill_competency_id))) {
+                                    item.skill_competency_id = '';
+                                }
+                                return item;
+                            });
+                        },
+                        addItem() {
+                            if (!this.skill) {
+                                alert('Selecione a skill da tarefa antes de adicionar itens.');
+                                return;
+                            }
+                            this.items.push({
+                                uid: `new_${this.nextUid++}`,
+                                id: null,
+                                title: '',
+                                description: '',
+                                skill_competency_id: this.competency || '',
+                                assigned_to: '',
+                            });
+                        },
+                        removeItem(index) {
+                            this.items.splice(index, 1);
+                        },
+                        primaryCompetencyName() {
+                            const option = this.competencies.find(option => String(option.id) === String(this.competency));
+                            return option ? option.name : '';
+                        },
+                        primaryCompetencyOptionLabel() {
+                            if (!this.skill) {
+                                return 'Selecione uma skill para liberar as competências';
+                            }
+                            const name = this.primaryCompetencyName();
+                            return name ? `Seguir competência principal (${name})` : 'Seguir competência principal da tarefa';
                         }
                     }"
                     x-init="ensureCompetency()">
@@ -49,9 +105,9 @@
                         <select name="skill_id" x-model="skill" @change="ensureCompetency()" required
                             class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                             <option value="">Selecione...</option>
-                            <template x-for="option in options" :key="option.id">
-                                <option :value="option.id" x-text="option.name"></option>
-                            </template>
+                        <template x-for="option in options" :key="option.id">
+                            <option :value="String(option.id)" x-text="option.name"></option>
+                        </template>
                         </select>
                         @error('skill_id', 'projectTasksStore')
                             <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -63,9 +119,9 @@
                         <select name="skill_competency_id" x-model="competency" required
                             class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                             <option value="">Selecione...</option>
-                            <template x-for="competencyOption in competencies" :key="competencyOption.id">
-                                <option :value="competencyOption.id" x-text="competencyOption.name"></option>
-                            </template>
+                        <template x-for="competencyOption in competencies" :key="competencyOption.id">
+                            <option :value="String(competencyOption.id)" x-text="competencyOption.name"></option>
+                        </template>
                         </select>
                         @error('skill_competency_id', 'projectTasksStore')
                             <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -112,6 +168,15 @@
                         @enderror
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data planejada</label>
+                        <input type="date" name="planned_at" value="{{ old('planned_at') }}"
+                            class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                        @error('planned_at', 'projectTasksStore')
+                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Descri&ccedil;&atilde;o</label>
                         <textarea name="description" rows="3"
@@ -121,13 +186,85 @@
                         @enderror
                     </div>
 
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Notas de progresso</label>
-                        <textarea name="progress_notes" rows="3"
-                            class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">{{ old('progress_notes') }}</textarea>
-                        @error('progress_notes', 'projectTasksStore')
-                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
+                    <div class="md:col-span-2 space-y-4">
+                        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">Itens da tarefa</p>
+                                <p class="text-xs text-gray-500">Monte subtarefas espec&iacute;ficas para distribuir responsabilidades.</p>
+                            </div>
+                            <button type="button" @click="addItem()"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50">
+                                <i class="fa-solid fa-list-check"></i>
+                                Adicionar item
+                            </button>
+                        </div>
+
+                        @if ($taskItemsErrors->isNotEmpty())
+                            <div class="bg-red-50 border border-red-100 text-xs text-red-600 rounded-md p-3 space-y-1">
+                                @foreach ($taskItemsErrors as $message)
+                                    <p>{{ $message }}</p>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <template x-if="!items.length">
+                            <div class="border border-dashed border-gray-200 rounded-md p-4 text-sm text-gray-500">
+                                Nenhum item adicionado. Clique em &ldquo;Adicionar item&rdquo; para criar a primeira subtarefa.
+                            </div>
+                        </template>
+
+                        <template x-for="(item, index) in items" :key="item.uid">
+                            <div class="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/60">
+                                <input type="hidden" :name="`items[${index}][id]`" :value="item.id ?? ''">
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">T&iacute;tulo do item</label>
+                                        <input type="text" :name="`items[${index}][title]`" x-model="item.title" required
+                                            class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Compet&ecirc;ncia</label>
+                                        <select :name="`items[${index}][skill_competency_id]`" x-model="item.skill_competency_id"
+                                            :disabled="!skill"
+                                            class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500 disabled:bg-gray-100 disabled:text-gray-500">
+                                            <option value="" x-text="primaryCompetencyOptionLabel()"></option>
+                                        <template x-for="competencyOption in competencies" :key="competencyOption.id">
+                                            <option :value="String(competencyOption.id)" x-text="competencyOption.name"></option>
+                                        </template>
+                                        </select>
+                                        <p class="text-xs text-gray-500 mt-1">Deixe em branco para herdar a compet&ecirc;ncia principal da tarefa.</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Respons&aacute;vel</label>
+                                        <select :name="`items[${index}][assigned_to]`" x-model="item.assigned_to"
+                                            class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                                            <option value="">Definir depois</option>
+                                            @foreach ($teamMembers as $member)
+                                                <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descri&ccedil;&atilde;o do item</label>
+                                    <textarea rows="2" :name="`items[${index}][description]`" x-model="item.description"
+                                        class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500"></textarea>
+                                </div>
+
+                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                    <span class="uppercase tracking-widest">Item #<span x-text="index + 1"></span></span>
+                                    <button type="button" class="inline-flex items-center gap-1 text-red-600 hover:text-red-700"
+                                        @click="removeItem(index)">
+                                        <i class="fa-solid fa-trash"></i>
+                                        Remover
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <div class="md:col-span-2 flex items-center justify-end gap-3">

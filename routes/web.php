@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\ProjectProcessController as AdminProjectProcessCo
 use App\Http\Controllers\Admin\ProjectImageController as AdminProjectImageController;
 use App\Http\Controllers\Admin\ProjectSkillCompetencyController as AdminProjectSkillCompetencyController;
 use App\Http\Controllers\Admin\ProjectTaskController as AdminProjectTaskController;
+use App\Http\Controllers\Admin\TaskController as AdminTaskController;
 use App\Http\Controllers\Admin\ProjectPlanningController as AdminProjectPlanningController;
 use App\Http\Controllers\Admin\ProjectPageController as AdminProjectPageController;
 use App\Http\Controllers\Admin\ProjectPageComponentController as AdminProjectPageComponentController;
@@ -40,6 +41,7 @@ use App\Http\Controllers\Admin\PriceController as AdminPriceController;
 use App\Http\Controllers\Site\ContactFormController;
 use App\Http\Controllers\Site\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Site\ModalController;
 use App\Http\Controllers\Site\PublicBudgetController;
 use App\Http\Controllers\Admin\Commercial\KpiController as CommercialKpiController;
@@ -71,12 +73,9 @@ Route::get('/modal-process/{projectProcess}', [ModalController::class, 'process'
 
 
 // Rotas padrÃ£o do Breeze (dashboard e profile protegidos)
-Route::get('/dashboard', function () {
-    if (!auth()->check()) {
-        return redirect()->route('login');
-    }
-    return view('dashboard');
-})->middleware(['verified', 'approved', 'auth'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)
+    ->middleware(['verified', 'approved', 'auth'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -226,6 +225,7 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
 
     Route::post('projects/{project}/summary', [AdminProjectController::class, 'updateSummary'])->name('projects.summary.update');
     Route::post('projects/{project}/finish', [AdminProjectController::class, 'finish'])->name('projects.finish');
+    Route::post('projects/{project}/resume', [AdminProjectController::class, 'resume'])->name('projects.resume');
 
     Route::post('project-processes/{projectProcess}/images', [AdminProjectImageController::class, 'store'])->name('project-processes.images.store');
     Route::put('project-images/{projectImage}', [AdminProjectImageController::class, 'update'])->name('project-images.update');
@@ -245,8 +245,16 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::delete('project-skill-competency/{projectSkillCompetency}', [AdminProjectSkillCompetencyController::class, 'destroy'])->name('project-skill-competency.destroy');
 
     // Projects: tasks
+    Route::get('project-tasks/completed', [AdminProjectTaskController::class, 'completed'])->name('project-tasks.completed');
+    Route::post('project-tasks/{projectTask}/complete', [AdminProjectTaskController::class, 'complete'])->name('project-tasks.complete');
     Route::put('project-tasks/{projectTask}', [AdminProjectTaskController::class, 'update'])->name('project-tasks.update');
     Route::delete('project-tasks/{projectTask}', [AdminProjectTaskController::class, 'destroy'])->name('project-tasks.destroy');
+    Route::post('project-task-items/{projectTaskItem}/toggle', [AdminProjectTaskController::class, 'toggleItem'])
+        ->name('project-task-items.toggle');
+
+    // Tasks hub
+    Route::get('tasks', [AdminTaskController::class, 'index'])->name('tasks.index');
+    Route::get('tasks/completed', [AdminTaskController::class, 'completed'])->name('tasks.completed');
 
     // Settings
     Route::get('settings', [AdminSettingController::class, 'index'])->name('settings.index');
