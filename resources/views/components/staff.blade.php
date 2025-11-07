@@ -195,7 +195,8 @@
                                             <div class="item">
                                                 <div class="benefit-card pixel-card">
                                                     <div class="pixel-card__content front">
-                                                        <div class="service-one__item-modal" style="position: relative;">
+                                                        <div class="service-one__item-modal"
+                                                            style="position: relative;">
                                                             <span class="holo-pixels" aria-hidden="true"></span>
                                                             <h3 class="service-one__item-modal__title">
                                                                 <a href="#">{{ $uc->classe }}</a>
@@ -204,10 +205,13 @@
                                                         </div>
                                                     </div>
                                                     <div class="pixel-card__content back">
-                                                        <div class="service-one__item-modal" style="position: relative;">
+                                                        <div class="service-one__item-modal"
+                                                            style="position: relative;">
                                                             <span class="holo-pixels" aria-hidden="true"></span>
-                                                            <h3 class="service-one__item-modal__title" style="display: none;">&nbsp;</h3>
-                                                            <p class="service-one__item-modal__text">{{ $uc->description }}</p>
+                                                            <h3 class="service-one__item-modal__title"
+                                                                style="display: none;">&nbsp;</h3>
+                                                            <p class="service-one__item-modal__text">
+                                                                {{ $uc->description }}</p>
                                                         </div>
                                                     </div>
                                                 </div>

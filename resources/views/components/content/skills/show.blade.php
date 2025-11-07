@@ -1,3 +1,57 @@
+<style>
+    @media (max-width: 768px) {
+
+        /* Centraliza o card inteiro apenas no mobile */
+        .pixel-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Centraliza o conteúdo interno de frente e verso */
+        .pixel-card__content .service-one__item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 320px;
+            padding: 20px;
+        }
+
+        /* Ícone centralizado */
+        .service-one__item__icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        /* Centraliza título e texto */
+        .service-one__item__title,
+        .service-one__item__text {
+            text-align: center;
+        }
+
+        /* Centraliza o botão (Explorar / Voltar) */
+        .service-one__item__btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        /* Dá um leve equilíbrio no verso */
+        .pixel-card__content.back .service-one__item__text {
+            line-height: 1.5;
+            max-width: 90%;
+        }
+    }
+</style>
+
 <div class="stricky-header stricked-menu main-menu">
     <div class="sticky-header__content"></div>
 </div>

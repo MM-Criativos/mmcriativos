@@ -1,3 +1,104 @@
+<style>
+    /* 🔧 Remove espaço branco no final da página (mobile) */
+    .page-wrapper {
+        overflow: hidden;
+    }
+
+    /* 🔸 Layout exclusivo para mobile */
+    .contact-info-mobile {
+        background-color: #0a0a0a;
+        color: #fff;
+        padding: 40px 0 0;
+        /* tiramos o padding-bottom que causava o espaço branco */
+    }
+
+    .contact-info-mobile__wrapper {
+        max-width: 360px;
+        margin: 0 auto;
+        padding-bottom: 30px;
+        /* padding suave interno para respiro visual */
+    }
+
+    /* 🔶 Itens */
+    .contact-info-mobile__item {
+        text-align: center;
+        margin-bottom: 45px;
+    }
+
+    /* 🔶 Ícones */
+    .contact-info-mobile__icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 75px;
+        height: 75px;
+        margin: 0 auto 20px auto;
+        background: rgba(255, 136, 0, 0.08);
+        border: 1px solid rgba(255, 136, 0, 0.4);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .contact-info-mobile__icon span {
+        font-size: 38px;
+        color: #ff8800;
+    }
+
+    /* 🔶 Título */
+    .contact-info-mobile__title {
+        font-weight: 700;
+        font-size: 17px;
+        color: #fff;
+        margin-bottom: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* 🔶 Texto */
+    .contact-info-mobile__text {
+        color: #fff;
+        font-size: 15px;
+        line-height: 1.8;
+        margin: 0;
+    }
+
+    /* Links brancos */
+    .contact-info-mobile__text a {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .contact-info-mobile__text a:hover {
+        color: #ff8800;
+    }
+
+    /* 🔶 Separador */
+    .contact-info-mobile__item+.contact-info-mobile__item {
+        border-top: 1px solid rgba(255, 136, 0, 0.15);
+        padding-top: 45px;
+    }
+
+    /* 🔶 Equilíbrio entre blocos de texto */
+    .contact-info-mobile__text span,
+    .contact-info-mobile__text div,
+    .contact-info-mobile__text a {
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .contact-info-mobile__text div:last-child,
+    .contact-info-mobile__text span:last-child {
+        margin-bottom: 0;
+    }
+
+    /* 🔶 Ajuste fino no último bloco (Funcionamento) */
+    .contact-info-mobile__item:last-child .contact-info-mobile__text div {
+        margin-bottom: 6px;
+        /* reduz leve diferença entre as linhas */
+    }
+</style>
+
 @extends('layout.layout')
 
 @section('content')
@@ -100,8 +201,8 @@
         </section>
         <!--Contact End-->
 
-        <!--Contact Info Start-->
-        <section class="contact-info" style="margin-bottom: 100px;">
+        <!-- Contact Info (Desktop/Tablet) -->
+        <section class="contact-info d-none d-md-block" style="margin-bottom: 100px;">
             <div class="container">
                 <div class="contact-info__wrapper" style="padding: 40px 0;">
                     <div class="row justify-content-center align-items-center g-5">
@@ -121,7 +222,7 @@
                                             class="d-inline-block me-2">{{ $email }}</a><br>
                                     @endif
                                     @if ($phone)
-                                        <div class="d-inline-block">{{ $phone }}</div>
+                                        <span class="d-inline-block">{{ $phone }}</span>
                                     @endif
                                 </p>
                             </div>
@@ -133,27 +234,18 @@
                                 <div class="contact-info__item__icon"><span class="icon-schedule"></span></div>
                                 <h3 class="contact-info__item__title">Funcionamento</h3>
                                 <p class="contact-info__item__text mb-0">
-                                    @forelse(($businessHours ?? collect()) as $bh)
+                                    @foreach ($businessHours ?? [] as $bh)
                                         @php
                                             $open = $bh->open_time
-                                                ? \Illuminate\Support\Carbon::createFromTimeString(
-                                                    $bh->open_time,
-                                                )->format('H:i')
-                                                : null;
+                                                ? \Carbon\Carbon::createFromTimeString($bh->open_time)->format('H:i')
+                                                : '--:--';
                                             $close = $bh->close_time
-                                                ? \Illuminate\Support\Carbon::createFromTimeString(
-                                                    $bh->close_time,
-                                                )->format('H:i')
-                                                : null;
+                                                ? \Carbon\Carbon::createFromTimeString($bh->close_time)->format('H:i')
+                                                : '--:--';
                                         @endphp
-                                        @if ($bh->is_closed)
-                                            {{ $bh->days }}: Fechado<br>
-                                        @else
-                                            {{ $bh->days }}: {{ $open ?? '--:--' }} às {{ $close ?? '--:--' }}<br>
-                                        @endif
-                                    @empty
-                                        —
-                                    @endforelse
+                                        {{ $bh->days }}:
+                                        {{ $bh->is_closed ? 'Fechado' : "$open às $close" }}<br>
+                                    @endforeach
                                 </p>
                             </div>
                         </div>
@@ -162,7 +254,76 @@
                 </div>
             </div>
         </section>
-        <!--Contact Info End-->
+
+        <!-- Contact Info (Mobile) -->
+        <section class="contact-info-mobile d-block d-md-none">
+            <div class="container">
+                <div class="contact-info-mobile__wrapper" style="padding: 20px 0;">
+
+                    <!-- Contato -->
+                    <div class="contact-info-mobile__item mb-5">
+                        <div class="contact-info-mobile__icon">
+                            <span class="icon-phone"></span>
+                        </div>
+                        <h3 class="contact-info-mobile__title">Contato</h3>
+                        @php
+                            $email = $setting->email_contact ?? null;
+                            $phone = $setting->phone ?? null;
+                        @endphp
+                        <p class="contact-info-mobile__text">
+                            @if ($email)
+                                <a href="mailto:{{ $email }}" class="d-block">{{ $email }}</a>
+                            @endif
+                            @if ($phone)
+                                <span class="d-block">{{ $phone }}</span>
+                            @endif
+                        </p>
+                    </div>
+
+                    <!-- Funcionamento -->
+                    <div class="contact-info-mobile__item">
+                        <div class="contact-info-mobile__icon">
+                            <span class="icon-schedule"></span>
+                        </div>
+                        <h3 class="contact-info-mobile__title">Funcionamento</h3>
+                        <p class="contact-info-mobile__text">
+                            @php
+                                $weekdays = collect($businessHours ?? [])->filter(
+                                    fn($bh) => !str_contains(strtolower($bh->days), 'sab') &&
+                                        !str_contains(strtolower($bh->days), 'dom'),
+                                );
+                                $weekend = collect($businessHours ?? [])->filter(
+                                    fn($bh) => str_contains(strtolower($bh->days), 'sab') ||
+                                        str_contains(strtolower($bh->days), 'dom'),
+                                );
+                            @endphp
+
+                            @foreach ($weekdays as $bh)
+                                @php
+                                    $open = $bh->open_time
+                                        ? \Carbon\Carbon::createFromTimeString($bh->open_time)->format('H:i')
+                                        : '--:--';
+                                    $close = $bh->close_time
+                                        ? \Carbon\Carbon::createFromTimeString($bh->close_time)->format('H:i')
+                                        : '--:--';
+                                @endphp
+                                {{ $bh->days }}: {{ $open }} às {{ $close }}
+                            @endforeach
+
+                        <div class="mt-2">
+                            @foreach ($weekend as $bh)
+                                {{ $bh->days }}:
+                                {{ $bh->is_closed ? 'Fechado' : $bh->open_time . ' às ' . $bh->close_time }}
+                            @endforeach
+                        </div>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
 
         <!--Google Map End-->
         @include('partials.bottom')

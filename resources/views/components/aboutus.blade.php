@@ -6,7 +6,8 @@
                 <div class="about-one__content">
                     <!-- about content start-->
                     <div class="section-title">
-                        <h5 class="section-title__tagline section-title__tagline--has-dots">{{ $about->subtitle ?? 'Subtítulo' }}
+                        <h5 class="section-title__tagline section-title__tagline--has-dots">
+                            {{ $about->subtitle ?? 'Subtítulo' }}
                         </h5>
                         <h2 class="section-title__title">{{ $about->title ?? 'Título' }}</h2>
                     </div><!-- section-title -->
@@ -21,7 +22,8 @@
                         <img src="assets/images/resources/why-choose-1-1.png" alt="ogency">
                     </div>
                     <div class="why-choose__image__author wow fadeInRight animated" data-wow-delay="300ms">
-                        <img src="{{ isset($about->photo) ? asset($about->photo) : asset('assets/images/resources/marcusm.jpg') }}" alt="Sobre nós">
+                        <img src="{{ isset($about->photo) ? asset($about->photo) : asset('assets/images/resources/marcusm.jpg') }}"
+                            alt="Sobre nós">
                     </div>
                 </div>
             </div>
