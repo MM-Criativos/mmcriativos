@@ -1,61 +1,56 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# mmcriativos
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Suite interna da agencia MM Criativos para gerir pipeline comercial, execucao de projetos digitais e formularios publicos conectados aos clientes. O repositorio contem o painel administrativo completo, o site institucional alimentado por dados e as rotinas que fecham o ciclo de briefing ate entrega.
 
-## About Laravel
+## Principais recursos
+- Painel administrativo para cadastrar clientes, projetos, skills e tarefas de desenvolvimento com agrupamento por competencia (`resources/views/admin/projects/steps/develepoment/tasks.blade.php`).
+- Fluxo comercial com planos, orcamentos, eventos e pagamentos automatizados (`app/Models/Budget.php`).
+- Site publico responsavel por paginas institucionais, formularios de contato e coleta de briefing (`routes/web.php` e `app/Http/Controllers/Site`).
+- Modulos qualitativos que registram percepcao do cliente por meio das regras de briefing (`app/Http/Controllers/Site/PublicBriefingController.php`).
+- Scripts padronizados para subir servidor, fila, logs com Pail e Vite (`composer.json`).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tecnologias
+- PHP 8.2 + Laravel 12 com Eloquent, Jobs em fila (driver database) e Blade.
+- Front-end com Vite 7, Tailwind CSS, Alpine.js e Axios.
+- Banco relacional (MySQL ou SQLite para desenvolvimento) com migracoes versionadas, inclusive `project_tasks`.
+- Ferramentas auxiliares: Laravel Pail para logs em tempo real, queue:listen, ffmpeg opcional para midia (`.env.example`).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Setup rapido
+1. Copie o arquivo de exemplo: `cp .env.example .env` (ou use `copy` no Windows) e configure banco, filas e e-mail.
+2. Rode o script de bootstrap completo:
+   ```bash
+   composer run setup
+   ```
+   O script instala dependencias PHP/Node, gera a chave e executa migracoes e build inicial.
+3. Para ambiente interativo, execute `composer run dev` e acompanhe servidor HTTP, listener da fila, Pail e Vite em paralelo.
+4. Rode a suite de testes quando aplicar alteracoes: `composer run test`.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Caso prefira passos manuais, instale dependencias com `composer install` e `npm install`, gere a chave (`php artisan key:generate`), execute `php artisan migrate --force` e finalize com `npm run build` ou `npm run dev`.
 
-## Learning Laravel
+## Scripts uteis
+| Comando | Descricao |
+| --- | --- |
+| `composer run setup` | Provisiona dependencias, copia `.env`, gera chave e roda migracoes + build. |
+| `composer run dev` | Ativa `php artisan serve`, `queue:listen`, `pail` e `npm run dev` via `concurrently`. |
+| `composer run test` | Limpa configuracoes em cache e executa `php artisan test`. |
+| `npm run dev` | Build incremental com Vite e Tailwind. |
+| `npm run build` | Build de producao minificado. |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Estrutura de pastas
+- `app/` - Codigo de dominio (Models, Controllers, Jobs). Veja `app/Models/ProjectTask.php` e `app/Models/Budget.php`.
+- `resources/views/` - Interfaces Blade do painel, site publico e formularios (ex.: `resources/views/admin/projects/steps/develepoment`).
+- `database/migrations/` - Definicoes de schema, incluindo `2025_11_06_204906_create_project_tasks_table.php`.
+- `routes/` - Entradas HTTP (admin, site, APIs publicas) detalhadas em `routes/web.php`.
+- `docs/` - Nova documentacao modular (onboarding, arquitetura, dominio e operacoes).
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Documentacao
+A documentacao viva mora em `docs/`. Comece pelo indice em `docs/README.md` e navegue pelos guias de onboarding (`docs/getting-started`), arquitetura (`docs/architecture`), dominio (`docs/domain`) e operacoes (`docs/operations`). Consulte tambem o glossario para alinhar termos de negocio.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Contribuicao
+1. Abra uma branch com escopo claro.
+2. Atualize/adicione testes relevantes (`composer run test`).
+3. Registre mudancas relevantes na documentacao em `docs/`.
+4. Abra o PR descrevendo impacto, migracoes e passos de validacao.
 
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Licenca
+Projeto privado do time MM Criativos. Nao distribuir sem autorizacao.
