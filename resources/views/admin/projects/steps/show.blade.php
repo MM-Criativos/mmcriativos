@@ -4,8 +4,8 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
                 Etapas do Projeto · {{ $project->name }}
             </h2>
-            <a href="{{ route('admin.projects.edit', $project) }}"
-                class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
+            <a href="{{ route('admin.projects.steps.show', ['project' => $project, 'tab' => 'delivery']) }}"
+               class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
                 Editar Projeto
             </a>
         </div>
@@ -76,7 +76,11 @@
                         <div class="text-gray-600">Seção de testes em preparação.</div>
                     @elseif ($active === 'delivery')
                         @includeIf('admin.projects.steps.delivery.training', ['project' => $project])
-                        @includeIf('admin.projects.steps.delivery.presentation', ['project' => $project])
+                        @includeIf('admin.projects.steps.delivery.presentation', [
+                            'project' => $project,
+                            'clients' => $clients ?? collect(),
+                            'services' => $services ?? collect(),
+                        ])
                         @includeIf('admin.projects.steps.delivery.post_launch', ['project' => $project])
                     @endif
                 </div>

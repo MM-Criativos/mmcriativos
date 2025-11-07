@@ -43,7 +43,7 @@
                                         </div>
 
                                         <div class="flex items-center justify-between mt-auto">
-                                            <a href="{{ route('admin.projects.edit', $project) }}"
+                                            <a href="{{ route('admin.projects.steps.show', ['project' => $project, 'tab' => 'delivery']) }}"
                                                class="inline-flex items-center gap-1 px-5 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
                                                 <i class="fa-regular fa-pen-to-square"></i>
                                                 <span>Editar</span>

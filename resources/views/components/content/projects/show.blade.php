@@ -562,8 +562,22 @@
         <!-- ====== Versão Desktop / Tablet ====== -->
         <div class="feature-one d-none d-md-block">
             <div class="container">
-                <div class="row">
-                    @foreach ($project->projectProcesses ?? [] as $pp)
+                <div id="project-processes-carousel" class="ogency-owl__dots ogency-owl__carousel owl-theme owl-carousel"
+                    data-owl-options='{
+                        "items": 3,
+                        "margin": 24,
+                        "smartSpeed": 600,
+                        "loop": false,
+                        "autoplay": false,
+                        "nav": false,
+                        "dots": true,
+                        "responsive": {
+                            "0": { "items": 1 },
+                            "768": { "items": 2 },
+                            "1024": { "items": 3 }
+                        }
+                    }'>
+                    @foreach (($project->projectProcesses ?? collect())->sortBy(fn($pp) => $pp->order ?? PHP_INT_MAX) as $pp)
                         @php
                             $proc = $pp->process;
                             $firstImg = optional($pp->images->sortBy('order')->first())->image;
@@ -584,12 +598,36 @@
                                 ->all();
                         @endphp
 
-                        <x-project-process-item :titulo="$proc?->name ?? 'Etapa'" :icone="($proc?->icon_class ?: $proc?->icon) ?? 'icon-idea'" :imagem="$image" :descricao="$pp->description ?? ''"
-                            :categoria="$proc?->slug ?? 'proc-' . $pp->id" :slides="$slides" :etapa="$proc?->name ?? null" :process-id="$pp->id" />
+                        <div class="item">
+                            <x-project-process-item
+                                :titulo="$proc?->name ?? 'Etapa'"
+                                :icone="($proc?->icon_class ?: $proc?->icon) ?? 'icon-idea'"
+                                :imagem="$image"
+                                :descricao="$pp->description ?? ''"
+                                :categoria="$proc?->slug ?? 'proc-' . $pp->id"
+                                :slides="$slides"
+                                :etapa="$proc?->name ?? null"
+                                :process-id="$pp->id" />
+                        </div>
                     @endforeach
                 </div>
             </div>
         </div>
+
+        <style>
+            #project-processes-carousel .item {
+                padding: 0 12px;
+            }
+
+            #project-processes-carousel .feature-one__item-wrapper {
+                width: 100%;
+            }
+
+            #project-processes-carousel .feature-one__item {
+                height: 100%;
+                width: 100%;
+            }
+        </style>
 
         <!-- ====== Versão Mobile (Carrossel) ====== -->
         <div class="gallery-page gallery-page__padding d-block d-md-none">

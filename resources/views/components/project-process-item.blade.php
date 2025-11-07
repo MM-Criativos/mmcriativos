@@ -9,7 +9,7 @@
     'processId' => null,
 ])
 
-<div class="col-lg-4 col-md-6 wow fadeInUp animated" data-wow-delay="200ms">
+<div class="feature-one__item-wrapper wow fadeInUp animated" data-wow-delay="200ms">
     <div class="feature-one__item" data-category="{{ $categoria }}">
         <!-- Imagem -->
         <div class="feature-one__item__img">

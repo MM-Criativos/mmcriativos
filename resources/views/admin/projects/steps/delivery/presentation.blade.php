@@ -1,17 +1,68 @@
-<div class="space-y-6">
-    <h3 class="text-lg font-semibold text-gray-800">Apresentação</h3>
+@php
+    $clients = $clients ?? collect();
+    $services = $services ?? collect();
+@endphp
 
-    <form method="POST" action="{{ route('admin.projects.update', $project) }}" enctype="multipart/form-data" class="space-y-6">
+<div class="space-y-6">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">Entrega e publicação</h3>
+            <p class="text-sm text-gray-500">Atualize os dados finais e conclua o projeto para aparecer no site.</p>
+        </div>
+    </div>
+
+    <form id="project-presentation-form" method="POST" action="{{ route('admin.projects.update', $project) }}"
+          enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
 
-        <!-- Campos obrigatórios do update para não quebrar validação -->
-        <input type="hidden" name="name" value="{{ $project->name }}">
-        <input type="hidden" name="slug" value="{{ $project->slug }}">
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Descrição</label>
-            <textarea name="summary" rows="4" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('summary', $project->summary) }}</textarea>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nome do projeto</label>
+                <input type="text" name="name" value="{{ old('name', $project->name) }}"
+                       class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                @error('name')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                <input type="text" name="slug" value="{{ old('slug', $project->slug) }}"
+                       class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                @error('slug')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                <select name="client_id"
+                        class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    <option value="">Selecione...</option>
+                    @foreach ($clients as $client)
+                        <option value="{{ $client->id }}" @selected(old('client_id', $project->client_id) == $client->id)>
+                            {{ $client->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('client_id')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Serviço</label>
+                <select name="service_id"
+                        class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    <option value="">Selecione...</option>
+                    @foreach ($services as $service)
+                        <option value="{{ $service->id }}" @selected(old('service_id', $project->service_id) == $service->id)>
+                            {{ $service->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('service_id')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -48,7 +99,7 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Skill Cover</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Skill cover</label>
                 <div class="w-40 h-40 mb-2">
                     @if ($project->skill_cover)
                         <img src="{{ asset($project->skill_cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200" />
@@ -63,11 +114,34 @@
                 <label class="block text-sm font-medium text-gray-700">Vídeo (URL)</label>
                 <input type="text" name="video" value="{{ old('video', $project->video) }}" placeholder="https://..."
                        class="mt-1 block w-full border-gray-300 rounded-md">
+                @error('video')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
-
-        <div>
-            <button type="submit" class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">Salvar apresentação</button>
-        </div>
     </form>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <button type="submit" form="project-presentation-form"
+                class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm transition-colors duration-200">
+            Salvar apresentação
+        </button>
+
+        <form method="POST" action="{{ route('admin.projects.finish', $project) }}"
+              onsubmit="return confirm('Marcar este projeto como finalizado?')">
+            @csrf
+            <button type="submit"
+                class="inline-flex items-center px-6 py-3 rounded border text-sm font-medium transition-colors duration-200
+                {{ $project->finished_at ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}"
+                {{ $project->finished_at ? 'disabled' : '' }}>
+                {{ $project->finished_at ? 'Projeto finalizado' : 'Finalizar projeto' }}
+            </button>
+        </form>
+
+        @if ($project->finished_at)
+            <span class="text-xs text-gray-500">
+                Finalizado em {{ $project->finished_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
+            </span>
+        @endif
+    </div>
 </div>

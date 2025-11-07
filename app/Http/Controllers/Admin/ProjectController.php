@@ -97,28 +97,7 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
-        $project->load([
-            'client',
-            'service',
-            'challenges',
-            'solutions',
-            'projectProcesses' => fn($q) => $q->orderBy('order'),
-            'projectProcesses.process',
-            'projectProcesses.images' => fn($q) => $q->orderBy('order'),
-            'skills',
-            'skillLinks' => fn($q) => $q->orderBy('order'),
-            'skillLinks.skill',
-            'skillLinks.competency',
-        ]);
-
-        $clients = Client::query()->orderBy('name')->get(['id', 'name']);
-        $services = Service::query()->orderBy('name')->get(['id', 'name']);
-        $processes = \App\Models\Process::query()->orderBy('order')->orderBy('name')->get(['id', 'name']);
-        $skills = \App\Models\Skill::with(['competencies' => fn($q) => $q->orderBy('competency')])
-            ->orderBy('name')
-            ->get();
-
-        return view('admin.projects.edit', compact('project', 'clients', 'services', 'processes', 'skills'));
+        return redirect()->route('admin.projects.steps.show', $project);
     }
 
     public function update(Request $request, Project $project): JsonResponse|RedirectResponse
@@ -271,6 +250,14 @@ class ProjectController extends Controller
             ->orderBy('name')
             ->get();
 
+        $clients = Client::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $services = Service::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         $teamMembers = User::query()
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -301,8 +288,20 @@ class ProjectController extends Controller
             'availablePages',
             'availableComponents',
             'teamMembers',
-            'skillOptions'
+            'skillOptions',
+            'clients',
+            'services'
         ));
+    }
+
+    public function finish(Project $project): RedirectResponse
+    {
+        if (!$project->finished_at) {
+            $project->finished_at = now();
+            $project->save();
+        }
+
+        return back()->with('status', 'Projeto finalizado com sucesso.');
     }
 
 }

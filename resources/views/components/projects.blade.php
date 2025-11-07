@@ -1,3 +1,15 @@
+@php
+    $projects = \App\Models\Project::with(['client', 'service'])
+        ->whereNotNull('finished_at')
+        ->orderByDesc('finished_at')
+        ->orderBy('name')
+        ->get();
+@endphp
+
+@if ($projects->isEmpty())
+    @php return; @endphp
+@endif
+
 <style>
     /* =========================================
 🔶 BASE DA SEÇÃO - CAMPO HOLOGRÁFICO GLOBAL
@@ -251,13 +263,6 @@
                     "1200": {"items": 3}
                 }
             }'>
-
-            @php
-                $projects = \App\Models\Project::with(['client', 'service'])
-                    ->orderByDesc('finished_at')
-                    ->orderBy('name')
-                    ->get();
-            @endphp
 
             @foreach ($projects as $project)
                 <div class="project-two__item project-portal cursor-pointer" data-slug="{{ $project->slug }}"

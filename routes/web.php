@@ -225,6 +225,7 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::delete('project-processes/{projectProcess}', [AdminProjectProcessController::class, 'destroy'])->name('project-processes.destroy');
 
     Route::post('projects/{project}/summary', [AdminProjectController::class, 'updateSummary'])->name('projects.summary.update');
+    Route::post('projects/{project}/finish', [AdminProjectController::class, 'finish'])->name('projects.finish');
 
     Route::post('project-processes/{projectProcess}/images', [AdminProjectImageController::class, 'store'])->name('project-processes.images.store');
     Route::put('project-images/{projectImage}', [AdminProjectImageController::class, 'update'])->name('project-images.update');
