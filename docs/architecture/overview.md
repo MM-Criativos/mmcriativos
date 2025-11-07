@@ -3,6 +3,10 @@
 ## Camada HTTP
 - Todas as rotas web vivem em `routes/web.php`, separadas por namespaces para Admin, Site e Comercial. O arquivo registra mais de 30 controllers, incluindo `Admin\ProjectTaskController`, `Admin\Commercial\KpiController` e `Site\ModalController`.
 - Middlewares do Breeze protegem `/dashboard` e rotas administrativas (`routes/web.php:116-210`).
+- `/dashboard` agora aponta para `App\Http\Controllers\DashboardController` e entrega três zonas principais:
+  - **Painel resumo** com cards de projetos, tarefas, equipe e orçamentos.
+  - **Painel analítico** alimentado por Chart.js (progresso de projetos, tarefas por status/skill e conclusões semanais).
+  - **Painel pessoal** com filtros de status/data e paginação exclusiva para as tarefas do usuário logado.
 - Formularios publicos (briefing, contato, modal) ficam sob `App\Http\Controllers\Site`.
 
 ## Backend

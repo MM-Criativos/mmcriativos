@@ -32,5 +32,6 @@ Gerenciar propostas comerciais ligadas aos servicos e planos ativos, incluindo c
 
 ## Dashboards e KPIs
 - As rotas comerciais incluem dashboards (`Admin\Commercial\DashboardController`) e KPIs (`Admin\Commercial\KpiController`), alimentados pelos registros de orcamentos, eventos e planos (`routes/web.php:32-44`).
+- O painel de KPIs é restrito a usuários com `role=admin`: o middleware do controller retorna 403 para demais perfis e as tabs/cartões da interface são escondidos para evitar acessos incorretos.
 - Garanta que migracoes e seeds dessas entidades estejam atualizadas antes de publicar graficos.
 
