@@ -20,26 +20,31 @@ jobs:
 
       - name: 🚀 Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -s << 'EOSSH'
-          set -e
-          echo "📡 Conectado ao servidor e iniciando o deploy..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash -lc '
+            set -e
+            echo \"📡 Conectado ao servidor e iniciando o deploy...\"
 
-          cd /var/www/mmcriativos || exit 1
+            if [ -d /var/www/mmcriativos ]; then
+              cd /var/www/mmcriativos
+            else
+              echo \"❌ Diretório /var/www/mmcriativos não encontrado!\"
+              exit 1
+            fi
 
-          echo "📦 Atualizando código..."
-          git pull origin main
+            echo \"📦 Atualizando código...\"
+            git pull origin main
 
-          echo "🧩 Instalando dependências..."
-          composer install --no-interaction --prefer-dist --optimize-autoloader
+            echo \"🧩 Instalando dependências...\"
+            composer install --no-interaction --prefer-dist --optimize-autoloader
 
-          echo "🔧 Rodando migrations..."
-          php artisan migrate --force
+            echo \"🔧 Rodando migrations...\"
+            php artisan migrate --force
 
-          echo "🧹 Limpando e otimizando cache..."
-          php artisan optimize:clear
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
+            echo \"🧹 Limpando e otimizando cache...\"
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
 
-          echo "✅ Deploy concluído com sucesso!"
-          EOSSH
+            echo \"✅ Deploy concluído com sucesso!\"
+          '"
