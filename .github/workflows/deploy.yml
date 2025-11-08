@@ -1,4 +1,4 @@
-name: Deploy Diagnostic
+name: SSH Diagnostic (safe inline)
 
 on:
   push:
@@ -18,22 +18,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Run SSH diagnostic
+      - name: Run SSH diagnostic safely
         run: |
-          echo "Connecting for diagnostic..."
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            echo '=== User ==='
-            whoami
-            echo
-            echo '=== Current directory ==='
-            pwd
-            echo
-            echo '=== Home directory ==='
-            echo \$HOME
-            echo
-            echo '=== List /var/www ==='
-            ls -la /var/www || echo 'Cannot access /var/www'
-            echo
-            echo '=== Search for mmcriativos ==='
-            find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo 'Not found'
-          "
+          echo "Running diagnostic via SSH..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "whoami && pwd && echo '--- /var/www ---' && ls -la /var/www || echo 'Cannot access /var/www' && echo '--- Search mmcriativos ---' && find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo 'Not found'"
