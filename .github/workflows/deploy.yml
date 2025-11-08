@@ -19,14 +19,21 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - name: 🚀 Deploy para o servidor
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           echo "Iniciando deploy no servidor..."
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<'REMOTE'
+          
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST <<'REMOTE'
             set -e
-            echo "📡 Conectado ao servidor."
+            echo "📡 Conectado ao servidor como $(whoami)"
+
+            # Caminho do projeto
             cd /var/www/mmcriativos || { echo "❌ Diretório não encontrado!"; exit 1; }
 
             echo "📦 Atualizando código..."
+            # Garante que o repositório está autenticado com a chave SSH
             git pull origin main || { echo "❌ Falha no git pull"; exit 1; }
 
             echo "🧩 Instalando dependências..."
