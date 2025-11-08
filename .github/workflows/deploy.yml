@@ -18,44 +18,28 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: 🚀 Deploy via SSH
+      - name: 🧪 Diagnóstico SSH
         run: |
-          echo "📡 Iniciando conexão SSH..."
+          echo "🔍 Conectando para diagnóstico..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
-            set -e
-            echo "📡 Conectado ao servidor — iniciando deploy..."
-            
+            echo "👤 Usuário atual:"
+            whoami
+
             echo "📂 Diretório atual:"
             pwd
 
-            echo "📁 Listando estrutura de /var/www:"
-            ls -la /var/www || echo "❌ /var/www não acessível"
+            echo "🏠 Home:"
+            echo $HOME
 
-            if [ -d /var/www/mmcriativos ]; then
-              echo "✅ Diretório encontrado, acessando..."
-              cd /var/www/mmcriativos
-            elif [ -d /root/var/www/mmcriativos ]; then
-              echo "⚠️ Diretório existe dentro de /root, ajustando..."
-              cd /root/var/www/mmcriativos
-            else
-              echo "❌ Nenhum diretório mmcriativos encontrado!"
-              exit 1
-            fi
+            echo "📁 Listando /var/www:"
+            ls -la /var/www || echo "❌ Não conseguiu acessar /var/www"
 
-            echo "📦 Atualizando código..."
-            git pull origin main || exit 1
+            echo "📁 Listando /var:"
+            ls -la /var || echo "❌ Não conseguiu acessar /var"
 
-            echo "🧩 Instalando dependências..."
-            composer install --no-interaction --prefer-dist --optimize-autoloader || exit 1
+            echo "📁 Listando /:"
+            ls -la / || echo "❌ Não conseguiu acessar raiz"
 
-            echo "🔧 Rodando migrations..."
-            php artisan migrate --force || exit 1
-
-            echo "🧹 Limpando e otimizando cache..."
-            php artisan optimize:clear || exit 1
-            php artisan config:cache || exit 1
-            php artisan route:cache || exit 1
-            php artisan view:cache || exit 1
-
-            echo "✅ Deploy concluído com sucesso!"
+            echo "🔎 Buscando mmcriativos:"
+            find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo "❌ Não encontrado"
           '
