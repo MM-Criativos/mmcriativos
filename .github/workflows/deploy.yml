@@ -1,4 +1,4 @@
-name: 🚀 Deploy para o Servidor
+name: Deploy Diagnostic
 
 on:
   push:
@@ -6,40 +6,34 @@ on:
       - main
 
 jobs:
-  deploy:
+  diagnose:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧩 Checkout do repositório
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🔐 Configurar acesso SSH
+      - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: 🧪 Diagnóstico SSH
+      - name: Run SSH diagnostic
         run: |
-          echo "🔍 Conectando para diagnóstico..."
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
-            echo "👤 Usuário atual:"
+          echo "Connecting for diagnostic..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            echo '=== User ==='
             whoami
-
-            echo "📂 Diretório atual:"
+            echo
+            echo '=== Current directory ==='
             pwd
-
-            echo "🏠 Home:"
-            echo $HOME
-
-            echo "📁 Listando /var/www:"
-            ls -la /var/www || echo "❌ Não conseguiu acessar /var/www"
-
-            echo "📁 Listando /var:"
-            ls -la /var || echo "❌ Não conseguiu acessar /var"
-
-            echo "📁 Listando /:"
-            ls -la / || echo "❌ Não conseguiu acessar raiz"
-
-            echo "🔎 Buscando mmcriativos:"
-            find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo "❌ Não encontrado"
-          '
+            echo
+            echo '=== Home directory ==='
+            echo \$HOME
+            echo
+            echo '=== List /var/www ==='
+            ls -la /var/www || echo 'Cannot access /var/www'
+            echo
+            echo '=== Search for mmcriativos ==='
+            find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo 'Not found'
+          "
