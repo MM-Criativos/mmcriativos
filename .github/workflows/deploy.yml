@@ -1,4 +1,4 @@
-name: SSH Diagnostic (safe inline)
+name: 🔍 SSH Diagnostic (heredoc safe)
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup SSH
@@ -20,5 +20,24 @@ jobs:
 
       - name: Run SSH diagnostic safely
         run: |
-          echo "Running diagnostic via SSH..."
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "whoami && pwd && echo '--- /var/www ---' && ls -la /var/www || echo 'Cannot access /var/www' && echo '--- Search mmcriativos ---' && find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo 'Not found'"
+          echo "Running SSH diagnostic (heredoc mode)..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<'REMOTE'
+            echo "=== USER ==="
+            whoami
+            echo
+
+            echo "=== CURRENT DIR ==="
+            pwd
+            echo
+
+            echo "=== HOME ==="
+            echo $HOME
+            echo
+
+            echo "=== LIST /var/www ==="
+            ls -la /var/www || echo "Cannot access /var/www"
+            echo
+
+            echo "=== SEARCH mmcriativos ==="
+            find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo "Not found"
+          REMOTE
