@@ -24,13 +24,23 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             set -e
             echo "📡 Conectado ao servidor — iniciando deploy..."
+            
+            echo "📂 Diretório atual:"
+            pwd
 
-            if [ ! -d /var/www/mmcriativos ]; then
-              echo "❌ Diretório /var/www/mmcriativos não encontrado!"
+            echo "📁 Listando estrutura de /var/www:"
+            ls -la /var/www || echo "❌ /var/www não acessível"
+
+            if [ -d /var/www/mmcriativos ]; then
+              echo "✅ Diretório encontrado, acessando..."
+              cd /var/www/mmcriativos
+            elif [ -d /root/var/www/mmcriativos ]; then
+              echo "⚠️ Diretório existe dentro de /root, ajustando..."
+              cd /root/var/www/mmcriativos
+            else
+              echo "❌ Nenhum diretório mmcriativos encontrado!"
               exit 1
             fi
-
-            cd /var/www/mmcriativos
 
             echo "📦 Atualizando código..."
             git pull origin main || exit 1
