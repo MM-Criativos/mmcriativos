@@ -20,31 +20,32 @@ jobs:
 
       - name: 🚀 Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "bash -lc '
+          echo "📡 Iniciando conexão SSH..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             set -e
-            echo \"📡 Conectado ao servidor e iniciando o deploy...\"
+            echo "📡 Conectado ao servidor — iniciando deploy..."
 
-            if [ -d /var/www/mmcriativos ]; then
-              cd /var/www/mmcriativos
-            else
-              echo \"❌ Diretório /var/www/mmcriativos não encontrado!\"
+            if [ ! -d /var/www/mmcriativos ]; then
+              echo "❌ Diretório /var/www/mmcriativos não encontrado!"
               exit 1
             fi
 
-            echo \"📦 Atualizando código...\"
-            git pull origin main
+            cd /var/www/mmcriativos
 
-            echo \"🧩 Instalando dependências...\"
-            composer install --no-interaction --prefer-dist --optimize-autoloader
+            echo "📦 Atualizando código..."
+            git pull origin main || exit 1
 
-            echo \"🔧 Rodando migrations...\"
-            php artisan migrate --force
+            echo "🧩 Instalando dependências..."
+            composer install --no-interaction --prefer-dist --optimize-autoloader || exit 1
 
-            echo \"🧹 Limpando e otimizando cache...\"
-            php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            echo "🔧 Rodando migrations..."
+            php artisan migrate --force || exit 1
 
-            echo \"✅ Deploy concluído com sucesso!\"
-          '"
+            echo "🧹 Limpando e otimizando cache..."
+            php artisan optimize:clear || exit 1
+            php artisan config:cache || exit 1
+            php artisan route:cache || exit 1
+            php artisan view:cache || exit 1
+
+            echo "✅ Deploy concluído com sucesso!"
+          '
