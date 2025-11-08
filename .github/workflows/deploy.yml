@@ -20,11 +20,12 @@ jobs:
 
       - name: 🚀 Deploy via SSH
         run: |
-          ssh -tt -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -s << 'EOSSH'
           set -e
           echo "📡 Conectado ao servidor e iniciando o deploy..."
 
           cd /var/www/mmcriativos || exit 1
+
           echo "📦 Atualizando código..."
           git pull origin main
 
@@ -41,5 +42,4 @@ jobs:
           php artisan view:cache
 
           echo "✅ Deploy concluído com sucesso!"
-          exit
-          EOF
+          EOSSH
