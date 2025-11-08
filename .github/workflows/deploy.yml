@@ -20,14 +20,19 @@ jobs:
 
       - name: 🚀 Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          cd /var/www/mmcriativos
-          git pull origin main
-          composer install --no-interaction --prefer-dist --optimize-autoloader
-          php artisan migrate --force
-          php artisan optimize:clear
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-          exit
-          EOF
+          echo "🔗 Conectando ao servidor e iniciando o deploy..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            cd /var/www/mmcriativos &&
+            echo "📦 Atualizando código..." &&
+            git pull origin main &&
+            echo "🧰 Instalando dependências..." &&
+            composer install --no-interaction --prefer-dist --optimize-autoloader &&
+            echo "🧱 Rodando migrations..." &&
+            php artisan migrate --force &&
+            echo "🧹 Limpando e otimizando cache..." &&
+            php artisan optimize:clear &&
+            php artisan config:cache &&
+            php artisan route:cache &&
+            php artisan view:cache &&
+            echo "✅ Deploy concluído com sucesso!"
+          '
