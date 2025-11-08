@@ -1,4 +1,4 @@
-name: 🔍 SSH Diagnostic (heredoc safe)
+name: 🚀 Deploy para o Servidor (Produção)
 
 on:
   push:
@@ -6,38 +6,40 @@ on:
       - main
 
 jobs:
-  diagnose:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 🧩 Checkout do repositório
         uses: actions/checkout@v4
 
-      - name: Setup SSH
+      - name: 🔐 Configurar acesso SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Run SSH diagnostic safely
+      - name: 🚀 Deploy para o servidor
         run: |
-          echo "Running SSH diagnostic (heredoc mode)..."
+          echo "Iniciando deploy no servidor..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<'REMOTE'
-            echo "=== USER ==="
-            whoami
-            echo
+            set -e
+            echo "📡 Conectado ao servidor."
+            cd /var/www/mmcriativos || { echo "❌ Diretório não encontrado!"; exit 1; }
 
-            echo "=== CURRENT DIR ==="
-            pwd
-            echo
+            echo "📦 Atualizando código..."
+            git pull origin main || { echo "❌ Falha no git pull"; exit 1; }
 
-            echo "=== HOME ==="
-            echo $HOME
-            echo
+            echo "🧩 Instalando dependências..."
+            composer install --no-interaction --prefer-dist --optimize-autoloader || { echo "❌ Falha no composer"; exit 1; }
 
-            echo "=== LIST /var/www ==="
-            ls -la /var/www || echo "Cannot access /var/www"
-            echo
+            echo "🧰 Rodando migrations..."
+            php artisan migrate --force || { echo "❌ Falha nas migrations"; exit 1; }
 
-            echo "=== SEARCH mmcriativos ==="
-            find / -maxdepth 3 -type d -name mmcriativos 2>/dev/null || echo "Not found"
+            echo "🧹 Limpando e otimizando cache..."
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            echo "✅ Deploy concluído com sucesso!"
           REMOTE
