@@ -12,8 +12,8 @@ class ProjectChallengeController extends Controller
     public function store(Request $request, Project $project)
     {
         $data = $request->validate([
-            'title' => ['required','string','max:255'],
-            'description' => ['nullable','string'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
         ]);
         $challenge = $project->challenges()->create($data);
         if ($request->ajax()) {
@@ -25,8 +25,8 @@ class ProjectChallengeController extends Controller
     public function update(Request $request, ProjectChallenge $challenge)
     {
         $data = $request->validate([
-            'title' => ['required','string','max:255'],
-            'description' => ['nullable','string'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
         ]);
         $challenge->update($data);
         if ($request->ajax()) {
@@ -43,5 +43,23 @@ class ProjectChallengeController extends Controller
             return response()->json(['status' => 'ok', 'removed' => true, 'id' => $id]);
         }
         return back()->with('status', 'Desafio removido.');
+    }
+
+    public function updateAll(Request $request, Project $project)
+    {
+        $data = $request->validate([
+            'challenges' => ['required', 'array'],
+            'challenges.*.title' => ['required', 'string', 'max:255'],
+            'challenges.*.description' => ['nullable', 'string'],
+        ]);
+
+        foreach ($data['challenges'] as $id => $fields) {
+            $challenge = $project->challenges()->find($id);
+            if ($challenge) {
+                $challenge->update($fields);
+            }
+        }
+
+        return back()->with('status', 'Desafios atualizados com sucesso!');
     }
 }

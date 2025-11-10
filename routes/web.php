@@ -217,6 +217,11 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::resource('projects.solutions', AdminProjectSolutionController::class)
         ->only(['store', 'update', 'destroy'])
         ->shallow();
+    Route::put('/projects/{project}/challenges/update-all', [AdminProjectChallengeController::class, 'updateAll'])
+        ->name('projects.challenges.updateAll');
+    Route::put('/projects/{project}/solutions/update-all', [AdminProjectSolutionController::class, 'updateAll'])
+        ->name('projects.solutions.updateAll');
+
 
     // Projects: processes (pivot) and images
     Route::post('projects/{project}/processes', [AdminProjectProcessController::class, 'store'])->name('projects.processes.store');
