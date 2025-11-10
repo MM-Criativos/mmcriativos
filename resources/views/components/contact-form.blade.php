@@ -127,6 +127,10 @@
                                     <div class="contact-one__input-box text-message-box">
                                         <textarea name="message" placeholder="Escreva sua mensagem" required></textarea>
                                     </div>
+
+                                    <!-- 🔒 reCAPTCHA token invisível -->
+                                    <input type="hidden" name="g-recaptcha-response" id="recaptcha_token_desktop">
+
                                     <div class="contact-one__btn-box">
                                         <button type="submit" class="ogency-btn">Enviar mensagem</button>
                                     </div>
@@ -187,6 +191,10 @@
                 <div class="contact-one-mobile__input-box">
                     <textarea name="message" placeholder="Escreva sua mensagem" required></textarea>
                 </div>
+
+                <!-- 🔒 reCAPTCHA token invisível -->
+                <input type="hidden" name="g-recaptcha-response" id="recaptcha_token_mobile">
+
                 <div class="contact-one-mobile__btn-box">
                     <button type="submit" class="ogency-btn">Enviar mensagem</button>
                 </div>
@@ -194,3 +202,23 @@
         </div>
     </div>
 </section>
+
+<!-- 🧠 Google reCAPTCHA v3 -->
+<script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.ready(function() {
+                grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {
+                        action: 'contact'
+                    })
+                    .then(function(token) {
+                        const desktop = document.getElementById('recaptcha_token_desktop');
+                        const mobile = document.getElementById('recaptcha_token_mobile');
+                        if (desktop) desktop.value = token;
+                        if (mobile) mobile.value = token;
+                    });
+            });
+        }
+    });
+</script>

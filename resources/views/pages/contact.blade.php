@@ -129,10 +129,12 @@
         <section class="contact-two">
             <div class="container wow fadeInUp animated" data-wow-delay="300ms">
                 <div class="section-title text-center">
-                    <h5 class="section-title__tagline section-title__tagline--has-dots">Toda grande ideia começa com uma
-                        conversa</h5>
+                    <h5 class="section-title__tagline section-title__tagline--has-dots">
+                        Toda grande ideia começa com uma conversa
+                    </h5>
                     <h2 class="section-title__title">Vamos falar sobre<br> o seu projeto</h2>
                 </div><!-- section-title -->
+
                 <div class="contact-one__left text-center">
                     <div class="contact-one__form-box">
                         <form action="{{ route('contact.send') }}" method="POST" class="contact-one__form" novalidate>
@@ -171,14 +173,20 @@
                                 </div>
                                 <div class="col-md-12">
                                     <div class="contact-one__input-box text-message-box">
-                                        <textarea name="message" placeholder="Write Comment" required>{{ old('message') }}</textarea>
+                                        <textarea name="message" placeholder="Escreva sua mensagem" required>{{ old('message') }}</textarea>
                                     </div>
+
+                                    <!-- 🔒 reCAPTCHA v3 invisível -->
+                                    <input type="hidden" name="g-recaptcha-response" id="recaptcha_token_two">
+
                                     <div class="contact-one__btn-box">
                                         <button type="submit" class="ogency-btn">Enviar Mensagem</button>
                                     </div>
                                 </div>
                             </div>
                         </form>
+
+                        <!-- Mensagens de Erro -->
                         @if ($errors->any())
                             <div class="mt-3 p-3 bg-red-100 text-red-700 rounded">
                                 <ul class="m-0 pl-5">
@@ -189,12 +197,12 @@
                             </div>
                         @endif
 
+                        <!-- Mensagem de Sucesso -->
                         @if (session('status'))
                             <div class="mt-3 p-3 bg-green-100 text-green-800 rounded">
                                 {{ session('status') }}
                             </div>
                         @endif
-
                     </div>
                 </div>
             </div>
@@ -330,3 +338,21 @@
 
     </div><!-- /.page-wrapper -->
 @endsection
+
+<!-- 🧠 Google reCAPTCHA v3 -->
+<script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.ready(function() {
+                grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {
+                        action: 'contact'
+                    })
+                    .then(function(token) {
+                        const recaptchaInput = document.getElementById('recaptcha_token_two');
+                        if (recaptchaInput) recaptchaInput.value = token;
+                    });
+            });
+        }
+    });
+</script>
