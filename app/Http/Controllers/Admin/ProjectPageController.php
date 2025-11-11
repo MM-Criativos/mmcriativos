@@ -120,4 +120,27 @@ class ProjectPageController extends Controller
 
         return $defaultResponse;
     }
+
+    public function updateAll(Request $request, Project $project)
+    {
+        $data = $request->validate([
+            'pages' => ['required', 'array'],
+            'pages.*.name' => ['required', 'string', 'max:255'],
+            'pages.*.order' => ['required', 'integer', 'min:0'],
+            'pages.*.is_active' => ['nullable', 'boolean'],
+        ]);
+
+        foreach ($data['pages'] as $id => $fields) {
+            $page = $project->pages()->find($id);
+            if ($page) {
+                $page->update([
+                    'name' => $fields['name'],
+                    'order' => $fields['order'],
+                    'is_active' => isset($fields['is_active']) && $fields['is_active'] ? true : false,
+                ]);
+            }
+        }
+
+        return back()->with('status', 'Páginas atualizadas com sucesso!');
+    }
 }

@@ -111,4 +111,25 @@ class ProjectPageComponentController extends Controller
 
         return $defaultResponse;
     }
+
+    public function updateAll(Request $request, ProjectPage $projectPage)
+    {
+        $data = $request->validate([
+            'components' => ['required', 'array'],
+            'components.*.order' => ['required', 'integer', 'min:0'],
+            'components.*.is_visible' => ['nullable', 'boolean'],
+        ]);
+
+        foreach ($data['components'] as $pivotId => $fields) {
+            $componentPivot = $projectPage->components()->wherePivot('id', $pivotId)->first();
+            if ($componentPivot) {
+                $projectPage->components()->updateExistingPivot($componentPivot->id, [
+                    'order' => $fields['order'],
+                    'is_visible' => !empty($fields['is_visible']),
+                ]);
+            }
+        }
+
+        return back()->with('status', 'Componentes atualizados com sucesso!');
+    }
 }

@@ -244,6 +244,10 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::post('project-pages/{projectPage}/components', [AdminProjectPageComponentController::class, 'store'])->name('project-pages.components.store');
     Route::put('project-page-components/{projectPageComponent}', [AdminProjectPageComponentController::class, 'update'])->name('project-page-components.update');
     Route::delete('project-page-components/{projectPageComponent}', [AdminProjectPageComponentController::class, 'destroy'])->name('project-page-components.destroy');
+    Route::put('projects/{project}/pages/update-all', [AdminProjectPageController::class, 'updateAll'])
+        ->name('projects.pages.updateAll');
+    Route::put('project-pages/{projectPage}/components/update-all', [AdminProjectPageComponentController::class, 'updateAll'])
+        ->name('project-page-components.updateAll');
 
     // Projects: skills + competencies
     Route::post('projects/{project}/skills/attach', [AdminProjectSkillCompetencyController::class, 'attach'])->name('projects.skills.attach');
