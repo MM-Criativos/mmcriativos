@@ -1,20 +1,21 @@
 <div class="mt-6">
 
-    {{-- 🔶 Cabeçalho da seção --}}
-    <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-800">Soluções do Projeto</h3>
-        <button form="form-update-all-solutions"
-            class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded hover:bg-white hover:text-orange-600 hover:border-orange-600 border text-sm">
-            <i class="fa-solid fa-rotate-right mr-1"></i> Atualizar todas
-        </button>
-    </div>
-
     {{-- 🔶 FORM PRINCIPAL: engloba todas as soluções --}}
     <form id="form-update-all-solutions" method="POST"
         action="{{ route('admin.projects.solutions.updateAll', $project) }}">
         @csrf
         @method('PUT')
 
+        {{-- 🔹 Cabeçalho --}}
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-800">Soluções do Projeto</h3>
+            <button
+                class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded hover:bg-white hover:text-orange-600 hover:border-orange-600 border text-sm">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Atualizar todas
+            </button>
+        </div>
+
+        {{-- 🔹 Lista de soluções --}}
         <div class="space-y-4" id="solutions-list">
             @foreach ($project->solutions as $solution)
                 <div
