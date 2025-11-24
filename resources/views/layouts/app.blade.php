@@ -1,3 +1,86 @@
+<style>
+    /* Modo claro */
+    .icon-project.fa-duotone::before,
+    .icon-project.fad::before {
+        color: rgb(255 136 0) !important;
+        /* Camada primária */
+    }
+
+    .icon-project.fa-duotone::after,
+    .icon-project.fad::after {
+        color: rgb(0 0 0) !important;
+        /* Camada secundária */
+        opacity: 1 !important;
+    }
+
+    /* Modo escuro */
+    .dark .icon-project.fa-duotone::before,
+    .dark .icon-project.fad::before {
+        color: rgb(255 136 0) !important;
+        /* Mantém o laranja */
+    }
+
+    .dark .icon-project.fa-duotone::after,
+    .dark .icon-project.fad::after {
+        color: rgb(255 255 255) !important;
+        /* Cinza escuro no dark mode */
+        opacity: 1 !important;
+    }
+
+    /* HOVER — LIGHT MODE → foreground branco */
+    .btn-mmcriativos:hover .icon-project.fa-duotone::before,
+    .btn-mmcriativos:hover .icon-project.fad::before {
+        color: #ffffff !important;
+    }
+
+    /* HOVER — DARK MODE → foreground preto */
+    .dark .btn-mmcriativos:hover .icon-project.fa-duotone::before,
+    .dark .btn-mmcriativos:hover .icon-project.fad::before {
+        color: #000000 !important;
+    }
+
+    /* ACTIVE — LIGHT MODE → foreground branco */
+    .btn-mmcriativos-active .icon-project.fa-duotone::before,
+    .btn-mmcriativos-active .icon-project.fad::before {
+        color: #ffffff !important;
+    }
+
+    /* ACTIVE — DARK MODE → foreground preto */
+    .dark .btn-mmcriativos-active .icon-project.fa-duotone::before,
+    .dark .btn-mmcriativos-active .icon-project.fad::before {
+        color: #000000 !important;
+    }
+
+    /* NORMAL */
+    .btn-mmcriativos {
+        background-color: transparent !important;
+        border: 2px solid #ff8800 !important;
+        color: #000 !important;
+        transition: all 0.25s ease-in-out !important;
+    }
+
+    /* HOVER com DEGRADÊ */
+    .btn-mmcriativos:hover {
+        background-image: linear-gradient(to right, #feb365, #ff8800) !important;
+        border-color: 2px solid transparent !important;
+        color: #000 !important;
+    }
+
+    /* DARK MODE — NORMAL */
+    .dark .btn-mmcriativos {
+        background-color: transparent !important;
+        border: 2px solid #ff8800 !important;
+        color: #fff !important;
+    }
+
+    /* DARK MODE — HOVER com DEGRADÊ */
+    .dark .btn-mmcriativos:hover {
+        background-image: linear-gradient(to right, #feb365, #ff8800) !important;
+        border-color: 2px solid transparent !important;
+        color: #fff !important;
+    }
+</style>
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ darkMode: localStorage.theme === 'dark' }" x-init="if (darkMode) document.documentElement.classList.add('dark');
 $watch('darkMode', value => {
@@ -5,69 +88,36 @@ $watch('darkMode', value => {
     document.documentElement.classList.toggle('dark', value);
 });">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+{{-- Head --}}
+@include('layouts.components.head')
 
-    <title>MM Criativos | Painel Administrativo</title>
+<body class="dark:bg-neutral-800 bg-neutral-100 dark:text-white">
+    {{-- Sidebar --}}
+    @include('layouts.components.sidebar')
 
-    <!-- Favicons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/images/favicons/apple-touch-icon.png') }}" />
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/favicons/mmfavicon.png') }}" />
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/favicons/mmfavicon.png') }}" />
-    <link rel="manifest" href="{{ asset('assets/images/favicons/site.webmanifest') }}" />
-    <meta name="description" content="Ogency HTML Template For Creative Agency" />
+    {{-- Main Content --}}
+    <main class="dashboard-main">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        {{-- Navbar --}}
+        @include('layouts.components.navbar')
 
-    <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.6.0/css/all.css">
-</head>
+        {{-- Page Content Area --}}
+        <div class="dashboard-main-body">
 
-<body
-    class="font-sans antialiased bg-gray-100 dark:bg-dark-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <div class="min-h-screen">
-        @include('layouts.navigation')
+            {{-- Slot Content --}}
+            @if (isset($slot))
+                {{ $slot }}
+            @else
+                @yield('content')
+            @endif
+        </div>
 
-        <!-- Page Heading -->
-        @isset($header)
-            <header class="bg-white dark:bg-dark-800 shadow transition-colors duration-300">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    {{ $header }}
-                </div>
-            </header>
-        @endisset
+        {{-- Footer --}}
+        @include('layouts.components.footer')
+    </main>
 
-        <!-- Page Content -->
-        <main>
-            {{ $slot }}
-        </main>
-    </div>
-
-    <script>
-        // Inicializa conforme preferência salva/sistema
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia(
-                '(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-
-        // Fallback para botões que usam data-toggle-theme
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('[data-toggle-theme]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.documentElement.classList.toggle('dark');
-                    localStorage.theme = document.documentElement.classList.contains('dark') ?
-                        'dark' : 'light';
-                });
-            });
-        });
-    </script>
+    {{-- Scripts --}}
+    @include('layouts.components.script')
 </body>
 
 </html>

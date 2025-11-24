@@ -1,4 +1,21 @@
-<div class="mb-6 p-4 border rounded-lg bg-white dark:bg-dark-800">
+<style>
+    .badge-inprogress {
+        background-color: #ff8800;
+        color: #fff;
+    }
+
+    .badge-completed {
+        background-color: #008800;
+        color: #fff;
+    }
+
+    .badge-pendent {
+        background-color: #ff0000;
+        color: #fff;
+    }
+</style>
+
+<div class="mb-6 p-4 rounded-lg bg-[#f5f5f5] dark:bg-[#2c2c2c]">
     <div class="flex items-center justify-between">
         <div>
             <div class="text-sm text-gray-600 dark:text-gray-300">Status do planejamento</div>
@@ -35,15 +52,15 @@
                 $map = [
                     'not_started' => [
                         'label' => 'Não iniciado',
-                        'classes' => 'bg-red-100 text-red-800 border border-red-200',
+                        'classes' => 'badge-pendent',
                     ],
                     'in_progress' => [
                         'label' => 'Em progresso',
-                        'classes' => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+                        'classes' => 'badge-inprogress',
                     ],
                     'completed' => [
                         'label' => 'Finalizado',
-                        'classes' => 'bg-green-100 text-green-800 border border-green-200',
+                        'classes' => 'badge-completed',
                     ],
                 ];
                 $label = $map[$status]['label'] ?? ucfirst($status);

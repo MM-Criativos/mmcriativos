@@ -1,183 +1,302 @@
 @php
-    $statusBadge = [
+
+    $statusBadges = [
         \App\Models\ProjectTask::STATUS_DONE => [
             'label' => 'Concluída',
-            'classes' => 'bg-green-100 text-green-700 border border-green-200',
+            'classes' => 'badge-completed',
+        ],
+    ];
+
+    $searchHidden = request()->except(['q', 'page']);
+    $projectHidden = request()->except(['project_id', 'page']);
+    $skillHidden = request()->except(['skill_id', 'page']);
+    $clientHidden = request()->except(['client', 'page']);
+    $professionalHidden = request()->except(['professional', 'page']);
+    $deadlineHidden = request()->except(['deadline', 'page']);
+    $title = 'Finalizadas';
+    $subTitle = 'Veja as tarefas finalizadas.';
+    $navbarTabs = [
+        [
+            'label' => 'Dashboard',
+            'icon' => 'fa-duotone fa-list-check',
+            'route' => route('admin.tasks.index'),
+            'active' => request()->routeIs('admin.tasks.index'),
+        ],
+        [
+            'label' => 'Calendário',
+            'icon' => 'fa-duotone fa-calendar-days',
+            'route' => route('admin.tasks.calendar'),
+            'active' => request()->routeIs('admin.tasks.calendar'),
+        ],
+        [
+            'label' => 'Kanban',
+            'icon' => 'fa-duotone fa-chart-kanban',
+            'route' => route('admin.tasks.kanban'),
+            'active' => request()->routeIs('admin.tasks.kanban'),
+        ],
+        [
+            'label' => 'Finalizadas',
+            'icon' => 'fa-duotone fa-circle-check',
+            'route' => route('admin.tasks.completed'),
+            'active' => request()->routeIs('admin.tasks.completed'),
         ],
     ];
 @endphp
 
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Tarefas concluídas</h2>
-                <p class="text-sm text-gray-500">Histórico de entregas finalizadas. Use os filtros para localizar tarefas
-                    específicas.</p>
-            </div>
-            <a href="{{ route('admin.tasks.index') }}"
-                class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                <i class="fa-solid fa-arrow-left"></i>
-                Voltar
-            </a>
-        </div>
-    </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="bg-white shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <form method="GET" action="{{ route('admin.tasks.completed') }}"
-                        class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-                            <input type="search" name="q" value="{{ $search }}"
-                                placeholder="Busque pelo título da tarefa ou subtarefa"
-                                class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Projeto</label>
-                            <select name="project_id"
-                                class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
-                                <option value="">Todos</option>
-                                @foreach ($projects as $project)
-                                    <option value="{{ $project->id }}" @selected((string) $selectedProject === (string) $project->id)>
-                                        {{ $project->name }}
-                                    </option>
+
+<style>
+    .tasks-viewdt-btn {
+        background-color: transparent;
+        border: 2px solid #f5f5f5;
+        font-weight: 800;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        margin: 0 auto;
+        border-radius: 8px;
+        z-index: 1;
+        transition: border-color 0.2s ease;
+    }
+
+    .dark .tasks-viewdt-btn {
+        border-color: #262626;
+    }
+
+    .tasks-viewdt-btn:hover {
+        border-color: #ff8800 !important;
+    }
+
+    #tasks-table tbody tr:hover .tasks-viewdt-btn {
+        border-color: #000;
+    }
+
+    .dark #tasks-table tbody tr:hover .tasks-viewdt-btn {
+        border-color: #fff;
+    }
+
+    .badge-inprogress {
+        background-color: #ff8800;
+        color: #fff;
+    }
+
+    .badge-completed {
+        background-color: #008800;
+        color: #fff;
+    }
+
+    .badge-pendent {
+        background-color: #ff0000;
+        color: #fff;
+    }
+</style>
+
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1 gap-6">
+            <div
+                class="card bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 rounded-3xl overflow-hidden">
+                <div class="card-header flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-6 py-6 border-b border-neutral-300 dark:border-neutral-800">
+                    <div>
+                        <h6 class="card-title mb-0 text-lg font-semibold text-neutral-800 dark:text-white">Finalizadas</h6>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Veja as tarefas que já foram concluídas.</p>
+                    </div>
+                    <form method="GET" action="{{ route('admin.tasks.completed') }}" class="flex flex-col gap-3 w-full md:w-auto"
+                        aria-label="Buscar tarefas finalizadas">
+                        @foreach ($searchHidden as $param => $value)
+                            @if (is_array($value))
+                                @foreach ($value as $item)
+                                    <input type="hidden" name="{{ $param }}[]" value="{{ $item }}">
                                 @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Skill</label>
-                            <select name="skill_id"
-                                class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
-                                <option value="">Todas</option>
-                                @foreach ($skills as $skill)
-                                    <option value="{{ $skill->id }}" @selected((string) $selectedSkill === (string) $skill->id)>
-                                        {{ $skill->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="md:col-span-4 flex flex-wrap gap-3 justify-end">
-                            <a href="{{ route('admin.tasks.completed') }}"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-md border text-sm text-gray-600 hover:bg-gray-50">
-                                Limpar filtros
-                            </a>
-                            <button type="submit"
-                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700">
-                                <i class="fa-solid fa-filter"></i>
-                                Filtrar
-                            </button>
+                            @else
+                                <input type="hidden" name="{{ $param }}" value="{{ $value }}">
+                            @endif
+                        @endforeach
+                        <div class="relative w-full md:w-[320px]">
+                            <input type="text" name="q" value="{{ $search ?? '' }}"
+                                class="w-full bg-white dark:!bg-[#262626] border border-neutral-300 dark:border-neutral-700 rounded-lg pl-10 pr-3 py-2 text-sm text-neutral-800 dark:text-white focus:border-[#ff8800] focus:ring-0"
+                                placeholder="Buscar tarefa, projeto ou responsável...">
+                            <span
+                                class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 dark:text-neutral-400">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
                         </div>
                     </form>
                 </div>
-            </div>
-
-            <div class="space-y-4">
-                @forelse ($tasks as $task)
-                    @php
-                        $badge = $statusBadge[\App\Models\ProjectTask::STATUS_DONE];
-                    @endphp
-                    <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm" x-data="{ open: false }">
-                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">{{ $task->title }}</h3>
-                                <p class="text-sm text-gray-500">
-                                    Projeto: {{ $task->project?->name ?? 'Sem projeto' }} —
-                                    Skill: {{ $task->skill?->name ?? 'Não definida' }}
-                                </p>
-                                @if ($task->description)
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        {{ \Illuminate\Support\Str::limit($task->description, 160) }}</p>
-                                @endif
-                            </div>
-                            <div class="flex flex-col items-end gap-2 text-sm text-gray-600">
-                                <span
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $badge['classes'] }}">
-                                    {{ $badge['label'] }}
-                                </span>
-                                <div class="text-right">
-                                    <p class="text-xs uppercase tracking-widest text-gray-400">Concluída em</p>
-                                    <p>{{ optional($task->completed_at)->format('d/m/Y H:i') ?? 'Sem registro' }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                            <div>
-                                <p class="text-xs uppercase tracking-widest text-gray-400">Responsável</p>
-                                <p class="font-medium text-gray-900">{{ $task->assignedUser?->name ?? 'Não definido' }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase tracking-widest text-gray-400">Planejada para</p>
-                                <p>{{ optional($task->planned_at)->format('d/m/Y') ?? 'Sem previsão' }}</p>
-                            </div>
-                            <div class="flex items-center gap-2">
-
-                            <div class="flex items-center justify-end">
-                                @if ($task->project)
-                                    <a href="{{ route('admin.projects.steps.show', [$task->project, 'tab' => 'development']) }}"
-                                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-orange-600 text-orange-600 rounded-md hover:bg-orange-600 hover:text-white transition">
-                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        Projeto
-                                    </a>
-                                @else
-                                    <span class="text-gray-500">Projeto removido</span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="mt-4 flex justify-end">
-                            <button type="button" @click="open = !open"
-                                class="inline-flex items-center gap-2 text-sm font-medium text-orange-600 hover:text-orange-700">
-                                <i class="fa-solid" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                                <span x-text="open ? 'Ocultar itens' : 'Ver itens'"></span>
-                            </button>
-                        </div>
-
-                        <div x-show="open" x-collapse class="mt-4 border-t border-gray-100 pt-4 space-y-3">
-                            @if ($task->items->isEmpty())
-                                <p class="text-sm text-gray-500">Nenhum item cadastrado para esta tarefa.</p>
-                            @else
-                                @foreach ($task->items as $item)
-                                    <div class="border border-gray-200 rounded-md p-3">
-                                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
-                                            <div>
-                                                <p class="text-sm font-medium text-gray-900">{{ $item->title }}</p>
-                                                <p class="text-xs text-gray-500">
-                                                    {{ $item->competency?->competency ?? ($task->competency?->competency ?? 'Competência não definida') }}
-                                                    • {{ $item->assignedUser?->name ?? 'Sem responsável' }}
-                                                </p>
-                                                @if ($item->description)
-                                                    <p class="text-sm text-gray-600 mt-1">{{ $item->description }}</p>
-                                                @endif
-                                            </div>
-                                            <div class="flex flex-col items-end text-xs text-gray-500">
-                                                <span
-                                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ $item->is_done ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700 border border-gray-200' }}">
-                                                    {{ $item->is_done ? 'Concluído' : 'Pendente' }}
-                                                </span>
-                                                @if ($item->done_at)
-                                                    <span class="mt-1">Finalizado em
-                                                        {{ $item->done_at->format('d/m/Y H:i') }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
+                <div class="filters-bar grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 px-6 pb-0 pt-4">
+                    <form method="GET" action="{{ route('admin.tasks.completed') }}" class="w-full">
+                        @foreach ($projectHidden as $param => $value)
+                            @if (is_array($value))
+                                @foreach ($value as $item)
+                                    <input type="hidden" name="{{ $param }}[]" value="{{ $item }}">
                                 @endforeach
+                            @else
+                                <input type="hidden" name="{{ $param }}" value="{{ $value }}">
                             @endif
-                        </div>
-                    </div>
-                @empty
-                    <div class="bg-white border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
-                        Nenhuma tarefa concluída encontrada com os filtros atuais.
-                    </div>
-                @endforelse
-            </div>
+                        @endforeach
 
-            {{ $tasks->links() }}
+                        <select name="project_id"
+                            class="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-white rounded-lg px-3 py-4 text-sm focus:border-[#ff8800] focus:ring-0">
+                            <option value="">Projeto</option>
+                            @foreach ($projects as $project)
+                                <option value="{{ $project->id }}" @selected((string) $selectedProject === (string) $project->id)>{{ $project->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+
+                    <form method="GET" action="{{ route('admin.tasks.completed') }}" class="w-full">
+                        @foreach ($clientHidden as $param => $value)
+                            @if (is_array($value))
+                                @foreach ($value as $item)
+                                    <input type="hidden" name="{{ $param }}[]" value="{{ $item }}">
+                                @endforeach
+                            @else
+                                <input type="hidden" name="{{ $param }}" value="{{ $value }}">
+                            @endif
+                        @endforeach
+
+                        <select name="client"
+                            class="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-white rounded-lg px-3 py-4 text-sm focus:border-[#ff8800] focus:ring-0">
+                            <option value="">Cliente</option>
+                            @foreach ($clientOptions as $client)
+                                <option value="{{ $client->id }}" @selected((string) $selectedClient === (string) $client->id)>{{ $client->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+
+                    <form method="GET" action="{{ route('admin.tasks.completed') }}" class="w-full">
+                        @foreach ($professionalHidden as $param => $value)
+                            @if (is_array($value))
+                                @foreach ($value as $item)
+                                    <input type="hidden" name="{{ $param }}[]" value="{{ $item }}">
+                                @endforeach
+                            @else
+                                <input type="hidden" name="{{ $param }}" value="{{ $value }}">
+                            @endif
+                        @endforeach
+
+                        <select name="professional"
+                            class="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-white rounded-lg px-3 py-4 text-sm focus:border-[#ff8800] focus:ring-0">
+                            <option value="">Profissional</option>
+                            @foreach ($professionalOptions as $professional)
+                                <option value="{{ $professional->id }}" @selected((string) $selectedProfessional === (string) $professional->id)>
+                                    {{ $professional->name }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+
+                    <form method="GET" action="{{ route('admin.tasks.completed') }}" class="w-full">
+                        @foreach ($skillHidden as $param => $value)
+                            @if (is_array($value))
+                                @foreach ($value as $item)
+                                    <input type="hidden" name="{{ $param }}[]" value="{{ $item }}">
+                                @endforeach
+                            @else
+                                <input type="hidden" name="{{ $param }}" value="{{ $value }}">
+                            @endif
+                        @endforeach
+
+                        <select name="skill_id"
+                            class="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-white rounded-lg px-3 py-4 text-sm focus:border-[#ff8800] focus:ring-0">
+                            <option value="">Área (Habilidade)</option>
+                            @foreach ($skills as $skill)
+                                <option value="{{ $skill->id }}" @selected((string) $selectedSkill === (string) $skill->id)>{{ $skill->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+
+                    <form method="GET" action="{{ route('admin.tasks.completed') }}" class="w-full">
+                        @foreach ($deadlineHidden as $param => $value)
+                            @if (is_array($value))
+                                @foreach ($value as $item)
+                                    <input type="hidden" name="{{ $param }}[]" value="{{ $item }}">
+                                @endforeach
+                            @else
+                                <input type="hidden" name="{{ $param }}" value="{{ $value }}">
+                            @endif
+                        @endforeach
+
+                        <input type="date" name="deadline" value="{{ $deadlineFilter }}"
+                            class="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-white rounded-lg px-3 py-4 text-sm focus:border-[#ff8800] focus:ring-0">
+                    </form>
+                </div>
+
+                <div class="card-body overflow-x-auto">
+                    <table id="tasks-table"
+                        class="w-full text-sm text-center border border-neutral-300 dark:border-neutral-800 rounded-xl overflow-hidden border-separate border-spacing-0">
+                        <thead class="bg-[#ff8800] text-black dark:text-white">
+                            <tr>
+                                <th
+                                    class="py-3 px-4 first:rounded-tl-xl border-b border-neutral-300 dark:border-neutral-800">
+                                    Tarefa</th>
+                                <th class="py-3 px-4 border-b border-neutral-300 dark:border-neutral-800">Área</th>
+                                <th class="py-3 px-4 border-b border-neutral-300 dark:border-neutral-800">Tecnologia
+                                </th>
+                                <th class="py-3 px-4 border-b border-neutral-300 dark:border-neutral-800">Responsável
+                                </th>
+                                <th class="py-3 px-4 border-b border-neutral-300 dark:border-neutral-800">Data Limite
+                                </th>
+                                <th class="py-3 px-4 border-b border-neutral-300 dark:border-neutral-800">Status</th>
+                                <th
+                                    class="py-3 px-4 last:rounded-tr-xl border-b border-neutral-300 dark:border-neutral-800">
+                                    Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-neutral-900">
+                            @forelse ($tasks as $task)
+                                @php
+                                    $badge = $statusBadges[$task->status] ?? [
+                                        'label' => ucfirst($task->status),
+                                        'classes' => 'bg-gray-100 text-gray-700 border border-gray-200',
+                                    ];
+                                @endphp
+                                <tr class="hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                                    <td class="py-3 px-4 border-t border-neutral-300 dark:border-neutral-800">
+                                        {{ $task->title }}</td>
+                                    <td class="py-3 px-4 border-t border-neutral-300 dark:border-neutral-800">
+                                        {{ optional($task->skill)->name ?? 'Sem skill' }}</td>
+                                    <td class="py-3 px-4 border-t border-neutral-300 dark:border-neutral-800">
+                                        {{ optional($task->project)->name ?? 'Sem projeto' }}</td>
+                                    <td class="py-3 px-4 border-t border-neutral-300 dark:border-neutral-800">
+                                        {{ optional($task->assignedUser)->name ?? 'Não definido' }}</td>
+                                    <td class="py-3 px-4 border-t border-neutral-300 dark:border-neutral-800">
+                                        {{ $task->planned_at ? $task->planned_at->format('d/m/Y') : 'Sem prazo' }}</td>
+                                    <td class="py-3 px-4 border-t border-neutral-300 dark:border-neutral-800">
+                                        <span
+                                            class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-xs font-medium {{ $badge['classes'] }}">{{ $badge['label'] }}</span>
+                                    </td>
+                                    <td class="py-3 px-4 border-t border-neutral-300 dark:border-neutral-800">
+                                        @if ($task->project)
+                                            <a href="{{ route('admin.projects.steps.show', [$task->project, 'tab' => 'development']) }}"
+                                                class="tasks-viewdt-btn inline-flex items-center justify-center w-12 h-10 rounded-md">
+                                                <i class="fa-duotone fa-arrow-right-to-arc icon-project"></i>
+                                            </a>
+                                        @else
+                                            <span class="text-xs text-neutral-500">Projeto indisponível</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7"
+                                        class="py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">Nenhuma
+                                        tarefa encontrada.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-6 py-4 border-t border-neutral-300 dark:border-neutral-800">
+                    {{ $tasks->withQueryString()->links() }}
+                </div>
+            </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

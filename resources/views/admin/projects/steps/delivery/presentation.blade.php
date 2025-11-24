@@ -16,11 +16,11 @@
         @csrf
         @method('PUT')
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#f5f5f5] dark:bg-[#262626] rounded-lg shadow-sm p-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nome do projeto</label>
                 <input type="text" name="name" value="{{ old('name', $project->name) }}"
-                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                 @error('name')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -28,7 +28,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
                 <input type="text" name="slug" value="{{ old('slug', $project->slug) }}"
-                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                 @error('slug')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -36,7 +36,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
                 <select name="client_id"
-                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full bg-white dark:bg-black border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                     <option value="">Selecione...</option>
                     @foreach ($clients as $client)
                         <option value="{{ $client->id }}" @selected(old('client_id', $project->client_id) == $client->id)>
@@ -51,7 +51,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Serviço</label>
                 <select name="service_id"
-                    class="w-full border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
+                    class="w-full bg-white dark:bg-black border-gray-300 rounded-md text-sm focus:border-orange-500 focus:ring-orange-500">
                     <option value="">Selecione...</option>
                     @foreach ($services as $service)
                         <option value="{{ $service->id }}" @selected(old('service_id', $project->service_id) == $service->id)>
@@ -65,7 +65,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-[#f5f5f5] dark:bg-[#262626] rounded-lg shadow-sm p-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Cover</label>
                 @php
@@ -130,7 +130,8 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700">Vídeo (URL)</label>
                 <input type="text" name="video" value="{{ old('video', $project->video) }}"
-                    placeholder="https://..." class="mt-1 block w-full border-gray-300 rounded-md">
+                    placeholder="https://..."
+                    class="mt-1 block w-full bg-white dark:!bg-black border-gray-300 rounded-md">
                 @error('video')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -140,7 +141,7 @@
 
     <div class="flex flex-wrap items-center gap-3">
         <button type="submit" form="project-presentation-form"
-            class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm transition-colors duration-200">
+            class="btn-mmcriativos inline-flex items-center px-6 py-3 rounded-md">
             Salvar apresentação
         </button>
 
@@ -149,8 +150,8 @@
                 onsubmit="return confirm('Marcar este projeto como finalizado?')">
                 @csrf
                 <button type="submit"
-                    class="inline-flex items-center px-6 py-3 rounded border text-sm font-medium transition-colors duration-200
-                    {{ $project->finished_at ? 'bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}"
+                    class="inline-flex items-center px-6 py-3.5 rounded border text-sm font-medium transition-colors duration-200
+                    {{ $project->finished_at ? 'bg-green-800 text-white border-green-800 cursor-not-allowed' : 'bg-green-50 text-green-800 border-green-800 hover:bg-green-800 hover:text-white' }}"
                     {{ $project->finished_at ? 'disabled' : '' }}>
                     {{ $project->finished_at ? 'Projeto finalizado' : 'Finalizar projeto' }}
                 </button>
@@ -160,10 +161,8 @@
                 <form method="POST" action="{{ route('admin.projects.resume', $project) }}"
                     onsubmit="return confirm('Deseja reabrir este projeto e voltar para produção?');">
                     @csrf
-                    <button type="submit"
-                        class="inline-flex items-center px-6 py-3 rounded border text-sm font-medium transition-colors duration-200
-                        border-orange-600 text-orange-600 bg-white hover:bg-orange-600 hover:text-white">
-                        Voltar para produção
+                    <button type="submit" class="btn-mmcriativos inline-flex items-center px-6 py-3.5 rounded">
+                        Voltar para desenvolvimento
                     </button>
                 </form>
             @endif

@@ -1,5 +1,7 @@
 @php
     use App\Models\QualitativeTemplate;
+    $title = 'Criar Questionário';
+    $subTitle = 'Crie o questionário qualitativo';
     $templates = QualitativeTemplate::where('is_active', true)
         ->orderBy('category')
         ->orderBy('sort_order')
@@ -7,22 +9,12 @@
         ->groupBy('category');
 @endphp
 
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
-                Criar Questionário · {{ $project->name }}
-            </h2>
-            <a href="{{ route('admin.projects.steps.show', $project) }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded border border-gray-300 hover:bg-gray-50">
-                <i class="fa-solid fa-arrow-left"></i>
-                <span>Voltar</span>
-            </a>
-        </div>
-    </x-slot>
 
-    @if (session('status'))
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+@extends('layouts.app')
+
+@section('content')
+    <div class="w-full grid grid-cols-1 gap-6">
+        @if (session('status'))
             <div class="bg-green-50 border border-green-200 rounded-md p-4">
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -35,16 +27,14 @@
                     </div>
                 </div>
             </div>
-        </div>
-    @endif
+        @endif
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+        <div>
+            <div class="bg-white dark:bg-[#000] overflow-hidden shadow-sm sm:rounded-lg">
                 <form action="{{ route('admin.projects.planning.qualitative.save', $project) }}" method="POST">
                     @csrf
                     <div class="p-6">
-                        <div class="mb-4">
+                        <div class="mb-6">
                             <h3 class="text-lg font-medium text-gray-900">Selecione as Perguntas do Questionário</h3>
                             <p class="mt-1 text-sm text-gray-600">
                                 Escolha as perguntas que serão enviadas ao cliente.
@@ -54,13 +44,15 @@
                         <div class="space-y-8">
                             @foreach ($templates as $category => $items)
                                 <div>
-                                    <h4 class="text-sm font-medium text-gray-900 mb-4">{{ $category }}</h4>
-                                    <div class="space-y-4">
+                                    <h4
+                                        class="text-md font-medium text-gray-800 bg-[#ff8800] max-w-80 rounded-lg px-2 py-3 text-center mb-6">
+                                        {{ $category }}</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         @foreach ($items as $template)
                                             <label class="flex items-start">
                                                 <div class="flex h-6 items-center">
                                                     <input type="checkbox" name="template_ids[]" value="{{ $template->id }}"
-                                                        class="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-600">
+                                                        class="h-4 w-4 rounded border-gray-300 text-[#ff8800] focus:ring-[#ff8800]">
                                                 </div>
                                                 <div class="ml-3">
                                                     <span
@@ -78,10 +70,9 @@
                         </div>
                     </div>
 
-                    <div class="px-6 py-4 bg-gray-50 border-t flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded border border-transparent hover:bg-orange-700">
-                            <i class="fa-regular fa-floppy-disk"></i>
+                    <div class="px-6 py-4 flex justify-center">
+                        <button type="submit" class="btn btn-mmcriativos inline-flex items-center gap-2 px-4 py-2">
+                            <i class="fa-duotone fa-solid fa-arrow-down-to-arc icon-project"></i>
                             <span>Salvar Questionário</span>
                         </button>
                     </div>
@@ -89,4 +80,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

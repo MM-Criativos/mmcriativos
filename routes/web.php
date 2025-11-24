@@ -77,6 +77,10 @@ Route::get('/dashboard', DashboardController::class)
     ->middleware(['verified', 'approved', 'auth'])
     ->name('dashboard');
 
+Route::get('/dashboard/day-tasks', [DashboardController::class, 'dayTasks'])
+    ->middleware(['verified', 'approved', 'auth'])
+    ->name('dashboard.day-tasks');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -263,6 +267,12 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
 
     // Tasks hub
     Route::get('tasks', [AdminTaskController::class, 'index'])->name('tasks.index');
+    Route::get('tasks/calendar', [AdminTaskController::class, 'calendar'])->name('tasks.calendar');
+    Route::post('tasks/calendar', [AdminTaskController::class, 'storeCalendar'])->name('tasks.calendar.store');
+    Route::put('tasks/calendar/{projectTask}', [AdminTaskController::class, 'updateCalendar'])->name('tasks.calendar.update');
+    Route::delete('tasks/calendar/{projectTask}', [AdminTaskController::class, 'destroyCalendar'])->name('tasks.calendar.destroy');
+    Route::get('tasks/kanban', [AdminTaskController::class, 'kanban'])->name('tasks.kanban');
+    Route::patch('tasks/kanban/{projectTask}/status', [AdminTaskController::class, 'updateStatus'])->name('tasks.kanban.status');
     Route::get('tasks/completed', [AdminTaskController::class, 'completed'])->name('tasks.completed');
 
     // Settings
