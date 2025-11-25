@@ -24,22 +24,26 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           echo "Iniciando deploy no servidor..."
-          
-          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST <<'REMOTE'
+
+          ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'REMOTE'
             set -e
+
             echo "📡 Conectado ao servidor como $(whoami)"
 
-            # Caminho do projeto
             cd /var/www/mmcriativos || { echo "❌ Diretório não encontrado!"; exit 1; }
 
-            echo "📦 Atualizando código..."
-            # Evita erro de 'dubious ownership' do Git
+            echo "📦 Atualizando código do Git..."
             git config --global --add safe.directory /var/www/mmcriativos
-            # Atualiza código
             git pull origin main || { echo "❌ Falha no git pull"; exit 1; }
 
-            echo "🧩 Instalando dependências..."
+            echo "🧩 Instalando dependências do Composer..."
             composer install --no-interaction --prefer-dist --optimize-autoloader || { echo "❌ Falha no composer"; exit 1; }
+
+            echo "📦 Instalando dependências NPM..."
+            npm ci || npm install || { echo "❌ Falha no npm install"; exit 1; }
+
+            echo "🏗️ Rodando Vite build..."
+            npm run build || { echo "❌ Falha no Vite build"; exit 1; }
 
             echo "🧰 Rodando migrations..."
             php artisan migrate --force || { echo "❌ Falha nas migrations"; exit 1; }
@@ -50,5 +54,5 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
-            echo "✅ Deploy concluído com sucesso!"
+            echo "🎉 Deploy concluído com sucesso!"
           REMOTE
