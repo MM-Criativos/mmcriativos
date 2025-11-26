@@ -1,15 +1,13 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Orçamento #{{ $budget->id }}</h2>
-            <a href="{{ route('admin.commercial.budgets.preview', $budget) }}" target="_blank"
-                class="inline-flex items-center px-6 py-3 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-400">Preview</a>
-        </div>
-    </x-slot>
+@php
+    $title = 'Orçamentos';
+    $subTitle = 'Faça ajustes no orçamento';
+@endphp
 
-    <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @include('admin.commercial._tabs')
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
             @php($sym = ['BRL' => 'R$', 'USD' => '$', 'EUR' => '€'][$budget->currency] ?? $budget->currency)
             @if (session('status'))
                 <div class="p-3 bg-green-100 text-green-800 rounded">{{ session('status') }}</div>
@@ -24,10 +22,9 @@
                 </div>
             @endif
 
-            <div class=" bg-white dark:bg-dark-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class=" bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg mb-5">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <form method="POST" action="{{ route('admin.commercial.budgets.update', $budget) }}"
-                        class="space-y-4">
+                    <form method="POST" action="{{ route('admin.commercial.budgets.update', $budget) }}" class="space-y-4">
                         @csrf
                         @method('PUT')
 
@@ -35,7 +32,7 @@
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Cliente</label>
                                 <select name="client_id"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200">
                                     <option value="">Selecione...</option>
                                     @foreach ($clients as $c)
                                         <option value="{{ $c->id }}" @selected(old('client_id', $budget->client_id) == $c->id)>
@@ -46,7 +43,7 @@
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Serviço</label>
                                 <select name="service_id"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200">
                                     <option value="">Selecione...</option>
                                     @foreach ($services as $s)
                                         <option value="{{ $s->id }}" @selected(old('service_id', $budget->service_id) == $s->id)>
@@ -57,7 +54,7 @@
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Plano</label>
                                 <select name="plan_id"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200">
                                     <option value="">Selecione...</option>
                                     @foreach ($plans as $p)
                                         <option value="{{ $p->id }}" @selected(old('plan_id', $budget->plan_id) == $p->id)>
@@ -71,18 +68,18 @@
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Nome</label>
                                 <input name="client_name" value="{{ old('client_name', $budget->client_name) }}"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">E-mail</label>
                                 <input type="email" name="client_email"
                                     value="{{ old('client_email', $budget->client_email) }}"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Telefone</label>
                                 <input name="client_phone" value="{{ old('client_phone', $budget->client_phone) }}"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
                             </div>
                         </div>
 
@@ -90,7 +87,7 @@
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Moeda</label>
                                 <select name="currency"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200">
                                     @php($curr = old('currency', $budget->currency))
                                     <option value="BRL" @selected($curr === 'BRL')>BRL (R$)</option>
                                     <option value="USD" @selected($curr === 'USD')>USD ($)</option>
@@ -98,42 +95,45 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">Valor (a partir de) ({{ $sym }})</label>
+                                <label class="block text-sm text-gray-600 mb-1">Valor (a partir de)
+                                    ({{ $sym }})</label>
                                 <input type="number" step="0.01" name="base_price_snapshot"
                                     value="{{ old('base_price_snapshot', $budget->base_price_snapshot) }}"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">Desconto global ({{ $sym }})</label>
+                                <label class="block text-sm text-gray-600 mb-1">Desconto global
+                                    ({{ $sym }})</label>
                                 <input type="number" step="0.01" name="discount_amount"
                                     value="{{ old('discount_amount', $budget->discount_amount) }}"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Validade</label>
                                 <input type="date" name="valid_until"
                                     value="{{ old('valid_until', optional($budget->valid_until)->format('Y-m-d')) }}"
-                                    class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
+                                    class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600 mb-1">Observações</label>
                             <textarea name="notes" rows="4"
-                                class="w-full border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">{{ old('notes', $budget->notes) }}</textarea>
+                                class="w-full border-gray-300 rounded dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200">{{ old('notes', $budget->notes) }}</textarea>
                         </div>
 
-                        <div class="flex gap-2">
-                            <button class="px-5 py-3 bg-orange-600 text-white rounded hover:bg-orange-700">Salvar
+                        <div class="flex gap-2 justify-center">
+                            <button class="px-5 py-3 rounded-md btn-mmcriativos">Salvar
                                 alterações</button>
                             <a href="{{ route('admin.commercial.budgets.index') }}"
-                                class="px-5 py-3 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-400">Voltar</a>
+                                class="px-5 py-3 bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5]
+                                dark:hover:bg-[#262626] hover:text-red-500 hover:border-red-500 rounded-md">Voltar</a>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-dark-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg mb-5">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <h3 class="font-semibold mb-3">Itens</h3>
                     @php($sym = ['BRL' => 'R$', 'USD' => '$', 'EUR' => '€'][$budget->currency] ?? $budget->currency)
@@ -155,7 +155,7 @@
                                 </thead>
                                 <tbody>
                                     {{-- Produto como primeira linha --}}
-                                    @php($productName = $budget->plan ? ($budget->plan->category . ' — ' . ($budget->service->name ?? '')) : ($budget->service->name ?? 'Produto'))
+                                    @php($productName = $budget->plan ? $budget->plan->category . ' — ' . ($budget->service->name ?? '') : $budget->service->name ?? 'Produto')
                                     @php($productUnit = (float) $budget->base_price_snapshot)
                                     @php($productDiscount = (float) ($budget->discount_amount ?? 0))
                                     @php($productTotal = max($productUnit - $productDiscount, 0))
@@ -163,9 +163,12 @@
                                         <td class="py-3 pr-4">{{ trim($productName) }}</td>
                                         <td class="py-3 pr-4">1</td>
                                         <td class="py-3 pr-4">Único</td>
-                                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($productUnit, 2, ',', '.') }}</td>
-                                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($productDiscount, 2, ',', '.') }}</td>
-                                        <td class="py-3 pr-4">{{ $sym }} {{ number_format($productTotal, 2, ',', '.') }}</td>
+                                        <td class="py-3 pr-4">{{ $sym }}
+                                            {{ number_format($productUnit, 2, ',', '.') }}</td>
+                                        <td class="py-3 pr-4">{{ $sym }}
+                                            {{ number_format($productDiscount, 2, ',', '.') }}</td>
+                                        <td class="py-3 pr-4">{{ $sym }}
+                                            {{ number_format($productTotal, 2, ',', '.') }}</td>
                                         <td class="py-3 pr-4 text-sm text-gray-500">—</td>
                                     </tr>
 
@@ -180,9 +183,8 @@
                                                     @method('PUT')
                                                     <input type="number" min="1" name="qty"
                                                         value="{{ $i->qty }}"
-                                                        class="w-20 border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
-                                                    <button
-                                                        class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600">OK</button>
+                                                        class="w-20 border-gray-300 rounded bg-[#f5f5f5] dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
+                                                    <button class="px-3 py-3 rounded-md btn-mmcriativos">OK</button>
                                                 </form>
                                             </td>
                                             <td class="py-3 pr-4">
@@ -198,9 +200,8 @@
                                                     @method('PUT')
                                                     <input type="number" step="0.01" min="0"
                                                         name="discount_amount" value="{{ $i->discount_amount }}"
-                                                        class="w-28 border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
-                                                    <button
-                                                        class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600">OK</button>
+                                                        class="w-28 border-gray-300 rounded bg-[#f5f5f5] dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
+                                                    <button class="px-3 py-3 rounded-md btn-mmcriativos">OK</button>
                                                 </form>
                                             </td>
                                             <td class="py-3 pr-4">{{ $sym }}
@@ -212,7 +213,9 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <button
-                                                        class="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Excluir</button>
+                                                        class="px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5]
+                                                        dark:hover:bg-[#262626] hover:text-red-500 hover:border-red-500 rounded-md"><i
+                                                            class="fa-solid fa-trash"></i></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -230,7 +233,7 @@
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Adicionar extra</label>
                                 <select name="extra_id"
-                                    class="border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
+                                    class="border-gray-300 rounded bg-[#f5f5f5] dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200">
                                     @forelse(($extras ?? []) as $ex)
                                         <option value="{{ $ex->id }}">{{ $ex->name }} —
                                             {{ $ex->billing_period }}</option>
@@ -242,30 +245,32 @@
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Qtd</label>
                                 <input type="number" min="1" name="qty" value="1"
-                                    class="w-24 border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200" />
+                                    class="w-24 border-gray-300 rounded bg-[#f5f5f5] dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200" />
                             </div>
                             <div>
-                                <button
-                                    class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">Adicionar</button>
+                                <button class="px-4 py-2 rounded-md btn-mmcriativos">Adicionar</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-dark-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg mb-5">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold">Totais</h3>
-                        <form method="GET" action="{{ route('admin.commercial.budgets.edit', $budget) }}" class="flex items-center gap-2">
+                        <form method="GET" action="{{ route('admin.commercial.budgets.edit', $budget) }}"
+                            class="flex items-center gap-2">
                             <label class="text-sm text-gray-600">Parcelamento</label>
-                            <select name="installments" class="border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
-                                @foreach (($installmentRates ?? []) as $n => $rate)
-                                    @php($label = $n . 'x' . ($rate>0 ? ' ('.$rate.'%)' : ' (sem juros)'))
-                                    <option value="{{ $n }}" @selected(($installments ?? 1)==$n)>{{ $label }}</option>
+                            <select name="installments"
+                                class="border-gray-300 rounded bg-[#f5f5f5] dark:!bg-[#262626] dark:border-dark-600 dark:text-gray-200">
+                                @foreach ($installmentRates ?? [] as $n => $rate)
+                                    @php($label = $n . 'x' . ($rate > 0 ? ' (' . $rate . '%)' : ' (sem juros)'))
+                                    <option value="{{ $n }}" @selected(($installments ?? 1) == $n)>{{ $label }}
+                                    </option>
                                 @endforeach
                             </select>
-                            <button class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Aplicar</button>
+                            <button class="px-3 py-2 rounded-md btn-mmcriativos">Aplicar</button>
                         </form>
                     </div>
                     @php($servicesTotal = 0.0)
@@ -279,21 +284,21 @@
                     @php($perInstallment = round($grandWithInterest / max($installments, 1), 2))
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="p-4 bg-gray-50 rounded">
-                            <div class="text-gray-500 text-sm">Preço produto</div>
+                        <div class="p-4 bg-[#f5f5f5] dark:!bg-[#262626] rounded">
+                            <div class="text-gray-900 text-sm">Preço produto</div>
                             <div class="text-2xl font-semibold">{{ $sym }}
                                 {{ number_format($product, 2, ',', '.') }}</div>
                         </div>
-                        <div class="p-4 bg-gray-50 rounded">
-                            <div class="text-gray-500 text-sm">Preço serviços</div>
+                        <div class="p-4 bg-[#f5f5f5] dark:!bg-[#262626] rounded">
+                            <div class="text-gray-900 text-sm">Preço serviços</div>
                             <div class="text-2xl font-semibold">{{ $sym }}
                                 {{ number_format($servicesTotal, 2, ',', '.') }}</div>
                         </div>
-                        <div class="p-4 bg-gray-50 rounded">
-                            <div class="text-gray-500 text-sm">Preço total</div>
+                        <div class="p-4 bg-[#f5f5f5] dark:!bg-[#262626] rounded">
+                            <div class="text-gray-900 text-sm">Preço total</div>
                             <div class="text-2xl font-semibold">{{ $sym }}
                                 {{ number_format($grandWithInterest, 2, ',', '.') }}</div>
-                            <div class="text-xs text-gray-500 mt-1">{{ $installments ?? 1 }}x de {{ $sym }}
+                            <div class="text-xs text-gray-900 mt-1">{{ $installments ?? 1 }}x de {{ $sym }}
                                 {{ number_format($perInstallment, 2, ',', '.') }} @if (($ratePercent ?? 0) > 0)
                                     ({{ $ratePercent }}% juros)
                                 @else
@@ -305,7 +310,7 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-dark-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <h3 class="font-semibold mb-3">Enviar por e-mail</h3>
                     <form method="POST" action="{{ route('admin.commercial.budgets.send-email', $budget) }}"
@@ -314,15 +319,14 @@
                         <div>
                             <label class="block text-sm text-gray-600 mb-1">Para</label>
                             <input type="email" name="to" value="{{ $budget->client_email }}"
-                                class="w-full border-gray-300 rounded" />
+                                class="w-full bg-[#f5f5f5] dark:!bg-[#262626] border-gray-300 rounded" />
                         </div>
                         <div class="flex items-end">
-                            <button
-                                class="px-5 py-3 bg-orange-600 text-white rounded hover:bg-orange-700">Enviar</button>
+                            <button class="px-5 py-2 btn-mmcriativos rounded-md">Enviar</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

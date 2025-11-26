@@ -1,19 +1,19 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Pré-visualização do Orçamento
-                #{{ $budget->id }}</h2>
-        </div>
-    </x-slot>
+@php
+    $title = 'Orçamentos';
+    $subTitle = 'Veja como ficou seu orçamento';
+@endphp
 
-    @php($sym = ['BRL' => 'R$', 'USD' => '$', 'EUR' => '€'][$budget->currency] ?? $budget->currency)
-    <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="bg-white dark:bg-dark-800 overflow-hidden shadow-sm sm:rounded-lg">
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
+            @php($sym = ['BRL' => 'R$', 'USD' => '$', 'EUR' => '€'][$budget->currency] ?? $budget->currency)
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <div class="text-gray-500 text-sm">Cliente</div>
+                            <div class="text-orange-500 text-sm">Cliente</div>
                             <div class="font-medium">{{ $budget->client_name }}</div>
                             <div class="text-sm text-gray-600">{{ $budget->client_email }}</div>
                             @if ($budget->client_phone)
@@ -21,7 +21,7 @@
                             @endif
                         </div>
                         <div>
-                            <div class="text-gray-500 text-sm">Serviço / Plano</div>
+                            <div class="text-orange-500 text-sm">Serviço / Plano</div>
                             <div class="font-medium">{{ $budget->service->name ?? '-' }} @if ($budget->plan)
                                     — {{ $budget->plan->category }}
                                 @endif
@@ -84,15 +84,18 @@
 
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-semibold">Totais</h3>
-                        <form method="GET" action="{{ route('admin.commercial.budgets.preview', $budget) }}" class="flex items-center gap-2">
+                        <form method="GET" action="{{ route('admin.commercial.budgets.preview', $budget) }}"
+                            class="flex items-center gap-2">
                             <label class="text-sm text-gray-600">Parcelamento</label>
-                            <select name="installments" class="border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
-                                @foreach (($installmentRates ?? []) as $n => $rate)
-                                    @php($label = $n . 'x' . ($rate>0 ? ' ('.$rate.'%)' : ' (sem juros)'))
-                                    <option value="{{ $n }}" @selected(($installments ?? 1)==$n)>{{ $label }}</option>
+                            <select name="installments"
+                                class="border-gray-300 rounded bg-[#f5f5f5] dark:bg-[#262626] dark:border-dark-600 dark:text-gray-200">
+                                @foreach ($installmentRates ?? [] as $n => $rate)
+                                    @php($label = $n . 'x' . ($rate > 0 ? ' (' . $rate . '%)' : ' (sem juros)'))
+                                    <option value="{{ $n }}" @selected(($installments ?? 1) == $n)>{{ $label }}
+                                    </option>
                                 @endforeach
                             </select>
-                            <button class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Aplicar</button>
+                            <button class="px-3 py-2 rounded-md btn-mmcriativos">Aplicar</button>
                         </form>
                     </div>
 
@@ -107,26 +110,26 @@
                     @php($perInstallment = round($grandWithInterest / max($installments, 1), 2))
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="p-4 bg-gray-50 rounded">
-                            <div class="text-gray-500 text-sm">Preço produto</div>
+                        <div class="p-4 bg-[#f5f5f5] dark:bg-[#262626] rounded">
+                            <div class="text-gray-900 text-sm">Preço produto</div>
                             <div class="text-2xl font-semibold">{{ $sym }}
                                 {{ number_format($product, 2, ',', '.') }}</div>
                         </div>
-                        <div class="p-4 bg-gray-50 rounded">
-                            <div class="text-gray-500 text-sm">Preço serviços</div>
+                        <div class="p-4 bg-[#f5f5f5] dark:bg-[#262626] rounded">
+                            <div class="text-gray-900 text-sm">Preço serviços</div>
                             <div class="text-2xl font-semibold">{{ $sym }}
                                 {{ number_format($servicesTotal, 2, ',', '.') }}</div>
                         </div>
                         @if ($installments > 1)
-                            <div class="p-4 bg-gray-50 rounded">
-                                <div class="text-gray-500 text-sm">Preço parcelado</div>
+                            <div class="p-4 bg-[#f5f5f5] dark:bg-[#262626] rounded">
+                                <div class="text-gray-900 text-sm">Preço parcelado</div>
 
                                 <div class="text-2xl font-bold">
                                     {{ $installments }}x {{ $sym }}
                                     {{ number_format($perInstallment, 2, ',', '.') }}
                                 </div>
 
-                                <div class="text-xs text-gray-500 mt-1">
+                                <div class="text-xs text-gray-900 mt-1">
                                     Total: {{ $sym }} {{ number_format($grandWithInterest, 2, ',', '.') }}
                                     @if ($ratePercent > 0)
                                         ({{ $ratePercent }}% juros)
@@ -136,8 +139,8 @@
                                 </div>
                             </div>
                         @else
-                            <div class="p-4 bg-gray-50 rounded">
-                                <div class="text-gray-500 text-sm">Preço à vista</div>
+                            <div class="p-4 bg-[#f5f5f5] dark:bg-[#262626] rounded">
+                                <div class="text-gray-900 text-sm">Preço à vista</div>
 
                                 <div class="text-2xl font-bold">
                                     {{ $sym }} {{ number_format($grandWithInterest, 2, ',', '.') }}
@@ -150,4 +153,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

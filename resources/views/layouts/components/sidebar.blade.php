@@ -85,9 +85,8 @@
                 </a>
                 <ul class="sidebar-submenu">
                     {{-- <li><a href="{{ route('admin.projects.index') }}">Resumo</a></li> --}}
-                    <li><a href="{{ route('admin.clients.index') }}">Adicionar Clientes</a></li>
-                    <li><a href="{{ route('admin.clients.index') }}">Empresas</a></li>
-                    <li><a href="{{ route('admin.clients.index') }}">Contatos</a></li>
+                    <li><a href="{{ route('admin.clients.create') }}">Adicionar Clientes</a></li>
+                    <li><a href="{{ route('admin.clients.index') }}">Clientes</a></li>
                 </ul>
             </li>
 
