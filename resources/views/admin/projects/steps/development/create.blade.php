@@ -46,6 +46,7 @@
                 </div>
             @else
                 <form method="POST" action="{{ route('admin.projects.tasks.store', $project) }}"
+                    data-ajax="create-task"
                     class="grid grid-cols-1 md:grid-cols-2 gap-4" x-data="{
                         options: @js($skillOptions),
                         skill: @js(old('skill_id')),

@@ -60,8 +60,9 @@
         </div>
 
         <div class="p-6 space-y-6">
-            <form id="task-update-{{ $task->id }}" method="POST"
-                action="{{ route('admin.project-tasks.update', $task) }}" class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                <form id="task-update-{{ $task->id }}" method="POST"
+                    action="{{ route('admin.project-tasks.update', $task) }}" class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    data-ajax="update-task"
                 x-data="{
                     options: @js($skillOptionsCollection->values()),
                     skill: '',

@@ -4,14 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ProjectSkillCompetency;
 use App\Models\ProjectTask;
 use App\Models\ProjectTaskItem;
-use App\Models\ProjectSkillCompetency;
 use App\Models\Skill;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class ProjectTaskController extends Controller
@@ -21,7 +24,7 @@ class ProjectTaskController extends Controller
         $this->middleware('auth');
     }
 
-    public function store(Request $request, Project $project): RedirectResponse
+    public function store(Request $request, Project $project): RedirectResponse|JsonResponse
     {
         $data = $request->validateWithBag('projectTasksStore', $this->rules($request, $project));
         $items = $data['items'] ?? [];
@@ -33,12 +36,25 @@ class ProjectTaskController extends Controller
 
         $this->syncTaskItems($project, $task, $items);
 
+        if ($request->wantsJson()) {
+            return response()->json($this->buildTaskCreationPayload($project, $task));
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json($this->buildTasksListPayload($project));
+        }
+
         return redirect()
             ->route('admin.projects.steps.show', [$project, 'tab' => 'development'])
             ->with('status', 'Tarefa criada com sucesso.');
     }
 
-    public function update(Request $request, ProjectTask $projectTask): RedirectResponse
+    public function list(Project $project): JsonResponse
+    {
+        return response()->json($this->buildTasksListPayload($project));
+    }
+
+    public function update(Request $request, ProjectTask $projectTask): RedirectResponse|JsonResponse
     {
         $project = $projectTask->project ?? abort(404);
         $bag = 'projectTasksUpdate_' . $projectTask->id;
@@ -50,6 +66,10 @@ class ProjectTaskController extends Controller
 
         $projectTask->update($this->decorateData($data, $projectTask));
         $this->syncTaskItems($project, $projectTask, $items);
+
+        if ($request->wantsJson()) {
+            return response()->json($this->buildTasksListPayload($project));
+        }
 
         return redirect()
             ->route('admin.projects.steps.show', [$project, 'tab' => 'development'])
@@ -184,7 +204,107 @@ class ProjectTaskController extends Controller
         $task->items()->whereNotIn('id', $retainIds)->delete();
     }
 
-    public function toggleItem(ProjectTaskItem $projectTaskItem): RedirectResponse
+    protected function buildTasksListPayload(Project $project): array
+    {
+        $taskGroups = $project->tasks->groupBy(fn($task) => $task->skill_id ?? 'sem-skill');
+
+        return [
+            'html' => view('admin.projects.steps.development.partials.tasks-list', [
+                'project' => $project,
+                'teamMembers' => $this->teamMembers(),
+                'skillOptions' => $this->skillOptions(),
+                'taskGroups' => $taskGroups,
+                'statusTabs' => $this->statusTabs(),
+                'statusBadges' => ProjectTask::STATUS_BADGES,
+            ])->render(),
+        ];
+    }
+
+    protected function statusTabs(): array
+    {
+        return [
+            ProjectTask::STATUS_IN_PROGRESS => 'Em progresso',
+            ProjectTask::STATUS_PENDING => 'Não iniciado',
+            ProjectTask::STATUS_DONE => 'Completo',
+        ];
+    }
+
+    protected function buildTaskCreationPayload(Project $project, ProjectTask $task): array
+    {
+        $task->load([
+            'assignedUser',
+            'competency',
+            'items.assignedUser',
+            'items.competency',
+        ]);
+
+        $skillKey = $task->skill_id ? (string) $task->skill_id : 'sem-skill';
+
+        $html = view('admin.projects.steps.development.partials.task-card', [
+            'task' => $task,
+            'teamMembers' => $this->teamMembers(),
+            'skillOptions' => $this->skillOptions(),
+            'statusBadges' => ProjectTask::STATUS_BADGES,
+        ])->render();
+
+        return [
+            'skillKey' => $skillKey,
+            'statusKey' => $task->status,
+            'html' => $html,
+        ];
+    }
+
+    protected function teamMembers(): Collection
+    {
+        return User::orderBy('name')->get(['id', 'name']);
+    }
+
+    protected function skillOptions(): Collection
+    {
+        return Skill::with(['competencies' => fn($query) => $query->orderBy('competency')])
+            ->orderBy('name')
+            ->get()
+            ->map(function (Skill $skill) {
+                return [
+                    'id' => $skill->id,
+                    'name' => $skill->name,
+                    'competencies' => $skill->competencies
+                        ->map(fn($competency) => [
+                            'id' => $competency->id,
+                            'name' => $competency->competency,
+                        ])
+                        ->values()
+                        ->toArray(),
+                ];
+            })
+            ->filter(fn($skill) => count($skill['competencies']) > 0)
+            ->values();
+    }
+
+    private function buildItemStatusPayload(ProjectTaskItem $item): array
+    {
+        $isDone = $item->is_done;
+        $doneAtLabel = $isDone && $item->done_at
+            ? $item->done_at->format('d/m/Y H:i')
+            : '';
+        $buttonVariant = $isDone
+            ? 'border-[#ff8800] text-[#ff8800] bg-white hover:bg-[#ff8800] hover:text-white'
+            : 'border-green-800 text-green-800 bg-green-50 hover:bg-green-800 hover:text-white';
+
+        return [
+            'id' => $item->id,
+            'is_done' => $isDone,
+            'badgeLabel' => $isDone ? 'Concluído' : 'Pendente',
+            'badgeClasses' => $isDone ? 'bg-green-800 text-white' : 'bg-red-500 text-white',
+            'doneAtText' => $isDone ? "Finalizado em {$doneAtLabel}" : '',
+            'showDoneAt' => $isDone,
+            'buttonText' => $isDone ? 'Reabrir' : 'Finalizar',
+            'buttonIcon' => $isDone ? 'fa-rotate-left' : 'fa-check',
+            'buttonClasses' => "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors {$buttonVariant}",
+        ];
+    }
+
+    public function toggleItem(Request $request, ProjectTaskItem $projectTaskItem)
     {
         $project = $projectTaskItem->project ?? abort(404);
 
@@ -196,19 +316,45 @@ class ProjectTaskController extends Controller
             $message = 'Subtarefa finalizada.';
         }
 
+        if ($request->wantsJson()) {
+            $projectTaskItem->refresh();
+            return response()->json($this->buildItemStatusPayload($projectTaskItem));
+        }
+
         return redirect()
             ->route('admin.projects.steps.show', [$project, 'tab' => 'development'])
             ->with('status', $message);
     }
 
-    public function complete(ProjectTask $projectTask): RedirectResponse
+    public function complete(Request $request, ProjectTask $projectTask)
     {
         $project = $projectTask->project ?? abort(404);
 
         if (!$projectTask->isCompleted()) {
-            $projectTask->update([
-                'status' => ProjectTask::STATUS_DONE,
-                'completed_at' => now(),
+            $now = now();
+            $projectTask->items()
+                ->where('is_done', false)
+                ->update([
+                    'is_done' => true,
+                    'done_at' => $now,
+                ]);
+
+            $projectTask->markAsCompleted();
+        }
+
+        $badge = ProjectTask::STATUS_BADGES[ProjectTask::STATUS_DONE] ?? [
+            'label' => 'Completo',
+            'classes' => 'badge-completed',
+        ];
+
+        if ($request->wantsJson()) {
+            $projectTask->refresh();
+            $projectTask->load('items');
+            return response()->json([
+                'badgeText' => $badge['label'],
+                'badgeClasses' => $badge['classes'],
+                'completedAt' => optional($projectTask->completed_at)->format('d/m/Y H:i'),
+                'items' => $projectTask->items->map(fn ($item) => $this->buildItemStatusPayload($item))->values(),
             ]);
         }
 

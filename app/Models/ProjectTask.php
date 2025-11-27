@@ -19,6 +19,21 @@ class ProjectTask extends Model
         self::STATUS_DONE => 'Concluído',
     ];
 
+    public const STATUS_BADGES = [
+        self::STATUS_PENDING => [
+            'label' => 'Não iniciado',
+            'classes' => 'badge-pendent',
+        ],
+        self::STATUS_IN_PROGRESS => [
+            'label' => 'Em progresso',
+            'classes' => 'badge-inprogress',
+        ],
+        self::STATUS_DONE => [
+            'label' => 'Completo',
+            'classes' => 'badge-completed',
+        ],
+    ];
+
     protected $fillable = [
         'project_id',
         'skill_id',

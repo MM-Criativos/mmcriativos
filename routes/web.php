@@ -258,6 +258,7 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::delete('project-skill-competency/{projectSkillCompetency}', [AdminProjectSkillCompetencyController::class, 'destroy'])->name('project-skill-competency.destroy');
 
     // Projects: tasks
+    Route::get('projects/{project}/development/tasks/list', [AdminProjectTaskController::class, 'list'])->name('projects.steps.development.tasks.list');
     Route::get('project-tasks/completed', [AdminProjectTaskController::class, 'completed'])->name('project-tasks.completed');
     Route::post('project-tasks/{projectTask}/complete', [AdminProjectTaskController::class, 'complete'])->name('project-tasks.complete');
     Route::put('project-tasks/{projectTask}', [AdminProjectTaskController::class, 'update'])->name('project-tasks.update');
