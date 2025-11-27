@@ -123,7 +123,12 @@
                                             </div>
                                             <div class="connectedSortable ps-6 pt-6 pe-6" data-status="{{ $status }}">
                                                 @php
-                                                    $columnTasks = $kanbanTasks->get($status) ?? collect();
+                                                    $columnTasks = $status === ProjectTask::STATUS_DONE
+                                                        ? ($recentlyCompleted ?? collect())
+                                                        : ($kanbanTasks->get($status) ?? collect());
+                                                    $columnTasks = $columnTasks->sortByDesc(
+                                                        $status === ProjectTask::STATUS_DONE ? 'completed_at' : 'updated_at'
+                                                    );
                                                 @endphp
                                                 @forelse ($columnTasks as $task)
                                                     <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6"

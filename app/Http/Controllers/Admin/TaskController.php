@@ -278,9 +278,16 @@ class TaskController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
+        $recentlyCompleted = $tasks
+            ->where('status', ProjectTask::STATUS_DONE)
+            ->filter(fn($task) => optional($task->completed_at)
+                ? $task->completed_at->greaterThanOrEqualTo(now()->subDays(3))
+                : false);
+
         return view('admin.tasks.kanban', [
             'kanbanStatuses' => $kanbanStatuses,
             'kanbanTasks' => $tasks->groupBy('status'),
+            'recentlyCompleted' => $recentlyCompleted,
             'projects' => $projects,
             'skills' => $skills,
             'teamMembers' => $teamMembers,
