@@ -280,9 +280,7 @@ class TaskController extends Controller
 
         $recentlyCompleted = $tasks
             ->where('status', ProjectTask::STATUS_DONE)
-            ->filter(fn($task) => optional($task->completed_at)
-                ? $task->completed_at->greaterThanOrEqualTo(now()->subDays(3))
-                : false);
+            ->filter(fn($task) => $task->completed_at && $task->completed_at->greaterThanOrEqualTo(now()->subDays(3)));
 
         return view('admin.tasks.kanban', [
             'kanbanStatuses' => $kanbanStatuses,
