@@ -611,7 +611,7 @@
             </div>
 
             <!-- PAGINAÇÃO -->
-            <div class="px-6 py-4 border-t border-neutral-300 dark:border-neutral-800">
+            <div class="px-6 py-4 border-t  border-neutral-300 dark:border-neutral-800">
                 {{ $tasks->withQueryString()->links() }}
             </div>
 

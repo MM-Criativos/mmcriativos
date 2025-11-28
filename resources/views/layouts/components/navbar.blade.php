@@ -218,16 +218,27 @@
                         <li>
                             <a href="{{ route('profile.edit') }}"
                                 class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
-                                <i class="fa-duotone fa-solid fa-user icon-project"></i> My Profile
+                                <i class="fa-duotone fa-solid fa-user icon-project"></i> Meu perfil
                             </a>
                         </li>
-
+                        <li>
+                            <a href="{{ route('admin.settings.index') }}"
+                                class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
+                                <i class="fa-duotone fa-solid fa-gears icon-project"></i> Configurações
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.team.index') }}"
+                                class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
+                                <i class="fa-duotone fa-solid fa-user-group-simple icon-project"></i> Equipe
+                            </a>
+                        </li>
                         <li>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"
                                     class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition w-full text-left">
-                                    <i class="fa-duotone fa-solid fa-left-from-bracket icon-project"></i>
+                                    <i class="fa-duotone fa-solid fa-arrow-left-from-arc icon-project"></i>
                                     Log Out
                                 </button>
                             </form>

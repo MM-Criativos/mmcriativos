@@ -1,38 +1,51 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Extras</h2>
-            <a href="{{ route('admin.commercial.extras.create') }}"
-                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
-                Novo Extra
-            </a>
-        </div>
-    </x-slot>
+@php
+    $title = 'Serviços Extras';
+    $subTitle = 'Serviços adicionais aos projetos';
+@endphp
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @include('admin.commercial._tabs')
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
             @if (session('status'))
                 <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('status') }}</div>
             @endif
 
-            <div class="bg-white dark:bg-dark-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <form method="GET" class="mb-4">
                         <label class="block text-sm text-gray-600 mb-1">Filtrar por serviço</label>
-                        <div class="flex gap-2">
-                            <select name="service_id"
-                                class="border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
-                                <option value="">Todos</option>
-                                @foreach ($services as $s)
-                                    <option value="{{ $s->id }}" @selected((string) request('service_id') === (string) $s->id)>{{ $s->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <button
-                                class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-500">Filtrar</button>
-                            <a href="{{ route('admin.commercial.extras.index') }}"
-                                class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-400">Limpar</a>
+
+                        <div class="flex items-center justify-between w-full">
+
+                            {{-- 🔹 ESQUERDA: Select + Filtrar + Limpar --}}
+                            <div class="flex gap-2">
+                                <select name="service_id"
+                                    class="border-gray-300 rounded dark:bg-dark-700 dark:border-dark-600 dark:text-gray-200">
+                                    <option value="">Todos</option>
+                                    @foreach ($services as $s)
+                                        <option value="{{ $s->id }}" @selected((string) request('service_id') === (string) $s->id)>
+                                            {{ $s->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <button class="px-4 py-2 rounded-md btn-mmcriativos">Filtrar</button>
+
+                                <a href="{{ route('admin.commercial.extras.index') }}"
+                                    class="px-4 py-2 rounded-md bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500">
+                                    Limpar
+                                </a>
+                            </div>
+
+                            {{-- 🔸 DIREITA: Botão Novo Extra --}}
+                            <a href="{{ route('admin.commercial.extras.create') }}"
+                                class="px-4 py-2 rounded-md btn-mmcriativos inline-flex items-center gap-2">
+                                <i class="fa-duotone fa-solid fa-circle-plus icon-project"></i>
+                                Novo Extra
+                            </a>
+
                         </div>
                     </form>
 
@@ -65,14 +78,16 @@
                                             <td class="py-3 pr-4">{{ $e->is_active ? 'Sim' : 'Não' }}</td>
                                             <td class="py-3 pr-4 text-sm flex gap-3">
                                                 <a href="{{ route('admin.commercial.extras.edit', $e) }}"
-                                                    class="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">Editar</a>
+                                                    class="inline-flex items-center px-3 py-2 rounded-md btn-mmcriativos">Editar</a>
                                                 <form method="POST"
                                                     action="{{ route('admin.commercial.extras.destroy', $e) }}"
                                                     onsubmit="return confirm('Remover extra?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button
-                                                        class="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Excluir</button>
+                                                        class="inline-flex items-center rounded-md px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500">
+                                                        <i class="fa-regular fa-trash-can"></i>
+                                                    </button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -86,4 +101,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

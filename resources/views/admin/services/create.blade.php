@@ -1,16 +1,14 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Novo Serviço</h2>
-            <a href="{{ route('admin.services.index') }}"
-                class="inline-flex items-center gap-1.5 px-6 py-3.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-100 transition-colors duration-200">Voltar</a>
-        </div>
-    </x-slot>
+@php
+    $title = 'Serviços';
+    $subTitle = 'Crie um novo serviço';
+@endphp
 
-    <div class="py-6">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            @include('admin.content._tabs')
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     @if ($errors->any())
                         <div class="mb-4 p-3 bg-red-100 text-red-800 rounded">
@@ -33,11 +31,11 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Thumb</label>
                                 <div class="relative group cursor-pointer w-40 h-40">
                                     <input type="file" name="thumb" accept="image/*"
-                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        class=" absolute inset-0 opacity-0 cursor-pointer z-10"
                                         onchange="previewImage(event, 'thumb')">
 
                                     <div id="preview-thumb"
-                                        class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
+                                        class="flex bg-[#f5f5f5] dark:!bg-dark-800 items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded  text-gray-400 text-xs text-center group-hover:bg-orange-50">
                                         <i class="fa-regular fa-image text-base mr-1"></i> Thumb
                                     </div>
                                 </div>
@@ -51,7 +49,8 @@
                                         class="absolute inset-0 opacity-0 cursor-pointer z-10"
                                         onchange="previewCover(event)">
 
-                                    <div id="preview-cover" class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
+                                    <div id="preview-cover"
+                                        class="flex bg-[#f5f5f5] dark:!bg-dark-800 items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded text-gray-400 text-xs text-center group-hover:bg-orange-50">
                                         <i class="fa-regular fa-file-video text-base mr-1"></i> Vídeo
                                     </div>
                                 </div>
@@ -68,7 +67,8 @@
                                 if (preview.tagName === 'IMG') {
                                     preview.src = url;
                                 } else {
-                                    preview.outerHTML = `
+                                    preview.outerHTML =
+                                        `
                     <img id="preview-${id}" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" />`;
                                 }
                             }
@@ -78,7 +78,8 @@
                                 if (!file) return;
                                 const url = URL.createObjectURL(file);
                                 const container = document.getElementById('preview-cover');
-                                container.outerHTML = `
+                                container.outerHTML =
+                                    `
                     <video id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>`;
                             }
                         </script>
@@ -87,12 +88,14 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Nome</label>
                                 <input type="text" name="name" value="{{ old('name') }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Slug</label>
                                 <input type="text" name="slug" value="{{ old('slug') }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md" placeholder="opcional">
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    placeholder="opcional">
                             </div>
                         </div>
 
@@ -100,18 +103,18 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Ícone (classe FA)</label>
                                 <input type="text" name="icon" value="{{ old('icon') }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md"
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
                                     placeholder="ex: fa-light fa-code">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Descrição</label>
-                                <textarea name="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('description') }}</textarea>
+                                <textarea name="description" rows="3"
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">{{ old('description') }}</textarea>
                             </div>
                         </div>
 
                         <div class="flex justify-center">
-                            <button type="submit"
-                                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
+                            <button type="submit" class="inline-flex items-center px-6 py-4 btn-mmcriativos rounded-md">
                                 Criar Serviço
                             </button>
                         </div>
@@ -131,4 +134,4 @@
             }
         }
     </script>
-</x-app-layout>
+@endsection

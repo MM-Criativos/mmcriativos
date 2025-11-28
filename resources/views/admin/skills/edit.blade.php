@@ -1,22 +1,26 @@
-﻿<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Skill</h2>
-            <a href="{{ route('admin.skills.index') }}"
-                class="inline-flex items-center gap-1.5 px-6 py-3.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-100 transition-colors duration-200">Voltar</a>
-        </div>
-    </x-slot>
+﻿<style>
+    .navbar-header {
+        margin-top: -20px !important;
+    }
+</style>
 
-    <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-            @include('admin.content._tabs')
+@php
+    $title = 'Habilidades';
+    $subTitle = 'Edite os detalhes da habilidade';
+@endphp
+
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
             @if (session('status'))
                 <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('status') }}</div>
             @endif
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <form method="POST" action="{{ route('admin.skills.update', $skill) }}"
-                        enctype="multipart/form-data" class="space-y-6">
+                    <form method="POST" action="{{ route('admin.skills.update', $skill) }}" enctype="multipart/form-data"
+                        class="space-y-6">
                         @csrf
                         @method('PUT')
 
@@ -27,12 +31,14 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Nome</label>
                                 <input type="text" name="name" value="{{ old('name', $skill->name) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Slug</label>
                                 <input type="text" name="slug" value="{{ old('slug', $skill->slug) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    required>
                             </div>
                         </div>
 
@@ -41,11 +47,12 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Ícone (classe FA)</label>
                                 <input type="text" name="icon" value="{{ old('icon', $skill->icon) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md">
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Descrição</label>
-                                <textarea name="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('description', $skill->description) }}</textarea>
+                                <textarea name="description" rows="3"
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">{{ old('description', $skill->description) }}</textarea>
                             </div>
                         </div>
 
@@ -84,11 +91,20 @@
 
                                     @php
                                         $cover = $skill->cover;
-                                        $isVideo = $cover && \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), ['.mp4', '.webm', '.ogg', '.mov']);
+                                        $isVideo =
+                                            $cover &&
+                                            \Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($cover), [
+                                                '.mp4',
+                                                '.webm',
+                                                '.ogg',
+                                                '.mov',
+                                            ]);
                                     @endphp
                                     @if ($skill->cover)
                                         @if ($isVideo)
-                                            <video id="preview-cover" src="{{ asset($skill->cover) }}" class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition" controls muted></video>
+                                            <video id="preview-cover" src="{{ asset($skill->cover) }}"
+                                                class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition"
+                                                controls muted></video>
                                         @else
                                             <img id="preview-cover" src="{{ asset($skill->cover) }}" alt="Cover"
                                                 class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition">
@@ -130,9 +146,11 @@
                                 const isVideo = /^video\//.test(file.type);
                                 const el = document.getElementById('preview-cover');
                                 if (isVideo) {
-                                    el.outerHTML = `<video id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>`;
+                                    el.outerHTML =
+                                        `<video id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" controls muted></video>`;
                                 } else {
-                                    el.outerHTML = `<img id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" />`;
+                                    el.outerHTML =
+                                        `<img id="preview-cover" src="${url}" class="w-40 h-40 object-cover rounded border border-gray-200" />`;
                                 }
                             }
                         </script>
@@ -140,8 +158,7 @@
 
                         {{-- Botão --}}
                         <div class="flex justify-center">
-                            <button type="submit"
-                                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
+                            <button type="submit" class="inline-flex items-center px-6 py-4 btn-mmcriativos rounded-md">
                                 Salvar Alterações
                             </button>
                         </div>
@@ -149,16 +166,21 @@
 
                     <hr class="my-8">
                     <h3 class="text-lg font-semibold mb-2">Informações da Skill</h3>
-                    <form method="POST" action="{{ route('admin.skills.info.update', $skill) }}" enctype="multipart/form-data" class="space-y-4">
+                    <form method="POST" action="{{ route('admin.skills.info.update', $skill) }}"
+                        enctype="multipart/form-data" class="space-y-4">
                         @csrf
                         @method('PUT')
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Imagem</label>
                                 <div class="relative group cursor-pointer w-40 h-40">
-                                    <input type="file" name="image" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewImg(event, '#preview-skillinfo-image')">
+                                    <input type="file" name="image" accept="image/*"
+                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        onchange="previewImg(event, '#preview-skillinfo-image')">
                                     @if (optional($skill->info)->image)
-                                        <img id="preview-skillinfo-image" src="{{ asset($skill->info->image) }}" class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition" alt="Imagem">
+                                        <img id="preview-skillinfo-image" src="{{ asset($skill->info->image) }}"
+                                            class="w-40 h-40 object-cover rounded border border-gray-200 group-hover:opacity-80 transition"
+                                            alt="Imagem">
                                     @else
                                         <div id="preview-skillinfo-image"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
@@ -169,22 +191,29 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Subtítulo</label>
-                                <input type="text" name="subtitle" value="{{ old('subtitle', optional($skill->info)->subtitle) }}" class="mt-1 block w-full border-gray-300 rounded-md">
+                                <input type="text" name="subtitle"
+                                    value="{{ old('subtitle', optional($skill->info)->subtitle) }}"
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Título</label>
-                                <input type="text" name="title" value="{{ old('title', optional($skill->info)->title) }}" class="mt-1 block w-full border-gray-300 rounded-md" required>
+                                <input type="text" name="title"
+                                    value="{{ old('title', optional($skill->info)->title) }}"
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Descrição</label>
-                                <textarea name="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('description', optional($skill->info)->description) }}</textarea>
+                                <textarea name="description" rows="3"
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">{{ old('description', optional($skill->info)->description) }}</textarea>
                             </div>
                         </div>
 
                         <div class="flex justify-center mt-10">
-                            <button class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">Salvar Informações</button>
+                            <button class="inline-flex items-center px-6 py-4 btn-mmcriativos rounded-md">Salvar
+                                Informações</button>
                         </div>
                     </form>
 
@@ -216,21 +245,21 @@
                                     <div class="col-span-10">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Competência</label>
                                         <input type="text" name="competency" value="{{ $comp->competency }}"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Competência" required>
                                     </div>
 
                                     <div class="col-span-2 flex gap-2 justify-end">
                                         <button
-                                            class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
-                                            <i class="fa-solid fa-rotate-right"></i>
+                                            class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
+                                            <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
                                         </button>
 
                                         <form method="POST" action="{{ route('admin.competencies.destroy', $comp) }}"
                                             onsubmit="return confirm('Remover competência?');" class="inline-block">
                                             @csrf @method('DELETE')
                                             <button
-                                                class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-red-600 text-white rounded hover:bg-red-700 transition">
+                                                class="flex-1 inline-flex items-center justify-center px-4 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500">
                                                 <i class="fa-regular fa-trash-can"></i>
                                             </button>
                                         </form>
@@ -251,13 +280,13 @@
                                 <div class="col-span-10">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Competência</label>
                                     <input type="text" name="competency"
-                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                        class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                         placeholder="Nova competência" required>
                                 </div>
 
                                 <div class="col-span-2 flex items-end">
                                     <button type="submit"
-                                        class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
+                                        class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>
@@ -270,4 +299,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

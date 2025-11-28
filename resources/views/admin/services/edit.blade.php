@@ -1,22 +1,20 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Editar Serviço</h2>
-            <a href="{{ route('admin.services.index') }}"
-                class="inline-flex items-center gap-1.5 px-6 py-3.5 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-100 transition-colors duration-200">Voltar</a>
-        </div>
-    </x-slot>
+@php
+    $title = 'Serviços';
+    $subTitle = 'Edite os detalhes do serviço';
+@endphp
 
-    <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-            @include('admin.content._tabs')
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
             @if (session('status'))
                 <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('status') }}</div>
             @endif
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <form method="POST" action="{{ route('admin.services.update', $service) }}"
-                        enctype="multipart/form-data" class="space-y-6">
+                    <form method="POST" action="{{ route('admin.services.update', $service) }}" enctype="multipart/form-data"
+                        class="space-y-6">
                         @csrf
                         @method('PUT')
 
@@ -25,12 +23,14 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Nome</label>
                                 <input type="text" name="name" value="{{ old('name', $service->name) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Slug</label>
                                 <input type="text" name="slug" value="{{ old('slug', $service->slug) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    required>
                             </div>
                         </div>
 
@@ -38,11 +38,12 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Ícone (classe FA)</label>
                                 <input type="text" name="icon" value="{{ old('icon', $service->icon) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md">
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Descrição</label>
-                                <textarea name="description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('description', $service->description) }}</textarea>
+                                <textarea name="description" rows="3"
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">{{ old('description', $service->description) }}</textarea>
                             </div>
                         </div>
 
@@ -181,18 +182,17 @@
                         <div>
                             <div class="flex justify-center mt-10">
                                 <button type="submit"
-                                    class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
+                                    class="inline-flex items-center px-6 py-4 btn-mmcriativos rounded-md mb-5">
                                     Salvar Alterações
                                 </button>
                             </div>
                         </div>
                     </form>
 
-
+                    <hr class="my-8">
 
                     <h3 class="text-lg font-semibold mb-2">Informações do Serviço</h3>
-                    <form method="POST" action="{{ route('admin.services.info.update', $service) }}"
-                        class="space-y-4">
+                    <form method="POST" action="{{ route('admin.services.info.update', $service) }}" class="space-y-4">
                         @csrf
                         @method('PUT')
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -200,22 +200,24 @@
                                 <label class="block text-sm font-medium text-gray-700">Subtítulo</label>
                                 <input type="text" name="subtitle"
                                     value="{{ old('subtitle', optional($service->info)->subtitle) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md">
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Título</label>
                                 <input type="text" name="title"
                                     value="{{ old('title', optional($service->info)->title) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md" required>
+                                    class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                    required>
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Descrição</label>
-                            <textarea name="description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md">{{ old('description', optional($service->info)->description) }}</textarea>
+                            <textarea name="description" rows="4"
+                                class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">{{ old('description', optional($service->info)->description) }}</textarea>
                         </div>
                         <div>
                             <div class="flex justify-center mt-10"><button
-                                    class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">Salvar
+                                    class="inline-flex items-center px-6 py-4 btn-mmcriativos rounded-md">Salvar
                                     Informações</button></div>
                         </div>
                     </form>
@@ -226,41 +228,41 @@
                         @foreach ($service->benefits as $benefit)
                             <div class="dnd-item" draggable="true" data-id="{{ $benefit->id }}">
                                 <form method="POST" action="{{ route('admin.benefits.update', $benefit) }}"
-                                    class="grid grid-cols-12 gap-3 items-end bg-white p-4 rounded shadow-sm border border-gray-100">
+                                    class="grid grid-cols-12 gap-3 items-end bg-[#f5f5f5] dark:bg-dark-800 p-4 rounded shadow-sm border border-gray-100">
                                     @csrf @method('PUT')
 
                                     <div class="col-span-3">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                                         <input type="text" name="title" value="{{ $benefit->title }}"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Título">
                                     </div>
 
                                     <div class="col-span-6">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                         <input type="text" name="subtitle" value="{{ $benefit->subtitle }}"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Descrição">
                                     </div>
 
                                     <div class="col-span-1">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Ordem</label>
                                         <input type="number" name="order" value="{{ $benefit->order }}"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="#">
                                     </div>
 
                                     <div class="col-span-2 flex gap-2 justify-end">
                                         <button
-                                            class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
-                                            <i class="fa-solid fa-rotate-right"></i>
+                                            class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
+                                            <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
                                             <span></span>
                                         </button>
                                         <form method="POST" action="{{ route('admin.benefits.destroy', $benefit) }}"
                                             onsubmit="return confirm('Remover benefício?');" class="inline-block">
                                             @csrf @method('DELETE')
                                             <button
-                                                class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-red-600 text-white rounded hover:bg-red-700 transition">
+                                                class="flex-1 inline-flex items-center justify-center px-4 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500">
                                                 <i class="fa-regular fa-trash-can"></i>
                                                 <span></span>
                                             </button>
@@ -281,21 +283,21 @@
                                 <div class="col-span-5">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                                     <input type="text" name="title"
-                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                        class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                         placeholder="Novo Título" required>
                                 </div>
 
                                 <div class="col-span-6">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                     <input type="text" name="subtitle"
-                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                        class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                         placeholder="Novo Subtítulo">
                                 </div>
 
                                 <div class="col-span-1 flex items-end">
                                     <button type="submit"
-                                        class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
-                                        <i class="fa-solid fa-plus"></i>
+                                        class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
+                                        <i class="fa-duotone fa-solid fa-plus-circle icon-project"></i>
                                         <span></span>
                                     </button>
                                 </div>
@@ -316,37 +318,36 @@
                                     <div class="col-span-3">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                                         <input type="text" name="title" value="{{ $feature->title }}"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Título">
                                     </div>
 
                                     <div class="col-span-6">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                         <input type="text" name="subtitle" value="{{ $feature->subtitle }}"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Descrição">
                                     </div>
 
                                     <div class="col-span-1">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Ordem</label>
                                         <input type="number" name="order" value="{{ $feature->order }}"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="#">
                                     </div>
 
                                     <div class="col-span-2 flex gap-2 justify-end">
                                         <button
-                                            class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200">
-                                            <i class="fa-solid fa-rotate-right"></i>
+                                            class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
+                                            <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
                                             <span></span>
                                         </button>
 
                                         <form method="POST" action="{{ route('admin.features.destroy', $feature) }}"
-                                            onsubmit="return confirm('Remover característica?');"
-                                            class="inline-block">
+                                            onsubmit="return confirm('Remover característica?');" class="inline-block">
                                             @csrf @method('DELETE')
                                             <button
-                                                class="flex-1 inline-flex items-center justify-center px-4 py-4 bg-red-600 text-white rounded hover:bg-red-700 transition">
+                                                class="flex-1 inline-flex items-center justify-center px-4 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500">
                                                 <i class="fa-regular fa-trash-can"></i>
                                                 <span></span>
                                             </button>
@@ -367,20 +368,20 @@
                                     <div class="col-span-5">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                                         <input type="text" name="title"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Novo Título" required>
                                     </div>
 
                                     <div class="col-span-6">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                         <input type="text" name="subtitle"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Novo Subtítulo">
                                     </div>
 
                                     <div class="col-span-1 flex items-end">
                                         <button type="submit"
-                                            class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition">
+                                            class="w-full flex items-center justify-center gap-2 px-3 py-2 btn-mmcriativos rounded-md">
                                             <i class="fa-solid fa-plus"></i>
                                             <span>Adicionar</span>
                                         </button>
@@ -429,17 +430,15 @@
                                                 <div class="col-span-10">
                                                     <label
                                                         class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                                                    <input type="text" name="title"
-                                                        value="{{ $process->title }}"
-                                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                    <input type="text" name="title" value="{{ $process->title }}"
+                                                        class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                                         placeholder="Título" required>
                                                 </div>
                                                 <div class="col-span-2">
                                                     <label
                                                         class="block text-sm font-medium text-gray-700 mb-1">Ordem</label>
-                                                    <input type="number" name="order"
-                                                        value="{{ $process->order }}"
-                                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                    <input type="number" name="order" value="{{ $process->order }}"
+                                                        class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                                         placeholder="#">
                                                 </div>
                                             </div>
@@ -449,7 +448,7 @@
                                                 <label
                                                     class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                                 <textarea name="description" rows="3"
-                                                    class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500 resize-none"
+                                                    class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500 resize-none"
                                                     placeholder="Descrição detalhada do processo">{{ $process->description }}</textarea>
                                             </div>
                                         </div>
@@ -460,7 +459,7 @@
 
                                             <button type="submit" form="delete-process-{{ $process->id }}"
                                                 formnovalidate
-                                                class="inline-flex items-center justify-center p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                                                class="inline-flex items-center justify-center px-3 py-2 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500 rounded"
                                                 title="Apagar" onclick="return confirm('Remover processo?');">
                                                 <i class="fa-regular fa-trash-can"></i>
                                             </button>
@@ -479,9 +478,9 @@
 
                         <div class="flex items-center justify-end mb-2">
                             <button type="button" id="bulkUpdateProcessesBtn"
-                                class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200"
+                                class="inline-flex items-center gap-2 px-4 py-2 btn-mmcriativos rounded-md"
                                 onclick="bulkUpdateProcesses('{{ route('admin.services.processes.bulk', $service) }}')">
-                                <i class="fa-solid fa-rotate-right"></i>
+                                <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
                                 <span>Atualizar todos</span>
                             </button>
                         </div>
@@ -490,8 +489,7 @@
 
                         {{-- Novo processo --}}
                         <form method="POST" action="{{ route('admin.services.processes.store', $service) }}"
-                            enctype="multipart/form-data"
-                            class="bg-white p-4 rounded shadow-sm border border-gray-300">
+                            enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm border border-gray-300">
                             @csrf
 
                             <div class="grid grid-cols-12 gap-4 items-start">
@@ -516,13 +514,13 @@
                                         <div class="col-span-10">
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                                             <input type="text" name="title"
-                                                class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                                 placeholder="Novo Título" required>
                                         </div>
                                         <div class="col-span-2">
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Ordem</label>
                                             <input type="number" name="order"
-                                                class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                                 placeholder="#">
                                         </div>
                                     </div>
@@ -530,7 +528,7 @@
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                         <textarea name="description" rows="3"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500 resize-none"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500 resize-none"
                                             placeholder="Nova descrição"></textarea>
                                     </div>
                                 </div>
@@ -538,9 +536,9 @@
                                 {{-- Coluna 3: Botão Adicionar --}}
                                 <div class="col-span-1 flex flex-col gap-2 justify-start items-end">
                                     <button type="submit"
-                                        class="inline-flex items-center justify-center p-2 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200"
+                                        class="inline-flex items-center justify-center px-3 py-2 btn-mmcriativos rounded-md"
                                         title="Adicionar">
-                                        <i class="fa-solid fa-plus"></i>
+                                        <i class="fa-duotone fa-solid fa-plus-circle icon-project"></i>
                                     </button>
                                 </div>
                             </div>
@@ -602,7 +600,7 @@
                                                     <label
                                                         class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                                                     <input type="text" name="title" value="{{ $cta->title }}"
-                                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                        class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                                         placeholder="Título" required>
                                                 </div>
 
@@ -610,7 +608,7 @@
                                                     <label
                                                         class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
                                                     <input type="text" name="phone" value="{{ $cta->phone }}"
-                                                        class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                        class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                                         placeholder="(00) 00000-0000">
                                                 </div>
                                             </div>
@@ -619,16 +617,16 @@
                                         {{-- Coluna 3: Botões --}}
                                         <div class="col-span-1 flex flex-col gap-2 justify-start items-end">
                                             <button type="submit"
-                                                class="inline-flex items-center justify-center p-2 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200"
+                                                class="inline-flex items-center justify-center px-3 py-2 btn-mmcriativos rounded-md"
                                                 title="Atualizar">
-                                                <i class="fa-solid fa-rotate-right"></i>
+                                                <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
                                             </button>
 
                                             <form method="POST" action="{{ route('admin.ctas.destroy', $cta) }}"
                                                 onsubmit="return confirm('Remover CTA?');">
                                                 @csrf @method('DELETE')
                                                 <button
-                                                    class="inline-flex items-center justify-center p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                                                    class="inline-flex items-center justify-center px-3.5 py-2 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500 rounded"
                                                     title="Apagar">
                                                     <i class="fa-regular fa-trash-can"></i>
                                                 </button>
@@ -643,8 +641,7 @@
                         <h3 class="text-md font-semibold mb-2">Adicionar novo CTA</h3>
 
                         <form method="POST" action="{{ route('admin.services.ctas.store', $service) }}"
-                            enctype="multipart/form-data"
-                            class="bg-white p-4 rounded shadow-sm border border-gray-300">
+                            enctype="multipart/form-data" class="bg-white p-4 rounded shadow-sm border border-gray-300">
                             @csrf
 
                             <div class="grid grid-cols-12 gap-4 items-start">
@@ -668,14 +665,14 @@
                                     <div class="col-span-7">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                                         <input type="text" name="title"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="Novo Título" required>
                                     </div>
 
                                     <div class="col-span-5">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
                                         <input type="text" name="phone"
-                                            class="w-full border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
+                                            class="w-full bg-white dark:!bg-black border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"
                                             placeholder="(00) 00000-0000">
                                     </div>
                                 </div>
@@ -683,9 +680,9 @@
                                 {{-- Coluna 3: Botão Adicionar --}}
                                 <div class="col-span-1 flex flex-col gap-2 justify-start items-end">
                                     <button type="submit"
-                                        class="inline-flex items-center justify-center p-2 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm transition-colors duration-200"
+                                        class="inline-flex items-center justify-center px-3 py-2 btn-mmcriativos rounded-md"
                                         title="Adicionar">
-                                        <i class="fa-solid fa-plus"></i>
+                                        <i class="fa-duotone fa-solid fa-plus-circle icon-project"></i>
                                     </button>
                                 </div>
                             </div>
@@ -723,7 +720,7 @@
             }
         }
     </script>
-</x-app-layout>
+@endsection
 
 <script>
     (function() {

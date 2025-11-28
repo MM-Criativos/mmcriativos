@@ -158,25 +158,9 @@
             </li>
 
             <li>
-                <a href="{{ route('admin.skills.index') }}">
+                <a href="{{ route('admin.testimonials.index') }}">
                     <i class="fa-duotone fa-solid fa-comment-lines icon-project mr-2"></i>
                     <span>Depoimentos</span>
-                </a>
-            </li>
-
-            <li class="sidebar-menu-group-title">Configurações</li>
-
-            <li>
-                <a href="{{ route('admin.settings.index') }}">
-                    <i class="fa-duotone fa-solid fa-gears icon-project mr-2"></i>
-                    <span>Configurações</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('admin.team.index') }}">
-                    <i class="fa-duotone fa-solid fa-user-group-simple icon-project mr-2"></i>
-                    <span>Equipe</span>
                 </a>
             </li>
         </ul>

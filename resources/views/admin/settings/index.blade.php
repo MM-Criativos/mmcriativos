@@ -1,21 +1,19 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Configurações</h2>
-            <button form="settingsForm"
-                class="inline-flex items-center gap-1.5 px-6 py-3.5 bg-orange-600 text-white text-sm font-medium rounded-md border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 transition-colors duration-200">Salvar</button>
-        </div>
-    </x-slot>
+@php
+    $title = 'Meu Perfil';
+    $subTitle = 'Edite suas informações';
+@endphp
 
-    <div class="py-6">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
             @if (session('status'))
                 <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('status') }}</div>
             @endif
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <form id="settingsForm" method="POST" action="{{ route('admin.settings.store') }}"
-                        class="space-y-8">
+                    <form id="settingsForm" method="POST" action="{{ route('admin.settings.store') }}" class="space-y-8">
                         @csrf
 
                         <div>
@@ -25,49 +23,50 @@
                                     <label class="block text-sm font-medium text-gray-700">CEP</label>
                                     <input type="text" name="address_zipcode"
                                         value="{{ old('address_zipcode', optional($setting)->address_zipcode) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md" placeholder="00000-000">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
+                                        placeholder="00000-000">
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700">Rua</label>
                                     <input type="text" name="address_street"
                                         value="{{ old('address_street', optional($setting)->address_street) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Número</label>
                                     <input type="text" name="address_number"
                                         value="{{ old('address_number', optional($setting)->address_number) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700">Complemento</label>
                                     <input type="text" name="address_complement"
                                         value="{{ old('address_complement', optional($setting)->address_complement) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Bairro</label>
                                     <input type="text" name="address_neighborhood"
                                         value="{{ old('address_neighborhood', optional($setting)->address_neighborhood) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Cidade</label>
                                     <input type="text" name="address_city"
                                         value="{{ old('address_city', optional($setting)->address_city) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Estado</label>
                                     <input type="text" name="address_state"
                                         value="{{ old('address_state', optional($setting)->address_state) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">País</label>
                                     <input type="text" name="address_country"
                                         value="{{ old('address_country', optional($setting)->address_country ?? 'Brasil') }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                             </div>
                         </div>
@@ -79,25 +78,25 @@
                                     <label class="block text-sm font-medium text-gray-700">Telefone</label>
                                     <input type="text" name="phone"
                                         value="{{ old('phone', optional($setting)->phone) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">E-mail Suporte</label>
                                     <input type="email" name="email_support"
                                         value="{{ old('email_support', optional($setting)->email_support) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">E-mail Contato</label>
                                     <input type="email" name="email_contact"
                                         value="{{ old('email_contact', optional($setting)->email_contact) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">E-mail Comercial</label>
                                     <input type="email" name="email_commercial"
                                         value="{{ old('email_commercial', optional($setting)->email_commercial) }}"
-                                        class="mt-1 block w-full border-gray-300 rounded-md">
+                                        class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md">
                                 </div>
                             </div>
                         </div>
@@ -130,7 +129,7 @@
                                         </label>
                                         <input type="text" name="{{ $field }}"
                                             value="{{ old($field, optional($setting)->{$field}) }}"
-                                            class="mt-1 block w-full border-gray-300 rounded-md"
+                                            class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
                                             placeholder="https://{{ $field }}.com/...">
                                     </div>
                                 @endforeach
@@ -139,8 +138,7 @@
 
 
                         <div class="flex justify-center">
-                            <button
-                                class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid text-sm">Salvar
+                            <button class="inline-flex items-center px-6 py-3 btn-mmcriativos rounded-md">Salvar
                                 Configurações</button>
                         </div>
                     </form>
@@ -170,4 +168,4 @@
             }
         });
     </script>
-</x-app-layout>
+@endsection

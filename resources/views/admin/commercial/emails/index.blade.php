@@ -1,22 +1,18 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Templates de E-mail</h2>
-            <a href="{{ route('admin.commercial.email-templates.create') }}"
-                class="inline-flex items-center px-6 py-4 bg-orange-600 text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid">
-                Novo Template
-            </a>
-        </div>
-    </x-slot>
+@php
+    $title = 'Template';
+    $subTitle = 'Veja o corpo dos nossos e-mails';
+@endphp
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @include('admin.commercial._tabs')
+@extends('layouts.app')
+
+@section('content')
+    <div>
+        <div class="grid grid-cols-1">
             @if (session('status'))
                 <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">{{ session('status') }}</div>
             @endif
 
-            <div class="bg-white dark:bg-dark-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     @if ($templates->isEmpty())
                         <p class="text-gray-600">Nenhum template encontrado.</p>
@@ -39,17 +35,20 @@
                                             <td class="py-3 pr-4">{{ $t->is_active ? 'Sim' : 'Não' }}</td>
                                             <td class="py-3 pr-4 text-sm flex gap-3">
                                                 <a href="{{ route('admin.commercial.email-templates.edit', $t) }}"
-                                                    class="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">Editar</a>
+                                                    class="inline-flex items-center px-3 py-2 btn-mmcriativos rounded-md"><i
+                                                        class="fa-duotone fa-solid fa-pen-to-square icon-project"></i></a>
                                                 <a href="{{ route('admin.commercial.email-templates.preview', $t) }}"
                                                     target="_blank"
-                                                    class="inline-flex items-center px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-500 dark:hover:bg-gray-400">Preview</a>
+                                                    class="inline-flex items-center px-3 py-2 btn-mmcriativos rounded-md"><i
+                                                        class="fa-duotone fa-solid fa-eye icon-project"></i></a>
                                                 <form method="POST"
                                                     action="{{ route('admin.commercial.email-templates.destroy', $t) }}"
                                                     onsubmit="return confirm('Remover template?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button
-                                                        class="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Excluir</button>
+                                                        class="inline-flex items-center px-4 py-3 rounded-md bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5] dark:hover:bg-[#262626] hover:text-red-500"><i
+                                                            class="fa-solid fa-trash"></i></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -63,4 +62,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection
