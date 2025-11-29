@@ -9,6 +9,7 @@ Este diretorio guarda os guias internos do mmcriativos. Todo novo modulo deve ch
 - `domain/projects-and-tasks.md` - processos do modulo de projetos e tarefas.
 - `domain/budgets-and-commercial.md` - funil comercial, planos, orcamentos e pagamentos.
 - `domain/public-briefing.md` - formularios publicos de briefing/percepcao.
+- `domain/team-and-classes.md` - cadastro de membros, classes internas, redes sociais e fluxos de aprovacao.
 - `operations/deployment.md` - checklist de deploy e configuracoes de producao.
 - `operations/runtime.md` - rotinas de operacao continua (fila, logs, agendamentos).
 - `glossary.md` - definicao dos termos de negocio usados em todo o produto.
