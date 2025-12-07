@@ -1,23 +1,21 @@
 services:
   app:
-    image: webdevops/php-nginx:8.2
+    # A linha abaixo diz ao Docker para construir a imagem a partir do Dockerfile
+    # que está no diretório atual ('.').
+    build: .
     working_dir: /app
 
-    volumes:
-      - ./:/app
+    # Você não precisa mais do 'volumes: ./:/app' após o build,
+    # pois o código já estará na imagem.
+    # Se você precisar de volumes para upload de arquivos, defina-os separadamente.
 
     environment:
+      # As variáveis de ambiente devem ser configuradas no painel do EasyPanel,
+      # não no docker-compose, para que ele possa gerenciá-las de forma segura.
+      # A remoção delas daqui não é o problema, mas é uma boa prática.
       APP_ENV: production
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
-
-    command: >
-      sh -c "
-        composer install --no-dev --optimize-autoloader &&
-        php artisan migrate --force &&
-        php artisan optimize &&
-        supervisord -c /opt/docker/etc/supervisor.conf
-      "
 
 networks:
   default:
