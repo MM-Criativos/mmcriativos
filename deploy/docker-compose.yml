@@ -8,7 +8,9 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: false
-      APP_KEY: ${APP_KEY}
+
+      # chave fixa, igual ao seu .env
+      APP_KEY: base64:oYFWelfGRxjucWzz5XPwAmeX6Km3KUmZcIUegUEDOG0=
 
       DB_CONNECTION: mysql
       DB_HOST: mm-criativos_mysql-mmcriativos
