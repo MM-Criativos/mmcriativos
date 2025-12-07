@@ -11,9 +11,6 @@ services:
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    networks:
-      - default
-
     command: >
       sh -c "
         composer install --no-dev --optimize-autoloader &&
@@ -25,4 +22,3 @@ services:
 networks:
   default:
     external: true
-    name: mm-criativos_default
