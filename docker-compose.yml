@@ -19,4 +19,9 @@ services:
         supervisord -c /opt/docker/etc/supervisor.conf
       "
 
-    restart: unless-stopped
+    networks:
+      - easypanel-network
+
+networks:
+  easypanel-network:
+    external: true
