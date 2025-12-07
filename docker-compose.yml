@@ -1,0 +1,22 @@
+services:
+  app:
+    image: webdevops/php-nginx:8.2
+    working_dir: /app
+    volumes:
+      - ./:/app
+
+    environment:
+      APP_ENV: production
+      APP_DEBUG: false
+      APP_KEY: ${APP_KEY}
+
+      DB_CONNECTION: mysql
+      DB_HOST: mm-criativos_mysql-mmcriativos
+      DB_PORT: 3306
+      DB_DATABASE: mmcriativos
+      DB_USERNAME: mmcloud
+      DB_PASSWORD: Or@Ch0910tknCE**
+
+      WEB_DOCUMENT_ROOT: /app/public
+
+    restart: unless-stopped
