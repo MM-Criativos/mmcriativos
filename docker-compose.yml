@@ -1,6 +1,6 @@
 services:
   app:
-    image: webdevops/php-nginx:8.2
+    image: webdevops/php-nginx-dev:8.2
     working_dir: /app
 
     volumes:
@@ -20,15 +20,14 @@ services:
 
       WEB_DOCUMENT_ROOT: /app/public
 
-    # 🚀 AQUI É A MÁGICA: tudo acontece antes do servidor iniciar
     command: >
       sh -c "
-      composer install --no-dev --optimize-autoloader &&
-      npm install &&
-      npm run build &&
-      php artisan migrate --force &&
-      php artisan optimize &&
-      /opt/docker/bin/service.d/supervisor.sh start
+        composer install --no-dev --optimize-autoloader &&
+        npm install &&
+        npm run build &&
+        php artisan migrate --force &&
+        php artisan optimize &&
+        supervisord -c /opt/docker/etc/supervisor.conf
       "
 
     restart: unless-stopped
