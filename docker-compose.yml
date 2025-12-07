@@ -2,14 +2,13 @@ services:
   app:
     image: webdevops/php-nginx:8.2
     working_dir: /app
+
     volumes:
       - ./:/app
 
     environment:
       APP_ENV: production
       APP_DEBUG: false
-
-      # chave fixa, igual ao seu .env
       APP_KEY: base64:oYFWelfGRxjucWzz5XPwAmeX6Km3KUmZcIUegUEDOG0=
 
       DB_CONNECTION: mysql
@@ -20,5 +19,16 @@ services:
       DB_PASSWORD: Or@Ch0910tknCE**
 
       WEB_DOCUMENT_ROOT: /app/public
+
+    # 🚀 AQUI É A MÁGICA: tudo acontece antes do servidor iniciar
+    command: >
+      sh -c "
+      composer install --no-dev --optimize-autoloader &&
+      npm install &&
+      npm run build &&
+      php artisan migrate --force &&
+      php artisan optimize &&
+      /opt/docker/bin/service.d/supervisor.sh start
+      "
 
     restart: unless-stopped
