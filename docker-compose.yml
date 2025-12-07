@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   app:
     image: webdevops/php-nginx:8.2
@@ -21,21 +19,4 @@ services:
         supervisord -c /opt/docker/etc/supervisor.conf
       "
 
-    depends_on:
-      - mysql
     restart: unless-stopped
-
-  mysql:
-    image: mysql:8.0
-    container_name: mmcriativos_mysql-mmcriativos
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mmcriativos
-      MYSQL_USER: mmcloud
-      MYSQL_PASSWORD: Or@Ch0910tknCE**
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: unless-stopped
-
-volumes:
-  mysql_data:
