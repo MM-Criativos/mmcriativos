@@ -11,11 +11,13 @@ services:
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # AÇÃO CRÍTICA: Sintaxe de Bloco (|) para segurança de parsing
+    # AÇÃO CRÍTICA: Sintaxe de Bloco (|) e comandos concisos
     command: |
       sh -c "
-        # Espera longa para o DB resolver o nome de host
-        sleep 25 &&
+        # 1. Espera de 30s. Esta sintaxe é muito simples para falhar no parsing.
+        sleep 30 &&
+
+        # 2. Executa toda a inicialização
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
         php artisan optimize &&
