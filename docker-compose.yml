@@ -1,24 +1,25 @@
 services:
   app:
-    # -----------------------------------------------------------------
-    # Mantenha esta configuração se você quer que o EasyPanel use seu Dockerfile
-    # Caso contrário, se você removeu o Dockerfile, use 'image: webdevops/php-nginx:8.2'
+    # Use 'build: .' se você tem um Dockerfile na raiz do seu projeto.
+    # Caso contrário, use 'image: webdevops/php-nginx:8.2' (o que você estava usando).
+    # Eu recomendo usar 'build: .' se você mantiver o Dockerfile.
     build: .
-    # -----------------------------------------------------------------
-
     working_dir: /app
 
+    # Volumes são necessários para que o container leia os arquivos do Git
     volumes:
       - ./:/app
 
     environment:
+      # Apenas as variáveis de ambiente mínimas, deixe o EasyPanel injetar as outras
       APP_ENV: production
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # Use 'sleep' para resolver a falha temporária de DNS/DB
+    # Ação Principal: Adicionar um delay (sleep) antes de rodar a migração
     command: >
       sh -c "
+        # 1. Espera 5 segundos para que a rede Docker e o DB inicializem
         sleep 5 &&
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
@@ -26,4 +27,7 @@ services:
         supervisord -c /opt/docker/etc/supervisor.conf
       "
 
+    # Garante que o container tente novamente caso falhe devido ao erro temporário
     restart: unless-stopped
+
+# Não inclua a seção 'networks' ou 'depends_on'
