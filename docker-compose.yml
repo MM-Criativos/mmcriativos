@@ -3,16 +3,31 @@ services:
     image: webdevops/php-nginx:8.2
     working_dir: /app
 
+    # O EasyPanel deve gerenciar o link do código, mas vamos manter o volumes
+    # para garantir que o contêiner possa ler os arquivos que ele puxa do Git.
     volumes:
       - ./:/app
 
     environment:
+      # Não precisa listar todas as variáveis aqui, apenas as essenciais
       APP_ENV: production
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
+    # -------------------------------------------------------------
+    # NOVIDADE: Adicione o depends_on
+    # Isso instrui o Docker a garantir que o serviço de DB comece primeiro,
+    # usando o nome que você deu ao serviço de DB no EasyPanel.
+    # Baseado no nome do serviço (mysql-mmcriativos), use ele aqui:
+    depends_on:
+      - mysql-mmcriativos
+    # -------------------------------------------------------------
+
     command: >
       sh -c "
+        # 1. Adicionar um pequeno delay (5 segundos) para dar tempo à rede
+        #    e ao serviço de DB para inicializar completamente.
+        sleep 5 &&
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
         php artisan optimize &&
