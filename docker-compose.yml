@@ -1,6 +1,5 @@
 services:
   app:
-    # Mantenha 'build: .' se você tem um Dockerfile na raiz.
     build: .
     working_dir: /app
 
@@ -12,33 +11,30 @@ services:
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # -----------------------------------------------------------------
-    # AÇÃO CRÍTICA: Implementar o loop de espera antes de migrar
-    # -----------------------------------------------------------------
+    # Ação de comando: Voltamos para o 'sleep 10' para cobrir o timing
+    # Se o 'nc' (netcat) falhou na versão anterior, vamos evitar o script complexo.
     command: >
       sh -c "
+        sleep 10 &&
         composer install --no-dev --optimize-autoloader &&
-
-        # Início do loop de espera (Wait-for-DB)
-        ATTEMPTS=0;
-        MAX_ATTEMPTS=20; # Tenta por até 100 segundos (20 * 5s)
-
-        # O comando 'php artisan migrate' serve como teste de conexão
-        while ! php artisan migrate --force; do
-          if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
-            echo '❌ Banco de dados indisponível após várias tentativas. Abortando.'
-            exit 1 # Sai com erro se falhar todas as tentativas
-          fi
-          echo '⏳ Tentando conectar ao banco de dados... (Tentativa $ATTEMPTS/$MAX_ATTEMPTS)'
-          ATTEMPTS=$((ATTEMPTS + 1));
-          sleep 5; # Espera 5 segundos antes de tentar novamente
-        done
-
-        # Se o loop terminar, a migração foi bem-sucedida.
-        echo '✅ Banco de dados conectado e migração concluída.'
-
+        php artisan migrate --force &&
         php artisan optimize &&
         supervisord -c /opt/docker/etc/supervisor.conf
       "
 
     restart: unless-stopped
+
+    # -------------------------------------------------------------
+    # NOVIDADE: ANEXAR O SERVIÇO À REDE PRINCIPAL
+    # O nome da rede aqui pode ser o nome do seu projeto no EasyPanel.
+    # Tente 'mm-criativos' ou apenas 'default'.
+    networks:
+      - mm-criativos
+    # -------------------------------------------------------------
+
+
+    # Definir a rede externa, usando o nome do projeto (mm-criativos)
+    # ou o nome que o EasyPanel usa para a rede compartilhada.
+networks:
+  mm-criativos:
+    external: true
