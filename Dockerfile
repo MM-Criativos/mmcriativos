@@ -4,6 +4,14 @@ FROM webdevops/php-nginx:8.2 AS builder
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
 
+# ----------------------------------------------------------------------
+# AÇÃO CRÍTICA: Instalação do Netcat (NC)
+# Isso corrige o erro "sh: nc: not found"
+USER root
+RUN apt-get update && apt-get install -y netcat-openbsd --no-install-recommends && rm -rf /var/lib/apt/lists/*
+USER application
+# ----------------------------------------------------------------------
+
 # Copia os arquivos de configuração do Composer e o código
 COPY composer.* ./
 COPY . .
@@ -15,8 +23,7 @@ RUN composer install --no-dev --optimize-autoloader
 RUN php artisan optimize
 
 # 2. Fase Final (Runtime)
-# Usa uma imagem menor ou a mesma, mas a partir do estado final do 'builder'
-# Isso garante que a imagem final contenha o código e as dependências instaladas.
+# Usa a mesma imagem base, mas a partir do estado final do 'builder'
 FROM webdevops/php-nginx:8.2 AS final
 
 WORKDIR /app
@@ -27,6 +34,8 @@ COPY --from=builder /app /app
 # Define a raiz do documento para o Nginx
 ENV WEB_DOCUMENT_ROOT /app/public
 
-# Adiciona o comando de entrada que executa as migrações e o supervisor
-# Este comando garante que o Laravel esteja pronto antes de iniciar o servidor
-CMD ["sh", "-c", "php artisan migrate --force && supervisord -c /opt/docker/etc/supervisor.conf"]
+# ----------------------------------------------------------------------
+# REMOVIDO: O comando de inicialização (CMD) foi removido daqui.
+# Ele será definido no 'command' do docker-compose.yml
+# para que possamos usar o for loop de espera ativa.
+# ----------------------------------------------------------------------
