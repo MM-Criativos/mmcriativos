@@ -1,33 +1,41 @@
-# 1. Fase de Build (para instalar dependências)
+# ============================================================
+# FASE 1 - BUILDER (instala dependências e prepara aplicação)
+# ============================================================
 FROM webdevops/php-nginx:8.2 AS builder
 
-# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# ----------------------------------------------------------------------
-# AÇÃO CRÍTICA: Instalação do Netcat (NC) - Necessário se for usar o loop 'nc'
-USER root
-RUN apt-get update && apt-get install -y netcat-openbsd --no-install-recommends && rm -rf /var/lib/apt-get/lists/*
-USER application
-# ----------------------------------------------------------------------
+# Instala o Composer (já vem nessa imagem)
+# Copia os arquivos essenciais do Composer primeiro (melhor cache)
+COPY composer.json composer.lock ./
 
-# Copia os arquivos de configuração do Composer e o código
-COPY composer.* ./
+# Instala dependências do Laravel
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+# Agora copia TODO o código
 COPY . .
 
-# ----------------------------------------------------------------------
-# REMOVIDO: RUN composer install... foi removido daqui
-# e movido para o 'command' do docker-compose.yml para execução no deploy.
-# REMOVIDO: RUN php artisan optimize
-# ----------------------------------------------------------------------
+# Gera otimizações
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 
-# 2. Fase Final (Runtime)
+
+# ============================================================
+# FASE 2 - FINAL (imagem enxuta e pronta para rodar)
+# ============================================================
 FROM webdevops/php-nginx:8.2 AS final
 
 WORKDIR /app
 
-# Copia o código com as dependências instaladas da fase 'builder'
+# Copia tudo do builder: código + vendor + caches
 COPY --from=builder /app /app
 
-# Define a raiz do documento para o Nginx
-ENV WEB_DOCUMENT_ROOT /app/public
+# Define raiz do documento para o Nginx
+ENV WEB_DOCUMENT_ROOT=/app/public
+
+# (Opcional) Linka storage – só funciona se storage tem permissão
+RUN php artisan storage:link || true
+
+# Expor porta (na verdade essa imagem já cuida disso)
+EXPOSE 80
