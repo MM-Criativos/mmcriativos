@@ -11,16 +11,14 @@ services:
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # Ação de comando: O MAIS SIMPLES POSSÍVEL, confiando no sleep e restart
-    command: >
+    # AÇÃO CRÍTICA: Sintaxe de Bloco (|) para segurança de parsing
+    command: |
       sh -c "
-        # Aumentamos o tempo de espera.
-        sleep 20 &&
+        sleep 25 &&
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
         php artisan optimize &&
         supervisord -c /opt/docker/etc/supervisor.conf
       "
 
-    # CRÍTICO: Garante que ele tente várias vezes até o DB estar pronto.
     restart: unless-stopped
