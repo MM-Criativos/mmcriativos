@@ -14,6 +14,7 @@ services:
     # AÇÃO CRÍTICA: Sintaxe de Bloco (|) para segurança de parsing
     command: |
       sh -c "
+        # Espera longa para o DB resolver o nome de host
         sleep 25 &&
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
