@@ -1,6 +1,5 @@
 services:
   app:
-    # Mantenha 'build: .', ele usará o Dockerfile atualizado
     build: .
     working_dir: /app
 
@@ -12,16 +11,17 @@ services:
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # O comando que será executado (agora com NC instalado!)
+    # Ação de Comando: Simplificada para um 'sleep' longo.
+    # Confiamos que o restart fará a conexão na segunda ou terceira tentativa.
     command: >
       sh -c "
-        # O loop de espera com NC agora funcionará
-        (for i in 1 2 3 4; do nc -z -v mm-criativos_mysql-mmcriativos 3306 && break || sleep 5; done) &&
-
+        echo 'Aguardando 15 segundos para estabilização do DB...' &&
+        sleep 15 &&
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
         php artisan optimize &&
         supervisord -c /opt/docker/etc/supervisor.conf
       "
 
+    # CRÍTICO: Garante que ele tente várias vezes até o DB estar pronto.
     restart: unless-stopped
