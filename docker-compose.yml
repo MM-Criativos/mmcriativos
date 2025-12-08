@@ -11,12 +11,11 @@ services:
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # Ação de Comando: Simplificada para um 'sleep' longo.
-    # Confiamos que o restart fará a conexão na segunda ou terceira tentativa.
+    # Ação de comando: O MAIS SIMPLES POSSÍVEL, confiando no sleep e restart
     command: >
       sh -c "
-        echo 'Aguardando 15 segundos para estabilização do DB...' &&
-        sleep 15 &&
+        # Aumentamos o tempo de espera.
+        sleep 20 &&
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
         php artisan optimize &&
