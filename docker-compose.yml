@@ -1,33 +1,44 @@
 services:
   app:
-    # Use 'build: .' se você tem um Dockerfile na raiz do seu projeto.
-    # Caso contrário, use 'image: webdevops/php-nginx:8.2' (o que você estava usando).
-    # Eu recomendo usar 'build: .' se você mantiver o Dockerfile.
+    # Mantenha 'build: .' se você tem um Dockerfile na raiz.
     build: .
     working_dir: /app
 
-    # Volumes são necessários para que o container leia os arquivos do Git
     volumes:
       - ./:/app
 
     environment:
-      # Apenas as variáveis de ambiente mínimas, deixe o EasyPanel injetar as outras
       APP_ENV: production
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # Ação Principal: Adicionar um delay (sleep) antes de rodar a migração
+    # -----------------------------------------------------------------
+    # AÇÃO CRÍTICA: Implementar o loop de espera antes de migrar
+    # -----------------------------------------------------------------
     command: >
       sh -c "
-        # 1. Espera 5 segundos para que a rede Docker e o DB inicializem
-        sleep 5 &&
         composer install --no-dev --optimize-autoloader &&
-        php artisan migrate --force &&
+
+        # Início do loop de espera (Wait-for-DB)
+        ATTEMPTS=0;
+        MAX_ATTEMPTS=20; # Tenta por até 100 segundos (20 * 5s)
+
+        # O comando 'php artisan migrate' serve como teste de conexão
+        while ! php artisan migrate --force; do
+          if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
+            echo '❌ Banco de dados indisponível após várias tentativas. Abortando.'
+            exit 1 # Sai com erro se falhar todas as tentativas
+          fi
+          echo '⏳ Tentando conectar ao banco de dados... (Tentativa $ATTEMPTS/$MAX_ATTEMPTS)'
+          ATTEMPTS=$((ATTEMPTS + 1));
+          sleep 5; # Espera 5 segundos antes de tentar novamente
+        done
+
+        # Se o loop terminar, a migração foi bem-sucedida.
+        echo '✅ Banco de dados conectado e migração concluída.'
+
         php artisan optimize &&
         supervisord -c /opt/docker/etc/supervisor.conf
       "
 
-    # Garante que o container tente novamente caso falhe devido ao erro temporário
     restart: unless-stopped
-
-# Não inclua a seção 'networks' ou 'depends_on'
