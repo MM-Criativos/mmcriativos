@@ -1,5 +1,6 @@
 services:
   app:
+    # Mantenha 'build: .' se você manteve o Dockerfile.
     build: .
     working_dir: /app
 
@@ -11,11 +12,17 @@ services:
       APP_DEBUG: false
       WEB_DOCUMENT_ROOT: /app/public
 
-    # Ação de comando: Voltamos para o 'sleep 10' para cobrir o timing
-    # Se o 'nc' (netcat) falhou na versão anterior, vamos evitar o script complexo.
+    # ----------------------------------------------------------------------
+    # Ação de comando: Wait-for-DB usando 'nc' e sintaxe simples.
+    # Esta sintaxe de uma linha é crucial para evitar erros de parsing.
+    # ----------------------------------------------------------------------
     command: >
       sh -c "
-        sleep 10 &&
+        # 1. Espera Ativa (NC) - Tenta conectar a porta 3306 4 vezes antes de prosseguir.
+        # Esta é a parte mais crítica para evitar o erro de DNS/Timing.
+        (for i in 1 2 3 4; do nc -z -v mm-criativos_mysql-mmcriativos 3306 && break || sleep 5; done) &&
+
+        # 2. Comandos de Inicialização (só rodam se a porta 3306 estiver acessível)
         composer install --no-dev --optimize-autoloader &&
         php artisan migrate --force &&
         php artisan optimize &&
@@ -24,17 +31,5 @@ services:
 
     restart: unless-stopped
 
-    # -------------------------------------------------------------
-    # NOVIDADE: ANEXAR O SERVIÇO À REDE PRINCIPAL
-    # O nome da rede aqui pode ser o nome do seu projeto no EasyPanel.
-    # Tente 'mm-criativos' ou apenas 'default'.
-    networks:
-      - mm-criativos
-    # -------------------------------------------------------------
-
-
-    # Definir a rede externa, usando o nome do projeto (mm-criativos)
-    # ou o nome que o EasyPanel usa para a rede compartilhada.
-networks:
-  mm-criativos:
-    external: true
+# Não inclua 'networks'
+# Não inclua 'depends_on'
