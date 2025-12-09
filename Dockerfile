@@ -1,48 +1,57 @@
-# ============================================
-# BASE IMAGE
-# ============================================
-FROM webdevops/php-nginx:8.2
+# ==========================
+# FASE 1 - PHP BUILDER
+# ==========================
+FROM webdevops/php-nginx:8.2 AS php_builder
 
-# Set working directory
 WORKDIR /app
 
-# ============================================
-# COPIA TODO O PROJETO (necessário para artisan existir)
-# ============================================
-COPY . .
+# Copia apenas composer (cache mais rápido)
+COPY composer.json composer.lock ./
 
-# ============================================
-# INSTALA DEPENDÊNCIAS PHP
-# ============================================
+# Instala dependências PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# ============================================
-# PERMISSÕES LARAVEL
-# ============================================
-RUN chown -R application:application /app/storage /app/bootstrap/cache && \
-    chmod -R 775 /app/storage /app/bootstrap/cache
+# Copia todo o projeto
+COPY . .
 
-# ============================================
-# BUILD DO FRONT (Vite)
-# ============================================
-RUN npm install && npm run build
+# Gera caches do Laravel
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 
-# ============================================
-# CACHE DO LARAVEL
-# ============================================
-RUN php artisan config:clear && \
-    php artisan route:clear && \
-    php artisan view:clear && \
-    php artisan cached packages:discover || true
 
-RUN php artisan optimize
+# ==========================
+# FASE 2 - NODE BUILDER (Vite)
+# ==========================
+FROM node:18 AS node_builder
 
-# ============================================
-# STORAGE LINK
-# ============================================
-RUN php artisan storage:link || true
+WORKDIR /app
 
-# Define root do nginx
+COPY package.json package-lock.json* ./
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+
+# ==========================
+# FASE 3 - FINAL IMAGE
+# ==========================
+FROM webdevops/php-nginx:8.2 AS final
+WORKDIR /app
+
+# Copia backend compilado
+COPY --from=php_builder /app /app
+
+# Copia arquivos Vite gerados
+COPY --from=node_builder /app/public/build /app/public/build
+
+# Document root do Nginx
 ENV WEB_DOCUMENT_ROOT=/app/public
 
+# Storage link (não dá erro se já existir)
+RUN php artisan storage:link || true
+
 EXPOSE 80
+
