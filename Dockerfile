@@ -1,36 +1,48 @@
-# ================================
-# FASE 1 - BUILDER
-# ================================
-FROM webdevops/php-nginx:8.2 AS builder
+# ============================================
+# BASE IMAGE
+# ============================================
+FROM webdevops/php-nginx:8.2
 
+# Set working directory
 WORKDIR /app
 
-# Copia o projeto inteiro (ANTES do composer!)
+# ============================================
+# COPIA TODO O PROJETO (necessário para artisan existir)
+# ============================================
 COPY . .
 
-# Instala dependências do PHP
+# ============================================
+# INSTALA DEPENDÊNCIAS PHP
+# ============================================
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# Gera caches do Laravel
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+# ============================================
+# PERMISSÕES LARAVEL
+# ============================================
+RUN chown -R application:application /app/storage /app/bootstrap/cache && \
+    chmod -R 775 /app/storage /app/bootstrap/cache
 
+# ============================================
+# BUILD DO FRONT (Vite)
+# ============================================
+RUN npm install && npm run build
 
-# ================================
-# FASE 2 - FINAL
-# ================================
-FROM webdevops/php-nginx:8.2 AS final
+# ============================================
+# CACHE DO LARAVEL
+# ============================================
+RUN php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    php artisan cached packages:discover || true
 
-WORKDIR /app
+RUN php artisan optimize
 
-# Copia tudo do builder (inclui vendor e caches)
-COPY --from=builder /app /app
-
-# Define o document root do Nginx
-ENV WEB_DOCUMENT_ROOT=/app/public
-
-# Garante que o storage link exista
+# ============================================
+# STORAGE LINK
+# ============================================
 RUN php artisan storage:link || true
+
+# Define root do nginx
+ENV WEB_DOCUMENT_ROOT=/app/public
 
 EXPOSE 80
