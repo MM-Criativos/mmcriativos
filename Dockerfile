@@ -48,8 +48,8 @@ RUN chown -R application:application /app/storage /app/bootstrap/cache && \
     chmod -R 775 /app/storage /app/bootstrap/cache
 
 # Limpa e recompila caches Laravel com o ambiente de produção
-RUN php artisan optimize && \
-    php artisan optimize:clear
+RUN php artisan optimize:clear && \
+    php artisan optimize
 
 # Cria symlink do storage (não quebra se já existir)
 RUN php artisan storage:link || true
