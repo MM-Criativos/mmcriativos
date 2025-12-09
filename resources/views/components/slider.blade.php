@@ -149,7 +149,7 @@
             @php
                 $sliderRec = \App\Models\Slider::first();
                 $videoPath = $sliderRec?->video ? asset($sliderRec->video) : asset('assets/video/MMConnect.mp4');
-                $t1 = $sliderRec?->text_1 ?: 'Diferencial 1';
+                $t1 = $sliderRec?->text_1 ?: 'Diferencial';
                 $t2 = $sliderRec?->text_2 ?: 'Diferencial 2';
                 $t3 = $sliderRec?->text_3 ?: 'Diferencial 3';
             @endphp
