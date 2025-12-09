@@ -1,48 +1,47 @@
-# ============================================
-# BASE IMAGE
-# ============================================
-FROM webdevops/php-nginx:8.2
+# ================================
+# FASE 1 - BUILDER
+# ================================
+FROM webdevops/php-nginx:8.2 AS builder
 
-# Set working directory
 WORKDIR /app
 
-# ============================================
-# COPIA TODO O PROJETO (necessário para artisan existir)
-# ============================================
+# Dependências do sistema
+RUN apt-get update && apt-get install -y curl git unzip libzip-dev && \
+    docker-php-ext-install zip
+
+# Instala Node 20 (necessário pro Vite)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
+# Copia tudo do projeto
 COPY . .
 
-# ============================================
-# INSTALA DEPENDÊNCIAS PHP
-# ============================================
+# Instala dependências PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# ============================================
-# PERMISSÕES LARAVEL
-# ============================================
-RUN chown -R application:application /app/storage /app/bootstrap/cache && \
-    chmod -R 775 /app/storage /app/bootstrap/cache
+# Instala dependências JS e builda assets
+RUN npm ci && npm run build
 
-# ============================================
-# BUILD DO FRONT (Vite)
-# ============================================
-RUN npm install && npm run build
+# Gera caches do Laravel
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 
-# ============================================
-# CACHE DO LARAVEL
-# ============================================
-RUN php artisan config:clear && \
-    php artisan route:clear && \
-    php artisan view:clear && \
-    php artisan cached packages:discover || true
 
-RUN php artisan optimize
+# ================================
+# FASE 2 - FINAL
+# ================================
+FROM webdevops/php-nginx:8.2 AS final
 
-# ============================================
-# STORAGE LINK
-# ============================================
-RUN php artisan storage:link || true
+WORKDIR /app
 
-# Define root do nginx
+# Copia tudo já compilado do builder
+COPY --from=builder /app /app
+
+# DocumentRoot Nginx
 ENV WEB_DOCUMENT_ROOT=/app/public
+
+# Garante o storage link
+RUN php artisan storage:link || true
 
 EXPOSE 80
