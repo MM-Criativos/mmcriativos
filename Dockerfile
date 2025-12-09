@@ -1,47 +1,56 @@
 # ================================
 # FASE 1 - BUILDER
 # ================================
-FROM webdevops/php-nginx:8.2 AS builder
-
+FROM node:20 AS node_builder
 WORKDIR /app
 
-# Dependências do sistema
-RUN apt-get update && apt-get install -y curl git unzip libzip-dev && \
-    docker-php-ext-install zip
+COPY package.json package-lock.json ./
+RUN npm install
 
-# Instala Node 20 (necessário pro Vite)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs
+COPY resources ./resources
+COPY vite.config.js .
+COPY tailwind.config.js .
+COPY postcss.config.js .
 
-# Copia tudo do projeto
-COPY . .
+RUN npm run build
+
+
+# ================================
+# FASE 2 - PHP BUILDER
+# ================================
+FROM webdevops/php-nginx:8.2 AS php_builder
+WORKDIR /app
+
+# Copia composer primeiro
+COPY composer.json composer.lock ./
 
 # Instala dependências PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# Instala dependências JS e builda assets
-RUN npm ci && npm run build
+# Copia tudo do projeto
+COPY . .
 
-# Gera caches do Laravel
+# Copia o build gerado pelo Node
+COPY --from=node_builder /app/public ./public
+
+# Gera caches Laravel
 RUN php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache
 
 
 # ================================
-# FASE 2 - FINAL
+# FASE FINAL
 # ================================
-FROM webdevops/php-nginx:8.2 AS final
+FROM webdevops/php-nginx:8.2
 
 WORKDIR /app
 
-# Copia tudo já compilado do builder
-COPY --from=builder /app /app
+# Copia tudo já pronto do builder PHP
+COPY --from=php_builder /app /app
 
-# DocumentRoot Nginx
 ENV WEB_DOCUMENT_ROOT=/app/public
 
-# Garante o storage link
 RUN php artisan storage:link || true
 
 EXPOSE 80
