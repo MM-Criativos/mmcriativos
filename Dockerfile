@@ -8,7 +8,7 @@ WORKDIR /app
 # Copia tudo de uma vez (necessário para artisan existir)
 COPY . .
 
-# Instala dependências PHP
+# Instala dependências do PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Gera caches do Laravel
@@ -36,16 +36,23 @@ RUN npm run build
 # FASE 3 - FINAL IMAGE
 # ==========================
 FROM webdevops/php-nginx:8.2 AS final
+
 WORKDIR /app
 
-# Copia backend compilado
+# Copia o backend gerado pelo PHP builder
 COPY --from=php_builder /app /app
 
-# Copia arquivos Vite gerados
+# Copia build do Vite
 COPY --from=node_builder /app/public/build /app/public/build
 
+# Define root do NGINX
 ENV WEB_DOCUMENT_ROOT=/app/public
 
+# Corrige permissões necessárias do Laravel
+RUN chown -R application:application /app/storage /app/bootstrap/cache && \
+    chmod -R 775 /app/storage /app/bootstrap/cache
+
+# Cria o symlink do storage (não quebra se já existir)
 RUN php artisan storage:link || true
 
 EXPOSE 80
