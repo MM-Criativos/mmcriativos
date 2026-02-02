@@ -11,8 +11,8 @@ class MmcloudTenantProvisioningService
 {
     public function createTenant(string $name, string $domain): array
     {
-        $url = rtrim(config('services.mmcloud.url', ''), '/');
-        $secret = config('services.mmcloud.secret');
+        $url        = rtrim(config('services.mmcloud.url', ''), '/');
+        $secret     = config('services.mmcloud.secret');
         $skipVerify = (bool) config('services.mmcloud.skip_verify', false);
 
         if (! $url || ! $secret) {
@@ -22,32 +22,44 @@ class MmcloudTenantProvisioningService
         }
 
         $payload = [
-            'name' => $name,
-            'slug' => $this->buildSlug($domain),
-            'status' => 'active',
+            'name'   => $name,
+            'slug'   => $this->buildSlug($domain),
+            'status' => 'trial', // 👈 recomendado iniciar como trial
         ];
 
         $client = Http::withOptions([
             'verify' => ! $skipVerify,
         ])->withHeaders([
             'X-MMCloud-External-Secret' => $secret,
+            'Accept'                   => 'application/json', // 🔥 ESSENCIAL
         ]);
 
         try {
             $response = $client->post("{$url}/api/external/tenants", $payload);
 
+            // força exception para qualquer 4xx / 5xx
             $response->throw();
         } catch (RequestException $exception) {
-            $message = $exception->response
-                ? $exception->response->json('message') ?? $exception->response->body()
-                : $exception->getMessage();
+
+            // tenta pegar mensagem JSON primeiro
+            $message = null;
+
+            if ($exception->response) {
+                $message = $exception->response->json('message');
+
+                // fallback seguro (sem HTML gigante)
+                if (! $message) {
+                    $message = 'Erro ao comunicar com o MM Criativos Cloud.';
+                }
+            }
 
             throw ValidationException::withMessages([
-                'domain' => $message,
+                'domain' => $message ?? $exception->getMessage(),
             ]);
         }
 
-        return $response->json();
+        // garante retorno como array
+        return $response->json() ?? [];
     }
 
     private function buildSlug(string $domain): string
