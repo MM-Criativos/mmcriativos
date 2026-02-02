@@ -16,6 +16,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
+        session()->put('_login_init', true);
         return view('auth.login');
     }
 
@@ -53,4 +54,3 @@ class AuthenticatedSessionController extends Controller
         return redirect('/');
     }
 }
-
