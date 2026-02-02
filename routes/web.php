@@ -45,6 +45,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Site\ModalController;
 use App\Http\Controllers\Site\PublicBudgetController;
 use App\Http\Controllers\Admin\Commercial\KpiController as CommercialKpiController;
+use App\Http\Controllers\SuperAdminTenantController;
 use App\Http\Controllers\Admin\Commercial\DashboardController as CommercialDashboardController;
 use App\Http\Controllers\Admin\Commercial\PlanController as CommercialPlanController;
 use App\Http\Controllers\Admin\Commercial\BudgetController as CommercialBudgetController;
@@ -80,6 +81,11 @@ Route::get('/dashboard', DashboardController::class)
 Route::get('/dashboard/day-tasks', [DashboardController::class, 'dayTasks'])
     ->middleware(['verified', 'approved', 'auth'])
     ->name('dashboard.day-tasks');
+
+Route::middleware(['verified', 'approved', 'auth'])->prefix('mmcloud/tenants')->name('mmcloud.tenants.')->group(function () {
+    Route::get('create', [SuperAdminTenantController::class, 'create'])->name('create');
+    Route::post('/', [SuperAdminTenantController::class, 'store'])->name('store');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

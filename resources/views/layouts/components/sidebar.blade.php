@@ -163,6 +163,15 @@
                     <span>Depoimentos</span>
                 </a>
             </li>
+
+            <li class="sidebar-menu-group-title">MM Criativos Cloud</li>
+
+            <li>
+                <a href="{{ route('mmcloud.tenants.create') }}">
+                    <i class="fa-duotone fa-solid fa-cloud-plus icon-project mr-2"></i>
+                    <span>Criar Empresas</span>
+                </a>
+            </li>
         </ul>
     </div>
 </aside>

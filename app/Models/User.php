@@ -64,4 +64,9 @@ class User extends Authenticatable
         return $this->belongsToMany(Classe::class, 'class_user', 'user_id', 'class_id')
             ->withTimestamps();
     }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
 }

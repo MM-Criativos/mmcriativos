@@ -40,4 +40,10 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
+    'mmcloud' => [
+        'url' => env('MMCC_API_URL'),
+        'secret' => env('MMCC_API_SECRET'),
+        'skip_verify' => env('MMCC_SKIP_VERIFY', false),
+    ],
+
 ];
