@@ -62,22 +62,13 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 
-Route::get('/__env-test', function () {
-    return response()->json([
-        'app_key' => config('app.key'),
-        'has_key' => ! empty(config('app.key')),
-        'encrypt' => app(\Illuminate\Contracts\Encryption\Encrypter::class)::class,
-    ]);
-});
-
-
 /*
 |------------------------------------------------------------------
 | Guest
 |------------------------------------------------------------------
 */
 
-Route::middleware('guest')->group(function () {
+Route::middleware(['web', 'guest'])->group(function () {
 
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
@@ -107,7 +98,7 @@ Route::middleware('guest')->group(function () {
 | Authenticated
 |------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
 
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
