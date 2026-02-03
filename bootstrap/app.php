@@ -13,7 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        // ✅ REGISTRO CORRETO DO GRUPO WEB (Laravel 12)
+        /**
+         * ✅ Laravel 12
+         * O grupo WEB precisa ser registrado via $middleware->web()
+         * (group() NÃO ativa o pipeline HTTP)
+         */
         $middleware->web([
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
