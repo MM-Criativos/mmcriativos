@@ -13,21 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        // 🔥 ISSO É O QUE FALTAVA
-        $middleware->prependToGroup('web', [
+        // ✅ CORRETO NO LARAVEL 12
+        // Cookies precisam estar no pipeline GLOBAL
+        $middleware->append([
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
 
+        // Aliases customizados
         $middleware->alias([
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
         ]);
     })
-
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })
