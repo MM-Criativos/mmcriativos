@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 use App\Events\BudgetSent;
 use App\Events\BudgetOpened;
 use App\Events\BudgetAccepted;
@@ -33,12 +34,30 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         /**
-         * ⚠️ IMPORTANTE
-         * HTTPS, esquema e domínio são responsabilidade do PROXY (Traefik).
-         * Não force URL::forceScheme nem URL::forceRootUrl aqui.
+         * ------------------------------------------------------------------
+         * HTTPS / Proxy (Traefik)
+         * ------------------------------------------------------------------
+         * O Traefik termina o SSL, mas o Laravel NÃO assume https
+         * automaticamente para o URL Generator.
+         *
+         * Isso afeta:
+         * - route()
+         * - url()
+         * - action de <form>
+         * - redirects
+         * - CSRF cookie
+         *
+         * Forçamos o scheme APENAS em produção.
          */
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
 
-        // Register event listeners for budget lifecycle
+        /**
+         * ------------------------------------------------------------------
+         * Budget lifecycle events
+         * ------------------------------------------------------------------
+         */
         foreach ([BudgetSent::class, BudgetAccepted::class, BudgetDeclined::class, BudgetExpired::class] as $evt) {
             Event::listen($evt, [RegisterBudgetEvent::class, 'handle']);
             Event::listen($evt, [UpdateBudgetStatus::class, 'handle']);
