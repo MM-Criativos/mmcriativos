@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         ]);
 
+        // Force trust proxies before cookies para enxergar https via Traefik
+        $middleware->prepend(\App\Http\Middleware\TrustProxies::class);
+
         // Aliases customizados
         $middleware->alias([
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,

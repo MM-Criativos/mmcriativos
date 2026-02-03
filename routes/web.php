@@ -1,6 +1,7 @@
 ﻿<?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Admin\SkillController as AdminSkillController;
 use App\Http\Controllers\Admin\SkillCompetencyController as AdminSkillCompetencyController;
 use App\Http\Controllers\Admin\ServiceInfoController as AdminServiceInfoController;
@@ -61,6 +62,21 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+
+/*
+|------------------------------------------------------------------
+| Diagnostic / Cookie debug
+|------------------------------------------------------------------
+*/
+Route::middleware('web')->get('/cookie-debug', function (Request $request) {
+    session()->put('debug_cookie', now()->toDateTimeString());
+
+    return response()->json([
+        'session_id' => session()->getId(),
+        'cookies' => $request->cookies->all(),
+        'session_cookie_name' => config('session.cookie'),
+    ]);
+});
 
 /*
 |------------------------------------------------------------------
