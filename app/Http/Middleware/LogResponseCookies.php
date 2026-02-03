@@ -12,9 +12,9 @@ class LogResponseCookies
     {
         $response = $next($request);
 
-        $headers = $response->headers->getCookies();
-        $names = array_map(fn($cookie) => $cookie->getName(), $headers);
-        Log::debug('Response cookies', ['count' => count($headers), 'names' => $names]);
+        $cookies = $response->headers->getCookies();
+        $names = array_map(fn($cookie) => $cookie->getName(), $cookies);
+        Log::info('Response cookies', ['count' => count($cookies), 'names' => $names]);
 
         return $response;
     }
