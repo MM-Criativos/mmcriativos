@@ -13,12 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        /**
-         * ✅ Laravel 12
-         * O grupo WEB precisa ser registrado via $middleware->web()
-         * (group() NÃO ativa o pipeline HTTP)
-         */
-        $middleware->web([
+        // 🔥 ISSO É O QUE FALTAVA
+        $middleware->prependToGroup('web', [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
@@ -31,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
         ]);
     })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })
