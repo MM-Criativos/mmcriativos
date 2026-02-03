@@ -62,6 +62,15 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 
+Route::get('/__env-test', function () {
+    return response()->json([
+        'app_key' => config('app.key'),
+        'has_key' => ! empty(config('app.key')),
+        'encrypt' => app(\Illuminate\Contracts\Encryption\Encrypter::class)::class,
+    ]);
+});
+
+
 /*
 |------------------------------------------------------------------
 | Guest
