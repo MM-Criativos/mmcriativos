@@ -12,19 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // 👇 VANILLA: NÃO registra cookies, NÃO mexe em web,
+        // NÃO prepend, NÃO append nada aqui.
 
-        // ✅ CORRETO NO LARAVEL 12
-        // Cookies precisam estar no pipeline GLOBAL
-        $middleware->append([
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \App\Http\Middleware\LogResponseCookies::class,
-        ]);
-
-        // Force trust proxies before cookies para enxergar https via Traefik
-        $middleware->prepend(\App\Http\Middleware\TrustProxies::class);
-
-        // Aliases customizados
+        // Apenas aliases customizados
         $middleware->alias([
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
         ]);
