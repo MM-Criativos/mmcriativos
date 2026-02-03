@@ -1,0 +1,41 @@
+* [33m02a07ba[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Debug cookie 1
+* [33mb89677d[m Debug cookie
+* [33m88595d2[m debug: cookies 2
+* [33md69afa7[m debug: cookies 1
+* [33m3c3feb7[m debug: cookies
+* [33m8aee050[m fix: adjusts in bootstrap/app
+* [33mc8cfb8c[m fix: adjusts in provider 2
+* [33mb8cffcd[m fix: adjusts in provider
+* [33m9567d2e[m fix: adjusts in provider
+* [33m2e1aa9c[m fix: adjusts in provider
+* [33mcf109e4[m fix: ajusts in provider
+* [33me0d5399[m fix: move auth routes into web.php and stabilize web middleware
+* [33me585726[m fix: move auth routes into web.php and stabilize web middleware
+* [33md2a818b[m fix: properly register web middleware group (laravel 12)
+* [33m3aced99[m fix: define web middleware group (session + csrf)
+* [33m59f4da8[m fix: apply web middleware to auth routes
+* [33m6c81b76[m fix: define web middleware group (sessions + csrf)
+* [33ma3d4dc4[m fix: add vite runtime config for production
+* [33m1b33a11[m build: frontend assets
+* [33m03b931f[m fix: remove setup scripts and stabilize production deploy
+* [33m9a15f0d[m fix: remove setup scripts and stabilize production deploy
+* [33m0627df5[m fix: remove key:generate and setup script, stabilize sessions
+* [33ma4d0fad[m Fix: remove forced HTTPS/root URL to allow proxy headers (419 fix)
+* [33m734434b[m fix(docker): remove custom entrypoint and rely on EasyPanel runtime env
+* [33mc89bc45[m chore(ci): switch runner to ubuntu-22.04
+* [33m140dbcc[m chore(ci): force new workflow run
+* [33m5179c62[m fix(docker): create .env at runtime to prevent session loss
+* [33m083ce9b[m fix(auth): force session initialization on GET /login to avoid 419 after deploy
+* [33mc791025[m fix(auth): register auth routes in web middleware (Laravel 11 session/CSRF fix)
+* [33m8134c1e[m feat: interface de criação de tenant no painel super-admin
+* [33md82c667[m feat: interface de criação de tenant no painel super-admin
+* [33mb0df8f6[m deploy no easypanel att layout 1.3
+* [33mcda0470[m deploy no easypanel att layout 1.2
+* [33m2f45ffb[m deploy no easypanel att layout 1.2
+* [33m31a0e32[m deploy no easypanel att layout 1.2
+* [33mcd18fa9[m deploy no easypanel att layout 1.2
+* [33mbc6bbdf[m deploy no easypanel att layout 1.2
+* [33ma86ddca[m deploy no easypanel att layout 1.2
+* [33me4d1a1c[m deploy no easypanel att layout 1.2
+* [33m1a2e3ab[m deploy no easypanel att layout 1.2
+* [33m85a3919[m deploy no easypanel att layout 1.2
