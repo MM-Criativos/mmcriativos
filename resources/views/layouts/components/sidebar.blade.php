@@ -166,12 +166,17 @@
 
             <li class="sidebar-menu-group-title">MM Criativos Cloud</li>
 
-            <li>
-                <a href="{{ route('mmcloud.tenants.create') }}">
-                    <i class="fa-duotone fa-solid fa-cloud-plus icon-project mr-2"></i>
-                    <span>Criar Empresas</span>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <i class="fa-duotone fa-solid fa-cloud icon-project mr-2"></i>
+                    <span>Empresas Cloud</span>
                 </a>
+                <ul class="sidebar-submenu">
+                    <li><a href="{{ route('mmcloud.tenants.index') }}">Empresas</a></li>
+                    <li><a href="{{ route('mmcloud.tenants.create') }}">Criar empresa</a></li>
+                </ul>
             </li>
         </ul>
     </div>
 </aside>
+

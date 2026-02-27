@@ -172,8 +172,13 @@ Route::get('/dashboard/day-tasks', [DashboardController::class, 'dayTasks'])
     ->name('dashboard.day-tasks');
 
 Route::middleware(['verified', 'approved', 'auth'])->prefix('mmcloud/tenants')->name('mmcloud.tenants.')->group(function () {
+    Route::get('/', [SuperAdminTenantController::class, 'index'])->name('index');
     Route::get('create', [SuperAdminTenantController::class, 'create'])->name('create');
     Route::post('/', [SuperAdminTenantController::class, 'store'])->name('store');
+    Route::get('{tenant}/edit', [SuperAdminTenantController::class, 'edit'])->name('edit');
+    Route::patch('{tenant}', [SuperAdminTenantController::class, 'update'])->name('update');
+    Route::post('{tenant}/regenerate-api-token', [SuperAdminTenantController::class, 'regenerateApiToken'])
+        ->name('regenerate-api-token');
 });
 
 Route::middleware('auth')->group(function () {
@@ -421,3 +426,4 @@ Route::name('public.')->group(function () {
     Route::post('briefing/qualitative/{project}/save', [PublicBriefingQualitativeController::class, 'save'])
         ->name('briefing.qualitative.save');
 });
+
