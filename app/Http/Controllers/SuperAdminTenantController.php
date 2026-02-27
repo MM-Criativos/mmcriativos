@@ -207,6 +207,8 @@ class SuperAdminTenantController extends Controller
 
         $instances = [];
         $instanceLoadError = null;
+        $selectedInstance = null;
+        $selectedInstanceId = null;
 
         try {
             $instancesPayload = $this->tenantProvisioning->listTenantInstances($tenant);
@@ -218,11 +220,36 @@ class SuperAdminTenantController extends Controller
             $instanceLoadError = 'Nao foi possivel carregar as instancias existentes deste tenant.';
         }
 
+        $selectedInstanceIdInput = $request->query('instance_id');
+        if (is_numeric($selectedInstanceIdInput)) {
+            $selectedInstanceId = (int) $selectedInstanceIdInput;
+        }
+
+        if ($instances !== []) {
+            foreach ($instances as $instance) {
+                if (! is_array($instance)) {
+                    continue;
+                }
+
+                if ($selectedInstanceId !== null && (int) ($instance['id'] ?? 0) === $selectedInstanceId) {
+                    $selectedInstance = $instance;
+                    break;
+                }
+            }
+
+            if (! $selectedInstance) {
+                $selectedInstance = $instances[0];
+                $selectedInstanceId = isset($selectedInstance['id']) ? (int) $selectedInstance['id'] : null;
+            }
+        }
+
         return view('mmcloud.instances.create', [
             'tenant' => $tenantData,
             'tenantId' => $tenant,
             'instances' => $instances,
             'instanceLoadError' => $instanceLoadError,
+            'selectedInstance' => $selectedInstance,
+            'selectedInstanceId' => $selectedInstanceId,
         ]);
     }
 
@@ -277,9 +304,20 @@ class SuperAdminTenantController extends Controller
                 ->withInput();
         }
 
+        $instanceId = (int) ($result['instance']['id'] ?? 0);
+        $action = (string) ($result['action'] ?? '');
+        $statusMessage = $action === 'updated'
+            ? 'Instancia atualizada com sucesso.'
+            : 'Instancia criada com sucesso.';
+
+        $routeParams = ['tenant' => $tenant];
+        if ($instanceId > 0) {
+            $routeParams['instance_id'] = $instanceId;
+        }
+
         return redirect()
-            ->route('mmcloud.tenants.instances.create', ['tenant' => $tenant])
-            ->with('status', 'Instancia criada/atualizada com sucesso.')
+            ->route('mmcloud.tenants.instances.create', $routeParams)
+            ->with('status', $statusMessage)
             ->with('instance_result', $result['instance'] ?? null);
     }
 
