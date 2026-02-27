@@ -205,9 +205,24 @@ class SuperAdminTenantController extends Controller
                 ]);
         }
 
+        $instances = [];
+        $instanceLoadError = null;
+
+        try {
+            $instancesPayload = $this->tenantProvisioning->listTenantInstances($tenant);
+            $instances = $instancesPayload['instances'] ?? [];
+        } catch (ValidationException $e) {
+            $instanceLoadError = collect($e->errors())->flatten()->first();
+        } catch (\Throwable $e) {
+            report($e);
+            $instanceLoadError = 'Nao foi possivel carregar as instancias existentes deste tenant.';
+        }
+
         return view('mmcloud.instances.create', [
             'tenant' => $tenantData,
             'tenantId' => $tenant,
+            'instances' => $instances,
+            'instanceLoadError' => $instanceLoadError,
         ]);
     }
 

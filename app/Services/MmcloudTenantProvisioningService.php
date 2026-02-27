@@ -108,6 +108,30 @@ class MmcloudTenantProvisioningService
         return $response->json() ?? [];
     }
 
+    public function listTenantInstances(string|int $tenant): array
+    {
+        $tenantData = $this->showTenant($tenant);
+        $tenantSlug = trim((string) ($tenantData['slug'] ?? ''));
+        $tenantToken = trim((string) ($tenantData['api_token'] ?? ''));
+
+        if ($tenantSlug === '' || $tenantToken === '') {
+            throw ValidationException::withMessages([
+                'mmcloud' => 'Tenant sem slug ou api_token para consultar instancias.',
+            ]);
+        }
+
+        try {
+            $response = $this->tenantClient($tenantToken)->get(
+                "/api/external/tenants/{$tenantSlug}/ai/instances"
+            );
+            $response->throw();
+        } catch (RequestException $exception) {
+            $this->throwValidationError($exception, 'mmcloud');
+        }
+
+        return $response->json() ?? ['instances' => []];
+    }
+
     private function client(): PendingRequest
     {
         $url = rtrim(config('services.mmcloud.url', ''), '/');

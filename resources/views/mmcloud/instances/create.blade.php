@@ -4,6 +4,8 @@
     $tenantId = $tenantId ?? ($tenant['tenant_id'] ?? null);
     $tenantName = $tenant['name'] ?? '-';
     $tenantSlug = $tenant['slug'] ?? '-';
+    $instances = $instances ?? [];
+    $instanceLoadError = $instanceLoadError ?? null;
 @endphp
 
 @section('content')
@@ -103,6 +105,59 @@
                             <pre class="text-xs whitespace-pre-wrap break-all text-neutral-700 dark:text-neutral-200">{{ json_encode(session('instance_result'), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                         </div>
                     @endif
+
+                    <div class="mt-6 border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden">
+                        <div class="px-4 py-3 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800">
+                            <h3 class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">Instancias cadastradas</h3>
+                        </div>
+
+                        @if ($instanceLoadError)
+                            <div class="px-4 py-3 text-sm text-red-600 dark:text-red-400">
+                                {{ $instanceLoadError }}
+                            </div>
+                        @elseif (empty($instances))
+                            <div class="px-4 py-3 text-sm text-neutral-500">
+                                Nenhuma instancia cadastrada para este tenant.
+                            </div>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200">
+                                        <tr>
+                                            <th class="text-left px-4 py-2">Nome</th>
+                                            <th class="text-left px-4 py-2">Evolution ID</th>
+                                            <th class="text-left px-4 py-2">Canal</th>
+                                            <th class="text-left px-4 py-2">Status</th>
+                                            <th class="text-left px-4 py-2">Atualizado em</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($instances as $instance)
+                                            @php
+                                                $status = (string) ($instance['status'] ?? 'inactive');
+                                                $statusBadge = match ($status) {
+                                                    'active' => 'bg-emerald-100 text-emerald-700',
+                                                    'maintenance' => 'bg-amber-100 text-amber-700',
+                                                    default => 'bg-neutral-200 text-neutral-700',
+                                                };
+                                            @endphp
+                                            <tr class="border-t border-neutral-200 dark:border-neutral-700">
+                                                <td class="px-4 py-2 font-medium text-neutral-800 dark:text-neutral-100">{{ $instance['instance_name'] ?? '-' }}</td>
+                                                <td class="px-4 py-2 text-neutral-700 dark:text-neutral-300">{{ $instance['evolution_instance_id'] ?? '-' }}</td>
+                                                <td class="px-4 py-2 text-neutral-700 dark:text-neutral-300">{{ $instance['channel'] ?? '-' }}</td>
+                                                <td class="px-4 py-2">
+                                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $statusBadge }}">
+                                                        {{ strtoupper($status) }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-2 text-neutral-700 dark:text-neutral-300">{{ $instance['updated_at'] ?? '-' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
