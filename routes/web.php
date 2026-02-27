@@ -177,6 +177,10 @@ Route::middleware(['verified', 'approved', 'auth'])->prefix('mmcloud/tenants')->
     Route::post('/', [SuperAdminTenantController::class, 'store'])->name('store');
     Route::get('{tenant}/edit', [SuperAdminTenantController::class, 'edit'])->name('edit');
     Route::patch('{tenant}', [SuperAdminTenantController::class, 'update'])->name('update');
+    Route::get('{tenant}/instances/create', [SuperAdminTenantController::class, 'createInstance'])
+        ->name('instances.create');
+    Route::post('{tenant}/instances', [SuperAdminTenantController::class, 'storeInstance'])
+        ->name('instances.store');
     Route::post('{tenant}/regenerate-api-token', [SuperAdminTenantController::class, 'regenerateApiToken'])
         ->name('regenerate-api-token');
 });

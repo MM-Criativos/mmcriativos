@@ -83,6 +83,31 @@ class MmcloudTenantProvisioningService
         return $response->json() ?? [];
     }
 
+    public function createTenantInstance(string|int $tenant, array $payload): array
+    {
+        $tenantData = $this->showTenant($tenant);
+        $tenantSlug = trim((string) ($tenantData['slug'] ?? ''));
+        $tenantToken = trim((string) ($tenantData['api_token'] ?? ''));
+
+        if ($tenantSlug === '' || $tenantToken === '') {
+            throw ValidationException::withMessages([
+                'mmcloud' => 'Tenant sem slug ou api_token para criar instancia.',
+            ]);
+        }
+
+        try {
+            $response = $this->tenantClient($tenantToken)->post(
+                "/api/external/tenants/{$tenantSlug}/ai/instances",
+                $payload
+            );
+            $response->throw();
+        } catch (RequestException $exception) {
+            $this->throwValidationError($exception, 'instance_name');
+        }
+
+        return $response->json() ?? [];
+    }
+
     private function client(): PendingRequest
     {
         $url = rtrim(config('services.mmcloud.url', ''), '/');
@@ -103,6 +128,13 @@ class MmcloudTenantProvisioningService
                 'X-MMCloud-External-Secret' => $secret,
                 'Accept' => 'application/json',
             ]);
+    }
+
+    private function tenantClient(string $tenantToken): PendingRequest
+    {
+        return $this->client()->withHeaders([
+            'X-MMCloud-Token' => $tenantToken,
+        ]);
     }
 
     private function throwValidationError(RequestException $exception, string $field): never

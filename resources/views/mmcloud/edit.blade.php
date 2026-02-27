@@ -19,6 +19,10 @@
                             class="inline-flex items-center rounded-xl px-4 py-2 border border-neutral-200 dark:border-neutral-700 text-sm text-neutral-700 dark:text-neutral-200">
                             Voltar para lista
                         </a>
+                        <a href="{{ route('mmcloud.tenants.instances.create', ['tenant' => $tenantId]) }}"
+                            class="inline-flex items-center rounded-xl px-4 py-2 border border-[#ff8800] text-[#ff8800] font-semibold text-sm">
+                            Instancia
+                        </a>
                         <a href="{{ route('mmcloud.tenants.create') }}"
                             class="inline-flex items-center rounded-xl px-4 py-2 bg-gradient-to-r from-[#feb365] to-[#ff8800] text-white font-semibold text-sm">
                             Criar empresa

@@ -185,6 +185,89 @@ class SuperAdminTenantController extends Controller
             ->with('tenant_token', $updated['api_token'] ?? null);
     }
 
+    public function createInstance(Request $request, string $tenant)
+    {
+        $this->ensureSuperAdmin($request);
+
+        try {
+            $tenantData = $this->tenantProvisioning->showTenant($tenant);
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('mmcloud.tenants.index')
+                ->withErrors($e->errors());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('mmcloud.tenants.index')
+                ->withErrors([
+                    'mmcloud' => 'Erro inesperado ao carregar tenant para criar instancia.',
+                ]);
+        }
+
+        return view('mmcloud.instances.create', [
+            'tenant' => $tenantData,
+            'tenantId' => $tenant,
+        ]);
+    }
+
+    public function storeInstance(Request $request, string $tenant)
+    {
+        $this->ensureSuperAdmin($request);
+
+        $data = $request->validate([
+            'instance_name' => ['required', 'string', 'max:255'],
+            'evolution_instance_id' => ['nullable', 'string', 'max:64'],
+            'channel' => ['nullable', 'string', 'max:50'],
+            'status' => ['required', 'in:active,inactive,maintenance'],
+            'config_json' => ['nullable', 'string'],
+        ]);
+
+        $payload = [
+            'instance_name' => trim($data['instance_name']),
+            'evolution_instance_id' => isset($data['evolution_instance_id'])
+                ? trim((string) $data['evolution_instance_id'])
+                : null,
+            'channel' => isset($data['channel']) && trim((string) $data['channel']) !== ''
+                ? trim((string) $data['channel'])
+                : 'whatsapp',
+            'status' => $data['status'],
+        ];
+
+        $configJson = isset($data['config_json']) ? trim($data['config_json']) : '';
+        if ($configJson !== '') {
+            $decoded = json_decode($configJson, true);
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
+                return back()
+                    ->withErrors(['config_json' => 'JSON de config invalido.'])
+                    ->withInput();
+            }
+
+            $payload['config'] = $decoded;
+        }
+
+        try {
+            $result = $this->tenantProvisioning->createTenantInstance($tenant, $payload);
+        } catch (ValidationException $e) {
+            return back()
+                ->withErrors($e->errors())
+                ->withInput();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()
+                ->withErrors([
+                    'mmcloud' => 'Erro inesperado ao criar instancia no MMCC.',
+                ])
+                ->withInput();
+        }
+
+        return redirect()
+            ->route('mmcloud.tenants.instances.create', ['tenant' => $tenant])
+            ->with('status', 'Instancia criada/atualizada com sucesso.')
+            ->with('instance_result', $result['instance'] ?? null);
+    }
+
     private function ensureSuperAdmin(Request $request): void
     {
         $user = $request->user();
