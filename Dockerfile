@@ -43,6 +43,8 @@ ENV WEB_DOCUMENT_ROOT=/app/public
 RUN chown -R application:application /app/storage /app/bootstrap/cache \
     && chmod -R 775 /app/storage /app/bootstrap/cache
 
-RUN php artisan storage:link || true
+RUN mkdir -p /app/storage/app/public \
+    && rm -rf /app/public/storage \
+    && ln -s /app/storage/app/public /app/public/storage
 
 EXPOSE 80

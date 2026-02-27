@@ -45,6 +45,9 @@ jobs:
             echo "🏗️ Rodando Vite build..."
             npm run build || { echo "❌ Falha no Vite build"; exit 1; }
 
+            echo "🔗 Garantindo link de storage..."
+            php artisan storage:link || true
+
             echo "🧰 Rodando migrations..."
             php artisan migrate --force || { echo "❌ Falha nas migrations"; exit 1; }
 

@@ -4,7 +4,15 @@
 - Garanta que `APP_ENV`, `APP_URL`, `APP_KEY` e credenciais de banco/servicos estao definidos no `.env` do servidor.
 - Configure `QUEUE_CONNECTION`, `CACHE_STORE`, `SESSION_DRIVER` conforme a infraestrutura (DB, Redis, etc).
 - Crie as pastas `storage` com permissoes de escrita pelo usuario do PHP-FPM/Apache.
+- Para uploads persistentes em Docker/Coolify, monte um volume em `/app/storage/app/public`.
+- Em producao, use `FILESYSTEM_DISK=public` no `.env`.
 - Verifique se `ffmpeg`/`ffprobe` estao instalados quando usar as rotinas de video (`.env.example:70-84`).
+
+## Persistencia de uploads
+- O projeto salva imagens/videos no disco `public` do Laravel (`storage/app/public`).
+- As URLs publicas saem como `/storage/...`, portanto o link simbolico `public/storage -> storage/app/public` precisa existir.
+- Em ambiente Docker este link deve ser criado no build/start do container e o volume precisa apontar para `/app/storage/app/public`.
+- Se necessario, recrie manualmente com `php artisan storage:link`.
 
 ## Pipeline sugerido
 1. **Baixar codigo**: `git pull` na branch de producao.
