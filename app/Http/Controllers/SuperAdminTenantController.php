@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\MmcloudTenantProvisioningService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class SuperAdminTenantController extends Controller
@@ -75,6 +76,13 @@ class SuperAdminTenantController extends Controller
     public function store(Request $request)
     {
         $this->ensureSuperAdmin($request);
+
+        Log::info('MMCloud tenant store reached', [
+            'user_id' => optional($request->user())->id,
+            'host' => $request->getHost(),
+            'full_url' => $request->fullUrl(),
+            'session_id' => $request->hasSession() ? $request->session()->getId() : null,
+        ]);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -256,6 +264,14 @@ class SuperAdminTenantController extends Controller
     public function storeInstance(Request $request, string $tenant)
     {
         $this->ensureSuperAdmin($request);
+
+        Log::info('MMCloud instance store reached', [
+            'user_id' => optional($request->user())->id,
+            'tenant' => $tenant,
+            'host' => $request->getHost(),
+            'full_url' => $request->fullUrl(),
+            'session_id' => $request->hasSession() ? $request->session()->getId() : null,
+        ]);
 
         $data = $request->validate([
             'instance_name' => ['required', 'string', 'max:255'],
