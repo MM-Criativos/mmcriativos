@@ -28,7 +28,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('mmcloud.tenants.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('mmcloud.tenants.store', [], false) }}" method="POST" class="space-y-4">
                     @csrf
 
                     <div>

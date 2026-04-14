@@ -43,7 +43,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('mmcloud.tenants.update', ['tenant' => $tenantId]) }}" class="space-y-4">
+                    <form method="POST" action="{{ route('mmcloud.tenants.update', ['tenant' => $tenantId], false) }}" class="space-y-4">
                         @csrf
                         @method('PATCH')
 
@@ -94,7 +94,7 @@
                         </div>
                     </form>
 
-                    <form method="POST" action="{{ route('mmcloud.tenants.regenerate-api-token', ['tenant' => $tenantId]) }}"
+                    <form method="POST" action="{{ route('mmcloud.tenants.regenerate-api-token', ['tenant' => $tenantId], false) }}"
                         class="mt-4"
                         onsubmit="return confirm('Regenerar API key deste tenant? A chave atual sera invalidada.');">
                         @csrf

@@ -62,7 +62,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('mmcloud.tenants.instances.store', ['tenant' => $tenantId]) }}" class="space-y-4">
+                    <form method="POST" action="{{ route('mmcloud.tenants.instances.store', ['tenant' => $tenantId], false) }}" class="space-y-4">
                         @csrf
                         <input type="hidden" name="instance_id" value="{{ old('instance_id', $selectedInstanceId) }}">
 
