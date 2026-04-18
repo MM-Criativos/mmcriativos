@@ -158,73 +158,73 @@ const dbWriteAdapter = new DatabaseWriteAdapter({
 });
 
 const capabilityCatalog: CapabilityDescriptor[] = [
-  { name: "vee.health", phase: "v0.1", permission: "read_only", status: "enabled" },
-  { name: "vee.list_capabilities", phase: "v0.1", permission: "read_only", status: "enabled" },
-  { name: "vee.n8n.list_workflows", phase: "v0.1", permission: "read_only", status: "enabled" },
-  { name: "vee.n8n.get_workflow", phase: "v0.1", permission: "read_only", status: "enabled" },
-  { name: "vee.n8n.preview_workflow_diff", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.n8n.list_recent_executions", phase: "v0.1", permission: "read_only", status: "enabled" },
-  { name: "vee.n8n.get_execution", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.n8n.retry_execution", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.n8n.stop_execution", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_health", phase: "v0.1", permission: "read_only", status: "enabled" },
+  { name: "vee_list_capabilities", phase: "v0.1", permission: "read_only", status: "enabled" },
+  { name: "vee_n8n_list_workflows", phase: "v0.1", permission: "read_only", status: "enabled" },
+  { name: "vee_n8n_get_workflow", phase: "v0.1", permission: "read_only", status: "enabled" },
+  { name: "vee_n8n_preview_workflow_diff", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_n8n_list_recent_executions", phase: "v0.1", permission: "read_only", status: "enabled" },
+  { name: "vee_n8n_get_execution", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_n8n_retry_execution", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_n8n_stop_execution", phase: "v0.2", permission: "safe_execute", status: "enabled" },
   {
-    name: "vee.n8n.update_workflow",
+    name: "vee_n8n_update_workflow",
     phase: "v0.2",
     permission: "approval_required",
     status: "enabled"
   },
   {
-    name: "vee.n8n.patch_workflow_nodes",
+    name: "vee_n8n_patch_workflow_nodes",
     phase: "v0.2",
     permission: "approval_required",
     status: "enabled"
   },
   {
-    name: "vee.n8n.rollback_workflow",
+    name: "vee_n8n_rollback_workflow",
     phase: "v0.2",
     permission: "approval_required",
     status: "enabled"
   },
-  { name: "vee.obsidian.health", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.obsidian.search", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.obsidian.read_note", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.obsidian.create_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.obsidian.append_to_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.obsidian.update_note_section", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.obsidian.append_to_daily_log", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.obsidian.create_task_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.server.status", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.list_containers", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.get_container_logs", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.server.disk_usage", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.memory_usage", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.list_containers_detailed", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.inspect_container", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.restart_container", phase: "v0.2", permission: "approval_required", status: "enabled" },
-  { name: "vee.server.tail_log", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.service_status", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.health_check", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.server.list_allowed_paths", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.claude.connection_info", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_tenant_by_slug", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_client_by_phone", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_recent_ai_messages", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_context_state", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_booking_session", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_recent_appointments", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_project_summary", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_pending_tasks", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_user_preferences", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.get_agent_execution_history", phase: "v0.2", permission: "read_only", status: "enabled" },
-  { name: "vee.db.update_project_status", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.db.create_internal_task", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.db.save_execution_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.db.update_context_state", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.db.register_incident", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.db.attach_task_to_project", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.db.mark_task_as_blocked", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.db.mark_task_as_done", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee.mmcc.list_tenants", phase: "v0.1", permission: "read_only", status: "planned" }
+  { name: "vee_obsidian_health", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_obsidian_search", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_obsidian_read_note", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_obsidian_create_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_obsidian_append_to_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_obsidian_update_note_section", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_obsidian_append_to_daily_log", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_obsidian_create_task_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_server_status", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_list_containers", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_get_container_logs", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_server_disk_usage", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_memory_usage", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_list_containers_detailed", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_inspect_container", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_restart_container", phase: "v0.2", permission: "approval_required", status: "enabled" },
+  { name: "vee_server_tail_log", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_service_status", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_health_check", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_server_list_allowed_paths", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_claude_connection_info", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_tenant_by_slug", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_client_by_phone", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_recent_ai_messages", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_context_state", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_booking_session", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_recent_appointments", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_project_summary", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_pending_tasks", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_user_preferences", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_agent_execution_history", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_update_project_status", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_create_internal_task", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_save_execution_note", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_update_context_state", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_register_incident", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_attach_task_to_project", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_mark_task_as_blocked", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_mark_task_as_done", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_mmcc_list_tenants", phase: "v0.1", permission: "read_only", status: "planned" }
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -682,14 +682,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.health",
+    "vee_health",
     {
       title: "Vee Health",
       description: "Returns Vee MCP server health information."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.health",
+        toolName: "vee_health",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -705,14 +705,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.list_capabilities",
+    "vee_list_capabilities",
     {
       title: "Vee Capabilities",
       description: "Lists enabled and planned Vee MCP tools."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.list_capabilities",
+        toolName: "vee_list_capabilities",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -728,14 +728,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.list_workflows",
+    "vee_n8n_list_workflows",
     {
       title: "Vee N8N List Workflows",
       description: "Lists all n8n workflows via REST API (includes sub-workflows)."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.n8n.list_workflows",
+        toolName: "vee_n8n_list_workflows",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -756,7 +756,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.get_workflow",
+    "vee_n8n_get_workflow",
     {
       title: "Vee N8N Get Workflow",
       description: "Gets one n8n workflow by ID via REST API.",
@@ -766,7 +766,7 @@ function createServer(): McpServer {
     },
     async ({ workflowId }) =>
       runAuditedTool({
-        toolName: "vee.n8n.get_workflow",
+        toolName: "vee_n8n_get_workflow",
         permission: "read_only",
         isWrite: false,
         args: { workflowId },
@@ -784,7 +784,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.preview_workflow_diff",
+    "vee_n8n_preview_workflow_diff",
     {
       title: "Vee N8N Preview Workflow Diff",
       description:
@@ -804,7 +804,7 @@ function createServer(): McpServer {
     },
     async ({ workflowId, workflow, operations }) =>
       runAuditedTool({
-        toolName: "vee.n8n.preview_workflow_diff",
+        toolName: "vee_n8n_preview_workflow_diff",
         permission: "read_only",
         isWrite: false,
         args: { workflowId, workflow, operations },
@@ -851,7 +851,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.list_recent_executions",
+    "vee_n8n_list_recent_executions",
     {
       title: "Vee N8N List Recent Executions",
       description: "Lists recent n8n executions, optionally filtered by workflow and status.",
@@ -863,7 +863,7 @@ function createServer(): McpServer {
     },
     async ({ workflowId, status, limit }) =>
       runAuditedTool({
-        toolName: "vee.n8n.list_recent_executions",
+        toolName: "vee_n8n_list_recent_executions",
         permission: "read_only",
         isWrite: false,
         args: { workflowId, status, limit },
@@ -888,7 +888,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.get_execution",
+    "vee_n8n_get_execution",
     {
       title: "Vee N8N Get Execution",
       description: "Gets execution details by ID.",
@@ -902,7 +902,7 @@ function createServer(): McpServer {
     },
     async ({ executionId, includeData }) =>
       runAuditedTool({
-        toolName: "vee.n8n.get_execution",
+        toolName: "vee_n8n_get_execution",
         permission: "read_only",
         isWrite: false,
         args: { executionId, includeData },
@@ -920,7 +920,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.retry_execution",
+    "vee_n8n_retry_execution",
     {
       title: "Vee N8N Retry Execution",
       description: "Retries a failed/canceled execution.",
@@ -934,7 +934,7 @@ function createServer(): McpServer {
     },
     async ({ executionId, loadWorkflow }) =>
       runAuditedTool({
-        toolName: "vee.n8n.retry_execution",
+        toolName: "vee_n8n_retry_execution",
         permission: "safe_execute",
         isWrite: true,
         args: { executionId, loadWorkflow },
@@ -956,7 +956,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.stop_execution",
+    "vee_n8n_stop_execution",
     {
       title: "Vee N8N Stop Execution",
       description:
@@ -971,7 +971,7 @@ function createServer(): McpServer {
     },
     async ({ executionId, allowDeleteFallback }) =>
       runAuditedTool({
-        toolName: "vee.n8n.stop_execution",
+        toolName: "vee_n8n_stop_execution",
         permission: "safe_execute",
         isWrite: true,
         args: { executionId, allowDeleteFallback },
@@ -995,7 +995,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.update_workflow",
+    "vee_n8n_update_workflow",
     {
       title: "Vee N8N Update Workflow",
       description: "Workflow update with persistent approval flow (request -> approve -> execute).",
@@ -1015,7 +1015,7 @@ function createServer(): McpServer {
     },
     async ({ workflowId, workflow, changeSummary, approvalId, autoRequestApproval }) =>
       runAuditedTool({
-        toolName: "vee.n8n.update_workflow",
+        toolName: "vee_n8n_update_workflow",
         permission: "approval_required",
         isWrite: true,
         args: { workflowId, workflow, changeSummary, approvalId, autoRequestApproval },
@@ -1052,7 +1052,7 @@ function createServer(): McpServer {
 
             const approval = await createWorkflowApprovalRequest({
               actionName: "n8n.update_workflow",
-              toolName: "vee.n8n.update_workflow",
+              toolName: "vee_n8n_update_workflow",
               workflowId,
               workflow: candidateWorkflow,
               previousWorkflow: currentWorkflow,
@@ -1079,7 +1079,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.patch_workflow_nodes",
+    "vee_n8n_patch_workflow_nodes",
     {
       title: "Vee N8N Patch Workflow Nodes",
       description:
@@ -1101,7 +1101,7 @@ function createServer(): McpServer {
     },
     async ({ workflowId, operations, changeSummary, approvalId, autoRequestApproval }) =>
       runAuditedTool({
-        toolName: "vee.n8n.patch_workflow_nodes",
+        toolName: "vee_n8n_patch_workflow_nodes",
         permission: "approval_required",
         isWrite: true,
         args: { workflowId, operations, changeSummary, approvalId, autoRequestApproval },
@@ -1141,7 +1141,7 @@ function createServer(): McpServer {
 
             const approval = await createWorkflowApprovalRequest({
               actionName: "n8n.patch_workflow_nodes",
-              toolName: "vee.n8n.patch_workflow_nodes",
+              toolName: "vee_n8n_patch_workflow_nodes",
               workflowId,
               workflow: patchResult.workflow,
               previousWorkflow: currentWorkflow,
@@ -1175,7 +1175,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.n8n.rollback_workflow",
+    "vee_n8n_rollback_workflow",
     {
       title: "Vee N8N Rollback Workflow",
       description:
@@ -1195,7 +1195,7 @@ function createServer(): McpServer {
     },
     async ({ sourceApprovalId, changeSummary, approvalId, autoRequestApproval }) =>
       runAuditedTool({
-        toolName: "vee.n8n.rollback_workflow",
+        toolName: "vee_n8n_rollback_workflow",
         permission: "approval_required",
         isWrite: true,
         args: { sourceApprovalId, changeSummary, approvalId, autoRequestApproval },
@@ -1254,7 +1254,7 @@ function createServer(): McpServer {
 
             const rollbackApproval = await createWorkflowApprovalRequest({
               actionName: "n8n.rollback_workflow",
-              toolName: "vee.n8n.rollback_workflow",
+              toolName: "vee_n8n_rollback_workflow",
               workflowId,
               workflow: rollbackWorkflow,
               previousWorkflow: currentWorkflow,
@@ -1288,14 +1288,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.health",
+    "vee_obsidian_health",
     {
       title: "Vee Obsidian Health",
       description: "Returns Obsidian adapter configuration and root accessibility."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.obsidian.health",
+        toolName: "vee_obsidian_health",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -1311,7 +1311,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.search",
+    "vee_obsidian_search",
     {
       title: "Vee Obsidian Search",
       description: "Searches markdown notes in the configured Obsidian vault.",
@@ -1323,7 +1323,7 @@ function createServer(): McpServer {
     },
     async ({ query, limit, caseSensitive }) =>
       runAuditedTool({
-        toolName: "vee.obsidian.search",
+        toolName: "vee_obsidian_search",
         permission: "read_only",
         isWrite: false,
         args: { query, limit, caseSensitive },
@@ -1348,7 +1348,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.read_note",
+    "vee_obsidian_read_note",
     {
       title: "Vee Obsidian Read Note",
       description: "Reads one markdown note from the Obsidian vault.",
@@ -1359,7 +1359,7 @@ function createServer(): McpServer {
     },
     async ({ path, maxChars }) =>
       runAuditedTool({
-        toolName: "vee.obsidian.read_note",
+        toolName: "vee_obsidian_read_note",
         permission: "read_only",
         isWrite: false,
         args: { path, maxChars },
@@ -1379,7 +1379,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.create_note",
+    "vee_obsidian_create_note",
     {
       title: "Vee Obsidian Create Note",
       description:
@@ -1403,7 +1403,7 @@ function createServer(): McpServer {
     },
     async ({ path, title, template, frontmatter, content }) =>
       runAuditedTool({
-        toolName: "vee.obsidian.create_note",
+        toolName: "vee_obsidian_create_note",
         permission: "safe_execute",
         isWrite: true,
         args: { path, title, template, frontmatter },
@@ -1425,7 +1425,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.append_to_note",
+    "vee_obsidian_append_to_note",
     {
       title: "Vee Obsidian Append to Note",
       description:
@@ -1442,7 +1442,7 @@ function createServer(): McpServer {
     },
     async ({ path, content, section, prepend }) =>
       runAuditedTool({
-        toolName: "vee.obsidian.append_to_note",
+        toolName: "vee_obsidian_append_to_note",
         permission: "safe_execute",
         isWrite: true,
         args: { path, section, prepend, content_length: content.length },
@@ -1458,7 +1458,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.update_note_section",
+    "vee_obsidian_update_note_section",
     {
       title: "Vee Obsidian Update Note Section",
       description:
@@ -1475,7 +1475,7 @@ function createServer(): McpServer {
     },
     async ({ path, section_name, content, create_if_missing }) =>
       runAuditedTool({
-        toolName: "vee.obsidian.update_note_section",
+        toolName: "vee_obsidian_update_note_section",
         permission: "safe_execute",
         isWrite: true,
         args: { path, section_name, create_if_missing },
@@ -1496,7 +1496,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.append_to_daily_log",
+    "vee_obsidian_append_to_daily_log",
     {
       title: "Vee Obsidian Append to Daily Log",
       description:
@@ -1516,7 +1516,7 @@ function createServer(): McpServer {
     },
     async ({ date, category, content }) =>
       runAuditedTool({
-        toolName: "vee.obsidian.append_to_daily_log",
+        toolName: "vee_obsidian_append_to_daily_log",
         permission: "safe_execute",
         isWrite: true,
         args: { date, category },
@@ -1532,7 +1532,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.obsidian.create_task_note",
+    "vee_obsidian_create_task_note",
     {
       title: "Vee Obsidian Create Task Note",
       description:
@@ -1558,7 +1558,7 @@ function createServer(): McpServer {
     },
     async ({ project, title, status, priority, description, links, assignee }) =>
       runAuditedTool({
-        toolName: "vee.obsidian.create_task_note",
+        toolName: "vee_obsidian_create_task_note",
         permission: "safe_execute",
         isWrite: true,
         args: { project, title, status, priority, assignee },
@@ -1582,14 +1582,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.status",
+    "vee_server_status",
     {
       title: "Vee Server Status",
       description: "Checks server SSH connectivity and basic host metadata."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.server.status",
+        toolName: "vee_server_status",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -1605,7 +1605,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.list_containers",
+    "vee_server_list_containers",
     {
       title: "Vee Server List Containers",
       description: "Lists Docker containers from remote server via SSH.",
@@ -1615,7 +1615,7 @@ function createServer(): McpServer {
     },
     async ({ limit }) =>
       runAuditedTool({
-        toolName: "vee.server.list_containers",
+        toolName: "vee_server_list_containers",
         permission: "read_only",
         isWrite: false,
         args: { limit },
@@ -1636,7 +1636,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.get_container_logs",
+    "vee_server_get_container_logs",
     {
       title: "Vee Server Get Container Logs",
       description: "Gets container logs tail via SSH (read-only operation).",
@@ -1647,7 +1647,7 @@ function createServer(): McpServer {
     },
     async ({ containerName, tailLines }) =>
       runAuditedTool({
-        toolName: "vee.server.get_container_logs",
+        toolName: "vee_server_get_container_logs",
         permission: "safe_execute",
         isWrite: false,
         args: { containerName, tailLines },
@@ -1668,14 +1668,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.disk_usage",
+    "vee_server_disk_usage",
     {
       title: "Vee Server Disk Usage",
       description: "Returns disk usage (df -h) from the remote server via SSH."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.server.disk_usage",
+        toolName: "vee_server_disk_usage",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -1692,14 +1692,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.memory_usage",
+    "vee_server_memory_usage",
     {
       title: "Vee Server Memory Usage",
       description: "Returns RAM usage (free -m) from the remote server via SSH."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.server.memory_usage",
+        toolName: "vee_server_memory_usage",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -1715,7 +1715,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.list_containers_detailed",
+    "vee_server_list_containers_detailed",
     {
       title: "Vee Server List Containers Detailed",
       description: "Lists Docker containers with name, status, image, ports, and short ID via SSH.",
@@ -1725,7 +1725,7 @@ function createServer(): McpServer {
     },
     async ({ limit }) =>
       runAuditedTool({
-        toolName: "vee.server.list_containers_detailed",
+        toolName: "vee_server_list_containers_detailed",
         permission: "read_only",
         isWrite: false,
         args: { limit },
@@ -1742,7 +1742,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.inspect_container",
+    "vee_server_inspect_container",
     {
       title: "Vee Server Inspect Container",
       description: "Returns configuration and state of a Docker container via docker inspect.",
@@ -1752,7 +1752,7 @@ function createServer(): McpServer {
     },
     async ({ containerName }) =>
       runAuditedTool({
-        toolName: "vee.server.inspect_container",
+        toolName: "vee_server_inspect_container",
         permission: "read_only",
         isWrite: false,
         args: { containerName },
@@ -1768,7 +1768,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.restart_container",
+    "vee_server_restart_container",
     {
       title: "Vee Server Restart Container",
       description:
@@ -1779,7 +1779,7 @@ function createServer(): McpServer {
     },
     async ({ containerName }) =>
       runAuditedTool({
-        toolName: "vee.server.restart_container",
+        toolName: "vee_server_restart_container",
         permission: "approval_required",
         isWrite: true,
         args: { containerName },
@@ -1795,7 +1795,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.tail_log",
+    "vee_server_tail_log",
     {
       title: "Vee Server Tail Log",
       description:
@@ -1807,7 +1807,7 @@ function createServer(): McpServer {
     },
     async ({ path, lines }) =>
       runAuditedTool({
-        toolName: "vee.server.tail_log",
+        toolName: "vee_server_tail_log",
         permission: "read_only",
         isWrite: false,
         args: { path, lines },
@@ -1823,7 +1823,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.service_status",
+    "vee_server_service_status",
     {
       title: "Vee Server Service Status",
       description:
@@ -1834,7 +1834,7 @@ function createServer(): McpServer {
     },
     async ({ serviceName }) =>
       runAuditedTool({
-        toolName: "vee.server.service_status",
+        toolName: "vee_server_service_status",
         permission: "read_only",
         isWrite: false,
         args: { serviceName },
@@ -1850,7 +1850,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.health_check",
+    "vee_server_health_check",
     {
       title: "Vee Server Health Check",
       description:
@@ -1858,7 +1858,7 @@ function createServer(): McpServer {
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.server.health_check",
+        toolName: "vee_server_health_check",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -1874,14 +1874,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.server.list_allowed_paths",
+    "vee_server_list_allowed_paths",
     {
       title: "Vee Server List Allowed Paths",
       description: "Returns the configured allowlists for containers, services, and log paths."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.server.list_allowed_paths",
+        toolName: "vee_server_list_allowed_paths",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -1897,14 +1897,14 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.claude.connection_info",
+    "vee_claude_connection_info",
     {
       title: "Vee Claude Connection Info",
       description: "Returns MCP endpoint and auth requirements for Claude connector setup."
     },
     async () =>
       runAuditedTool({
-        toolName: "vee.claude.connection_info",
+        toolName: "vee_claude_connection_info",
         permission: "read_only",
         isWrite: false,
         args: {},
@@ -1920,7 +1920,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_tenant_by_slug",
+    "vee_db_get_tenant_by_slug",
     {
       title: "Vee DB Get Tenant by Slug",
       description:
@@ -1931,7 +1931,7 @@ function createServer(): McpServer {
     },
     async ({ slug }) =>
       runAuditedTool({
-        toolName: "vee.db.get_tenant_by_slug",
+        toolName: "vee_db_get_tenant_by_slug",
         permission: "read_only",
         isWrite: false,
         args: { slug },
@@ -1948,7 +1948,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_client_by_phone",
+    "vee_db_get_client_by_phone",
     {
       title: "Vee DB Get Client by Phone",
       description:
@@ -1959,7 +1959,7 @@ function createServer(): McpServer {
     },
     async ({ phone }) =>
       runAuditedTool({
-        toolName: "vee.db.get_client_by_phone",
+        toolName: "vee_db_get_client_by_phone",
         permission: "read_only",
         isWrite: false,
         args: { phone_digits: phone.replace(/\D/g, "").length },
@@ -1976,7 +1976,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_recent_ai_messages",
+    "vee_db_get_recent_ai_messages",
     {
       title: "Vee DB Get Recent AI Messages",
       description:
@@ -1988,7 +1988,7 @@ function createServer(): McpServer {
     },
     async ({ session_id, limit }) =>
       runAuditedTool({
-        toolName: "vee.db.get_recent_ai_messages",
+        toolName: "vee_db_get_recent_ai_messages",
         permission: "read_only",
         isWrite: false,
         args: { session_id, limit },
@@ -2005,7 +2005,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_context_state",
+    "vee_db_get_context_state",
     {
       title: "Vee DB Get Context State",
       description:
@@ -2017,7 +2017,7 @@ function createServer(): McpServer {
     },
     async ({ session_id, key }) =>
       runAuditedTool({
-        toolName: "vee.db.get_context_state",
+        toolName: "vee_db_get_context_state",
         permission: "read_only",
         isWrite: false,
         args: { session_id, key },
@@ -2034,7 +2034,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_booking_session",
+    "vee_db_get_booking_session",
     {
       title: "Vee DB Get Booking Session",
       description: "Returns details of a booking session by its ID.",
@@ -2044,7 +2044,7 @@ function createServer(): McpServer {
     },
     async ({ session_id }) =>
       runAuditedTool({
-        toolName: "vee.db.get_booking_session",
+        toolName: "vee_db_get_booking_session",
         permission: "read_only",
         isWrite: false,
         args: { session_id },
@@ -2061,7 +2061,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_recent_appointments",
+    "vee_db_get_recent_appointments",
     {
       title: "Vee DB Get Recent Appointments",
       description: "Returns recent or upcoming appointments, optionally filtered by tenant.",
@@ -2072,7 +2072,7 @@ function createServer(): McpServer {
     },
     async ({ tenant_id, limit }) =>
       runAuditedTool({
-        toolName: "vee.db.get_recent_appointments",
+        toolName: "vee_db_get_recent_appointments",
         permission: "read_only",
         isWrite: false,
         args: { tenant_id, limit },
@@ -2093,7 +2093,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_project_summary",
+    "vee_db_get_project_summary",
     {
       title: "Vee DB Get Project Summary",
       description:
@@ -2107,7 +2107,7 @@ function createServer(): McpServer {
     },
     async ({ slug_or_id }) =>
       runAuditedTool({
-        toolName: "vee.db.get_project_summary",
+        toolName: "vee_db_get_project_summary",
         permission: "read_only",
         isWrite: false,
         args: { slug_or_id },
@@ -2124,7 +2124,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_pending_tasks",
+    "vee_db_get_pending_tasks",
     {
       title: "Vee DB Get Pending Tasks",
       description:
@@ -2140,7 +2140,7 @@ function createServer(): McpServer {
     },
     async ({ project_slug, status, limit }) =>
       runAuditedTool({
-        toolName: "vee.db.get_pending_tasks",
+        toolName: "vee_db_get_pending_tasks",
         permission: "read_only",
         isWrite: false,
         args: { project_slug, status, limit },
@@ -2160,7 +2160,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_user_preferences",
+    "vee_db_get_user_preferences",
     {
       title: "Vee DB Get User Preferences",
       description: "Returns saved preferences for a tenant by tenant ID, optionally filtered by key.",
@@ -2171,7 +2171,7 @@ function createServer(): McpServer {
     },
     async ({ tenant_id, key_filter }) =>
       runAuditedTool({
-        toolName: "vee.db.get_user_preferences",
+        toolName: "vee_db_get_user_preferences",
         permission: "read_only",
         isWrite: false,
         args: { tenant_id, key_filter },
@@ -2192,7 +2192,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.get_agent_execution_history",
+    "vee_db_get_agent_execution_history",
     {
       title: "Vee DB Get Agent Execution History",
       description:
@@ -2209,7 +2209,7 @@ function createServer(): McpServer {
     },
     async ({ tool_name, status, only_writes, limit }) =>
       runAuditedTool({
-        toolName: "vee.db.get_agent_execution_history",
+        toolName: "vee_db_get_agent_execution_history",
         permission: "read_only",
         isWrite: false,
         args: { tool_name, status, only_writes, limit },
@@ -2229,7 +2229,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.update_project_status",
+    "vee_db_update_project_status",
     {
       title: "Vee DB Update Project Status",
       description:
@@ -2244,7 +2244,7 @@ function createServer(): McpServer {
     },
     async ({ slug_or_id, status, notes }) =>
       runAuditedTool({
-        toolName: "vee.db.update_project_status",
+        toolName: "vee_db_update_project_status",
         permission: "safe_execute",
         isWrite: true,
         args: { slug_or_id, status },
@@ -2260,7 +2260,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.create_internal_task",
+    "vee_db_create_internal_task",
     {
       title: "Vee DB Create Internal Task",
       description:
@@ -2278,7 +2278,7 @@ function createServer(): McpServer {
     },
     async ({ project_slug_or_id, title, description, priority, assigned_to }) =>
       runAuditedTool({
-        toolName: "vee.db.create_internal_task",
+        toolName: "vee_db_create_internal_task",
         permission: "safe_execute",
         isWrite: true,
         args: { project_slug_or_id, title, priority },
@@ -2300,7 +2300,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.save_execution_note",
+    "vee_db_save_execution_note",
     {
       title: "Vee DB Save Execution Note",
       description:
@@ -2318,7 +2318,7 @@ function createServer(): McpServer {
     },
     async ({ note_type, title, content, tool_name, session_id, project_slug_or_id }) =>
       runAuditedTool({
-        toolName: "vee.db.save_execution_note",
+        toolName: "vee_db_save_execution_note",
         permission: "safe_execute",
         isWrite: true,
         args: { note_type, title, tool_name, session_id },
@@ -2341,7 +2341,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.update_context_state",
+    "vee_db_update_context_state",
     {
       title: "Vee DB Update Context State",
       description:
@@ -2355,7 +2355,7 @@ function createServer(): McpServer {
     },
     async ({ session_id, key, state, tenant_id }) =>
       runAuditedTool({
-        toolName: "vee.db.update_context_state",
+        toolName: "vee_db_update_context_state",
         permission: "safe_execute",
         isWrite: true,
         args: { session_id, key },
@@ -2376,7 +2376,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.register_incident",
+    "vee_db_register_incident",
     {
       title: "Vee DB Register Incident",
       description:
@@ -2393,7 +2393,7 @@ function createServer(): McpServer {
     },
     async ({ title, severity, description, affected_service }) =>
       runAuditedTool({
-        toolName: "vee.db.register_incident",
+        toolName: "vee_db_register_incident",
         permission: "safe_execute",
         isWrite: true,
         args: { title, severity, affected_service },
@@ -2414,7 +2414,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.attach_task_to_project",
+    "vee_db_attach_task_to_project",
     {
       title: "Vee DB Attach Task to Project",
       description:
@@ -2426,7 +2426,7 @@ function createServer(): McpServer {
     },
     async ({ task_id, project_slug_or_id }) =>
       runAuditedTool({
-        toolName: "vee.db.attach_task_to_project",
+        toolName: "vee_db_attach_task_to_project",
         permission: "safe_execute",
         isWrite: true,
         args: { task_id, project_slug_or_id },
@@ -2442,7 +2442,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.mark_task_as_blocked",
+    "vee_db_mark_task_as_blocked",
     {
       title: "Vee DB Mark Task as Blocked",
       description:
@@ -2454,7 +2454,7 @@ function createServer(): McpServer {
     },
     async ({ task_id, reason }) =>
       runAuditedTool({
-        toolName: "vee.db.mark_task_as_blocked",
+        toolName: "vee_db_mark_task_as_blocked",
         permission: "safe_execute",
         isWrite: true,
         args: { task_id },
@@ -2470,7 +2470,7 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
-    "vee.db.mark_task_as_done",
+    "vee_db_mark_task_as_done",
     {
       title: "Vee DB Mark Task as Done",
       description:
@@ -2482,7 +2482,7 @@ function createServer(): McpServer {
     },
     async ({ task_id, notes }) =>
       runAuditedTool({
-        toolName: "vee.db.mark_task_as_done",
+        toolName: "vee_db_mark_task_as_done",
         permission: "safe_execute",
         isWrite: true,
         args: { task_id },
