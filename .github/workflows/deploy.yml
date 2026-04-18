@@ -57,22 +57,5 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
-            echo "🎉 Deploy Laravel concluído com sucesso!"
-
-            echo "🤖 Rebuilding vee-agent container..."
-            cd /var/www/mmcriativos/vee-agent || { echo "❌ Diretório vee-agent não encontrado"; exit 1; }
-
-            docker build -t vee-agent . || { echo "❌ Falha no build do vee-agent"; exit 1; }
-
-            docker stop vee-agent 2>/dev/null || true
-            docker rm vee-agent 2>/dev/null || true
-
-            docker run -d \
-              --name vee-agent \
-              --restart unless-stopped \
-              --env-file /var/www/mmcriativos/vee-agent/.env \
-              -p 3334:3334 \
-              vee-agent || { echo "❌ Falha ao iniciar vee-agent"; exit 1; }
-
-            echo "✅ vee-agent container reiniciado com sucesso!"
+            echo "🎉 Deploy concluído com sucesso!"
           REMOTE
