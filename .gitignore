@@ -16,6 +16,9 @@
 /mcp-server/node_modules
 /mcp-server/dist
 /mcp-server/.env
+/vee-agent/node_modules
+/vee-agent/dist
+/vee-agent/.env
 /public/hot
 /public/storage
 /storage/*.key
