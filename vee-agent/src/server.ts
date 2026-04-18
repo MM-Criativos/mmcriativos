@@ -36,11 +36,11 @@ app.use((_req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+  if (_req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
   next();
-});
-
-app.options("*", (_req, res) => {
-  res.sendStatus(204);
 });
 
 // ─── Health ───────────────────────────────────────────────────────────────────
