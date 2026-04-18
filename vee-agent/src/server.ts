@@ -30,7 +30,7 @@ function withAuth(req: Request, res: Response, next: NextFunction): void {
   next();
 }
 
-// ─── CORS (allow all for now — tighten per env later) ────────────────────────
+// ─── CORS ────────────────────────────────────────────────────────────────────
 
 app.use((_req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -43,13 +43,19 @@ app.use((_req, res, next) => {
   next();
 });
 
+// ─── DB state (set during boot) ──────────────────────────────────────────────
+
+let dbReady = false;
+let dbError: string | null = null;
+
 // ─── Health ───────────────────────────────────────────────────────────────────
 
 app.get("/health", (_req, res) => {
   res.json({
     name: "vee-agent",
     version: "1.0.0",
-    status: "ok",
+    status: dbReady ? "ok" : "degraded",
+    db: dbReady ? "ok" : `error: ${dbError ?? "not connected"}`,
     now: new Date().toISOString(),
     model_chat: MODEL_CHAT,
     model_cowork: MODEL_COWORK,
@@ -113,17 +119,29 @@ app.get("/log/feed", withAuth, handleLogFeed);
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
 async function boot(): Promise<void> {
-  await ensureTables();
-  console.log("[Vee Agent] DB tables ensured");
-
-  app.listen(PORT, HOST, () => {
-    console.log(`[Vee Agent] listening on http://${HOST}:${PORT}`);
-    console.log(`[Vee Agent] auth: ${AUTH_TOKEN ? "Bearer token required" : "open"}`);
-    console.log(`[Vee Agent] model_chat: ${MODEL_CHAT}`);
-    console.log(`[Vee Agent] model_cowork: ${MODEL_COWORK}`);
-    console.log(`[Vee Agent] mcp_server: ${MCP_SERVER_URL}`);
-    console.log("[Vee Agent] endpoints: POST /stream, GET /sessions, GET /log/feed");
+  // Start server first — /health responds even if DB is not ready
+  await new Promise<void>((resolve) => {
+    app.listen(PORT, HOST, () => {
+      console.log(`[Vee Agent] listening on http://${HOST}:${PORT}`);
+      console.log(`[Vee Agent] auth: ${AUTH_TOKEN ? "Bearer token required" : "open"}`);
+      console.log(`[Vee Agent] model_chat: ${MODEL_CHAT}`);
+      console.log(`[Vee Agent] model_cowork: ${MODEL_COWORK}`);
+      console.log(`[Vee Agent] mcp_server: ${MCP_SERVER_URL}`);
+      console.log("[Vee Agent] endpoints: POST /stream, GET /sessions, GET /log/feed");
+      resolve();
+    });
   });
+
+  // Connect to DB (non-fatal — server stays up, /health reports degraded)
+  try {
+    await ensureTables();
+    dbReady = true;
+    console.log("[Vee Agent] DB ready");
+  } catch (err: unknown) {
+    dbError = err instanceof Error ? err.message : String(err);
+    console.error("[Vee Agent] DB connection failed:", dbError);
+    console.error("[Vee Agent] Check env vars: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE");
+  }
 }
 
 boot().catch((err: unknown) => {
