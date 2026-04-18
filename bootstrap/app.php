@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        api: __DIR__ . '/../routes/api.php',
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Apenas aliases customizados
         $middleware->alias([
             'approved' => \App\Http\Middleware\EnsureUserIsApproved::class,
+            'vee.internal' => \App\Http\Middleware\EnsureVeeInternalToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vee-mmcriativos": {
+      "transport": {
+        "type": "streamable-http",
+        "url": "https://SEU-DOMINIO/mcp",
+        "headers": {
+          "Authorization": "Bearer SEU_MCP_AUTH_TOKEN"
+        }
+      }
+    }
+  }
+}

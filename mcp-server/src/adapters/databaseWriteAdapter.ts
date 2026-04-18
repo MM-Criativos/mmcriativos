@@ -1,0 +1,493 @@
+import { randomUUID } from "node:crypto";
+import mysql from "mysql2/promise";
+import type { FieldPacket, RowDataPacket } from "mysql2/promise";
+
+// ─── Config ──────────────────────────────────────────────────────────────────
+
+export type DatabaseWriteAdapterConfig = {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+  enabled: boolean;
+};
+
+// ─── Result types ─────────────────────────────────────────────────────────────
+
+export type DbWriteResult<T = Record<string, unknown>> = {
+  ok: boolean;
+  affected_rows: number;
+  before: T | null;
+  after: T | null;
+};
+
+export type DbProjectStatusBefore = {
+  id: number;
+  name: string;
+  slug: string;
+  status: string | null;
+  finished_at: string | null;
+};
+
+export type DbTaskBefore = {
+  id: number;
+  title: string;
+  status: string;
+  progress_notes: string | null;
+  completed_at: string | null;
+};
+
+export type DbCreatedTask = {
+  id: number;
+  title: string;
+  status: string;
+  project_id: number | null;
+  description: string | null;
+  assigned_to: number | null;
+  created_at: string | null;
+};
+
+export type DbExecutionNote = {
+  id: number;
+  note_id: string;
+  note_type: string;
+  tool_name: string | null;
+  session_id: string | null;
+  project_id: number | null;
+  title: string;
+  created_at: string | null;
+};
+
+export type DbContextStateBefore = {
+  id: number | null;
+  session_id: string;
+  key: string;
+  state: unknown;
+  updated_at: string | null;
+};
+
+export type DbIncident = {
+  id: number;
+  incident_id: string;
+  title: string;
+  severity: string;
+  status: string;
+  affected_service: string | null;
+  created_at: string | null;
+};
+
+// ─── Adapter ──────────────────────────────────────────────────────────────────
+
+export class DatabaseWriteAdapter {
+  private readonly config: DatabaseWriteAdapterConfig;
+  private pool: mysql.Pool | null = null;
+
+  constructor(config: DatabaseWriteAdapterConfig) {
+    this.config = {
+      ...config,
+      host: config.host.trim(),
+      user: config.user.trim(),
+      database: config.database.trim()
+    };
+  }
+
+  isConfigured(): boolean {
+    return (
+      this.config.enabled &&
+      this.config.host.length > 0 &&
+      this.config.user.length > 0 &&
+      this.config.database.length > 0
+    );
+  }
+
+  private getPool(): mysql.Pool {
+    if (!this.pool) {
+      this.pool = mysql.createPool({
+        host: this.config.host,
+        port: this.config.port,
+        user: this.config.user,
+        password: this.config.password,
+        database: this.config.database,
+        connectionLimit: 3,
+        connectTimeout: 10_000,
+        charset: "utf8mb4"
+      });
+    }
+    return this.pool;
+  }
+
+  private assertEnabled(): void {
+    if (!this.config.enabled) {
+      throw new Error(
+        "DB writes are disabled. Set DB_WRITE_ENABLED=true to allow write operations."
+      );
+    }
+    if (!this.config.host || !this.config.user || !this.config.database) {
+      throw new Error(
+        "DB_WRITE_HOST, DB_WRITE_USER, and DB_WRITE_DATABASE are required for write tools."
+      );
+    }
+  }
+
+  private async execute(
+    sql: string,
+    params: (string | number | boolean | null)[]
+  ): Promise<mysql.ResultSetHeader> {
+    const [result] = await this.getPool().execute(sql, params) as [mysql.ResultSetHeader, FieldPacket[]];
+    return result;
+  }
+
+  private async queryOne<T>(
+    sql: string,
+    params: (string | number | boolean | null)[]
+  ): Promise<T | null> {
+    const [rows] = await this.getPool().execute(sql, params) as [RowDataPacket[], FieldPacket[]];
+    return rows.length > 0 ? rows[0] as unknown as T : null;
+  }
+
+  private safeStr(v: unknown): string | null {
+    if (v === null || v === undefined) return null;
+    return String(v);
+  }
+
+  private safeNum(v: unknown): number | null {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  // ─── 1. update_project_status ─────────────────────────────────────────────
+
+  /**
+   * Updates the status of a project.
+   * Valid statuses: active | paused | done | cancelled
+   * Also sets finished_at when status = done, clears it otherwise.
+   */
+  async updateProjectStatus(
+    slugOrId: string,
+    status: "active" | "paused" | "done" | "cancelled",
+    notes: string | null
+  ): Promise<DbWriteResult<DbProjectStatusBefore>> {
+    this.assertEnabled();
+
+    const isNumeric = /^\d+$/.test(slugOrId);
+    const whereClause = isNumeric ? "id = ?" : "slug = ?";
+
+    const before = await this.queryOne<DbProjectStatusBefore>(
+      `SELECT id, name, slug, status, finished_at FROM projects WHERE ${whereClause} LIMIT 1`,
+      [slugOrId]
+    );
+    if (!before) throw new Error(`Project not found: ${slugOrId}`);
+
+    const finishedAt = status === "done" ? new Date().toISOString().slice(0, 19).replace("T", " ") : null;
+
+    const result = await this.execute(
+      `UPDATE projects SET status = ?, finished_at = ? WHERE ${whereClause}`,
+      [status, finishedAt, slugOrId]
+    );
+
+    const after = await this.queryOne<DbProjectStatusBefore>(
+      `SELECT id, name, slug, status, finished_at FROM projects WHERE ${whereClause} LIMIT 1`,
+      [slugOrId]
+    );
+
+    void notes; // reserved for future audit note
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before, after };
+  }
+
+  // ─── 2. create_internal_task ──────────────────────────────────────────────
+
+  /**
+   * Creates a new internal project task.
+   * Links to an existing project via slugOrId.
+   */
+  async createInternalTask(params: {
+    projectSlugOrId: string;
+    title: string;
+    description?: string;
+    priority?: string;
+    assignedTo?: number | null;
+  }): Promise<DbWriteResult<DbCreatedTask>> {
+    this.assertEnabled();
+
+    const isNumeric = /^\d+$/.test(params.projectSlugOrId);
+    const project = await this.queryOne<{ id: number }>(
+      `SELECT id FROM projects WHERE ${isNumeric ? "id" : "slug"} = ? LIMIT 1`,
+      [params.projectSlugOrId]
+    );
+    if (!project) throw new Error(`Project not found: ${params.projectSlugOrId}`);
+
+    const result = await this.execute(
+      `INSERT INTO project_tasks (project_id, title, description, status, assigned_to, progress_notes, created_at, updated_at)
+       VALUES (?, ?, ?, 'pending', ?, ?, NOW(), NOW())`,
+      [
+        project.id,
+        params.title.trim(),
+        params.description ?? null,
+        params.assignedTo ?? null,
+        params.priority ? `[priority: ${params.priority}]` : null
+      ]
+    );
+
+    const created = await this.queryOne<DbCreatedTask>(
+      "SELECT id, title, status, project_id, description, assigned_to, created_at FROM project_tasks WHERE id = ? LIMIT 1",
+      [result.insertId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before: null, after: created };
+  }
+
+  // ─── 3. save_execution_note ───────────────────────────────────────────────
+
+  /**
+   * Saves a Vee execution note (diagnosis, fix attempt, summary, analysis).
+   * Table: vee_execution_notes
+   */
+  async saveExecutionNote(params: {
+    noteType: "diagnosis" | "fix_attempt" | "summary" | "analysis";
+    title: string;
+    content: string;
+    toolName?: string;
+    sessionId?: string;
+    projectSlugOrId?: string;
+    meta?: Record<string, unknown>;
+  }): Promise<DbWriteResult<DbExecutionNote>> {
+    this.assertEnabled();
+
+    let projectId: number | null = null;
+    if (params.projectSlugOrId) {
+      const isNumeric = /^\d+$/.test(params.projectSlugOrId);
+      const project = await this.queryOne<{ id: number }>(
+        `SELECT id FROM projects WHERE ${isNumeric ? "id" : "slug"} = ? LIMIT 1`,
+        [params.projectSlugOrId]
+      );
+      projectId = project?.id ?? null;
+    }
+
+    const noteId = randomUUID();
+    const metaJson = params.meta ? JSON.stringify(params.meta) : null;
+
+    const result = await this.execute(
+      `INSERT INTO vee_execution_notes (note_id, note_type, tool_name, session_id, project_id, title, content, meta, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        noteId,
+        params.noteType,
+        params.toolName ?? null,
+        params.sessionId ?? null,
+        projectId,
+        params.title.trim(),
+        params.content,
+        metaJson
+      ]
+    );
+
+    const created = await this.queryOne<DbExecutionNote>(
+      "SELECT id, note_id, note_type, tool_name, session_id, project_id, title, created_at FROM vee_execution_notes WHERE id = ? LIMIT 1",
+      [result.insertId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before: null, after: created };
+  }
+
+  // ─── 4. update_context_state ──────────────────────────────────────────────
+
+  /**
+   * Upserts agent context state (key/value per session).
+   * Table: agent_context_states
+   */
+  async updateContextState(params: {
+    sessionId: string;
+    key: string;
+    state: unknown;
+    tenantId?: number | null;
+  }): Promise<DbWriteResult<DbContextStateBefore>> {
+    this.assertEnabled();
+
+    const before = await this.queryOne<DbContextStateBefore>(
+      "SELECT id, session_id, `key`, state, updated_at FROM agent_context_states WHERE session_id = ? AND `key` = ? LIMIT 1",
+      [params.sessionId, params.key]
+    );
+
+    const stateJson = typeof params.state === "string" ? params.state : JSON.stringify(params.state);
+
+    let result: mysql.ResultSetHeader;
+    if (before?.id) {
+      result = await this.execute(
+        "UPDATE agent_context_states SET state = ?, updated_at = NOW() WHERE id = ?",
+        [stateJson, before.id]
+      );
+    } else {
+      result = await this.execute(
+        `INSERT INTO agent_context_states (tenant_id, session_id, \`key\`, state, created_at, updated_at)
+         VALUES (?, ?, ?, ?, NOW(), NOW())`,
+        [params.tenantId ?? null, params.sessionId, params.key, stateJson]
+      );
+    }
+
+    const after = await this.queryOne<DbContextStateBefore>(
+      "SELECT id, session_id, `key`, state, updated_at FROM agent_context_states WHERE session_id = ? AND `key` = ? LIMIT 1",
+      [params.sessionId, params.key]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before, after };
+  }
+
+  // ─── 5. register_incident ─────────────────────────────────────────────────
+
+  /**
+   * Registers a new operational incident.
+   * Table: vee_incidents
+   */
+  async registerIncident(params: {
+    title: string;
+    severity: "low" | "medium" | "high" | "critical";
+    description: string;
+    affectedService?: string;
+    meta?: Record<string, unknown>;
+  }): Promise<DbWriteResult<DbIncident>> {
+    this.assertEnabled();
+
+    const incidentId = randomUUID();
+    const metaJson = params.meta ? JSON.stringify(params.meta) : null;
+
+    const result = await this.execute(
+      `INSERT INTO vee_incidents (incident_id, title, severity, status, description, affected_service, meta, created_at, updated_at)
+       VALUES (?, ?, ?, 'open', ?, ?, ?, NOW(), NOW())`,
+      [
+        incidentId,
+        params.title.trim(),
+        params.severity,
+        params.description,
+        params.affectedService ?? null,
+        metaJson
+      ]
+    );
+
+    const created = await this.queryOne<DbIncident>(
+      "SELECT id, incident_id, title, severity, status, affected_service, created_at FROM vee_incidents WHERE id = ? LIMIT 1",
+      [result.insertId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before: null, after: created };
+  }
+
+  // ─── 6. attach_task_to_project ────────────────────────────────────────────
+
+  /**
+   * Moves a task to a different project (or assigns project if unset).
+   */
+  async attachTaskToProject(
+    taskId: number,
+    projectSlugOrId: string
+  ): Promise<DbWriteResult<{ task_id: number; old_project_id: number | null; new_project_id: number }>> {
+    this.assertEnabled();
+
+    const task = await this.queryOne<{ id: number; project_id: number | null; title: string }>(
+      "SELECT id, project_id, title FROM project_tasks WHERE id = ? LIMIT 1",
+      [taskId]
+    );
+    if (!task) throw new Error(`Task not found: ${taskId}`);
+
+    const isNumeric = /^\d+$/.test(projectSlugOrId);
+    const project = await this.queryOne<{ id: number }>(
+      `SELECT id FROM projects WHERE ${isNumeric ? "id" : "slug"} = ? LIMIT 1`,
+      [projectSlugOrId]
+    );
+    if (!project) throw new Error(`Project not found: ${projectSlugOrId}`);
+
+    const result = await this.execute(
+      "UPDATE project_tasks SET project_id = ?, updated_at = NOW() WHERE id = ?",
+      [project.id, taskId]
+    );
+
+    return {
+      ok: result.affectedRows > 0,
+      affected_rows: result.affectedRows,
+      before: { task_id: taskId, old_project_id: task.project_id, new_project_id: project.id },
+      after: { task_id: taskId, old_project_id: task.project_id, new_project_id: project.id }
+    };
+  }
+
+  // ─── 7. mark_task_as_blocked ──────────────────────────────────────────────
+
+  /**
+   * Marks a task as blocked with a required reason.
+   * Appends reason to progress_notes.
+   */
+  async markTaskAsBlocked(
+    taskId: number,
+    reason: string
+  ): Promise<DbWriteResult<DbTaskBefore>> {
+    this.assertEnabled();
+
+    const before = await this.queryOne<DbTaskBefore>(
+      "SELECT id, title, status, progress_notes, completed_at FROM project_tasks WHERE id = ? LIMIT 1",
+      [taskId]
+    );
+    if (!before) throw new Error(`Task not found: ${taskId}`);
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
+    const blockNote = `[BLOCKED ${timestamp}] ${reason.trim()}`;
+    const updatedNotes = before.progress_notes
+      ? `${before.progress_notes}\n${blockNote}`
+      : blockNote;
+
+    const result = await this.execute(
+      "UPDATE project_tasks SET status = 'in_progress', progress_notes = ?, updated_at = NOW() WHERE id = ?",
+      [updatedNotes, taskId]
+    );
+
+    const after = await this.queryOne<DbTaskBefore>(
+      "SELECT id, title, status, progress_notes, completed_at FROM project_tasks WHERE id = ? LIMIT 1",
+      [taskId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before, after };
+  }
+
+  // ─── 8. mark_task_as_done ─────────────────────────────────────────────────
+
+  /**
+   * Marks a task as done, setting completed_at.
+   */
+  async markTaskAsDone(
+    taskId: number,
+    notes: string | null
+  ): Promise<DbWriteResult<DbTaskBefore>> {
+    this.assertEnabled();
+
+    const before = await this.queryOne<DbTaskBefore>(
+      "SELECT id, title, status, progress_notes, completed_at FROM project_tasks WHERE id = ? LIMIT 1",
+      [taskId]
+    );
+    if (!before) throw new Error(`Task not found: ${taskId}`);
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
+    let updatedNotes = before.progress_notes ?? "";
+    if (notes) {
+      const doneNote = `[DONE ${timestamp}] ${notes.trim()}`;
+      updatedNotes = updatedNotes ? `${updatedNotes}\n${doneNote}` : doneNote;
+    }
+
+    const result = await this.execute(
+      "UPDATE project_tasks SET status = 'done', completed_at = NOW(), progress_notes = ?, updated_at = NOW() WHERE id = ?",
+      [updatedNotes || null, taskId]
+    );
+
+    const after = await this.queryOne<DbTaskBefore>(
+      "SELECT id, title, status, progress_notes, completed_at FROM project_tasks WHERE id = ? LIMIT 1",
+      [taskId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before, after };
+  }
+
+  async closePool(): Promise<void> {
+    if (this.pool) {
+      await this.pool.end();
+      this.pool = null;
+    }
+  }
+}
