@@ -170,6 +170,13 @@
         <!-- 🔹 RIGHT: ACTIONS + PROFILE -->
         <div class="flex items-center gap-4">
 
+            <!-- Vee Button -->
+            <button @click="$dispatch('open-vee')"
+                class="w-10 h-10 rounded-xl bg-[#ff8800] text-white flex items-center justify-center
+                       shadow-sm hover:bg-orange-600 transition" title="Abrir Vee">
+                <i class="fa-duotone fa-solid fa-robot text-lg"></i>
+            </button>
+
             <!-- Theme Toggle -->
             <button id="theme-toggle"
                 class="w-10 h-10 rounded-xl bg-neutral-200 dark:bg-neutral-700 dark:text-white flex items-center justify-center shadow-sm">

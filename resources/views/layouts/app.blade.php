@@ -118,6 +118,15 @@ $watch('darkMode', value => {
 
     {{-- Scripts --}}
     @include('layouts.components.script')
+
+    {{-- Vee Agent Config --}}
+    <script>
+        window.VEE_AGENT_URL   = '{{ config('vee.agent_url') }}';
+        window.VEE_AGENT_TOKEN = '{{ config('vee.agent_token') }}';
+    </script>
+
+    {{-- Vee Drawer --}}
+    <x-vee-drawer />
 </body>
 
 </html>

@@ -15,6 +15,7 @@ RUN npm prune --omit=dev
 
 ENV NODE_ENV=production
 ENV PORT=3334
+ENV HOST=0.0.0.0
 
 EXPOSE 3334
 
