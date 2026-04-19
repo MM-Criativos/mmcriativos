@@ -13,6 +13,7 @@ export type ServerSshAdapterConfig = {
   allowedContainers: string[];
   allowedServices: string[];
   allowedLogPaths: string[];
+  vaultPath: string;
 };
 
 export type ServerCommandResult = {
@@ -73,6 +74,12 @@ export type ServerHealthCheckResult = {
   container_count: number;
 };
 
+export type VaultSearchMatch = {
+  path: string;
+  line: number;
+  snippet: string;
+};
+
 const DEFAULT_ALLOWED_SERVICES = ["docker", "nginx", "mysql", "postgresql", "redis", "n8n-worker"];
 const DEFAULT_ALLOWED_LOG_PATHS = [
   "/var/log/nginx",
@@ -94,6 +101,7 @@ export class ServerSshAdapter {
   private readonly allowedContainers: string[];
   private readonly allowedServices: string[];
   private readonly allowedLogPaths: string[];
+  private readonly vaultPath: string;
 
   constructor(config: ServerSshAdapterConfig) {
     this.host = config.host.trim();
@@ -113,10 +121,15 @@ export class ServerSshAdapter {
       config.allowedLogPaths.length > 0
         ? config.allowedLogPaths.map(s => s.trim()).filter(Boolean)
         : DEFAULT_ALLOWED_LOG_PATHS;
+    this.vaultPath = config.vaultPath.trim().replaceAll("\\", "/");
   }
 
   isConfigured(): boolean {
     return this.host.length > 0 && this.username.length > 0;
+  }
+
+  isVaultConfigured(): boolean {
+    return this.isConfigured() && this.vaultPath.length > 0;
   }
 
   async getStatus(): Promise<{
@@ -424,6 +437,136 @@ export class ServerSshAdapter {
     };
   }
 
+  // ─── Vault over SSH ───────────────────────────────────────────────────────
+
+  async vaultHealth(): Promise<{
+    configured: boolean;
+    vault_path: string | null;
+    vault_exists: boolean;
+    ssh_ok: boolean;
+  }> {
+    if (!this.isVaultConfigured()) {
+      return { configured: false, vault_path: null, vault_exists: false, ssh_ok: false };
+    }
+
+    try {
+      const result = await this.execute(
+        `test -d ${shellQuote(this.vaultPath)} && echo "exists" || echo "missing"`
+      );
+      const vaultExists = result.stdout.trim() === "exists";
+      return {
+        configured: true,
+        vault_path: this.vaultPath,
+        vault_exists: vaultExists,
+        ssh_ok: true
+      };
+    } catch {
+      return { configured: true, vault_path: this.vaultPath, vault_exists: false, ssh_ok: false };
+    }
+  }
+
+  async vaultSearch(params: {
+    query: string;
+    limit?: number;
+    caseSensitive?: boolean;
+  }): Promise<VaultSearchMatch[]> {
+    this.assertVaultConfigured();
+
+    const query = params.query.trim();
+    if (!query) {
+      throw new Error("query is required.");
+    }
+
+    const limit = Math.max(1, Math.min(params.limit ?? 20, 100));
+    const caseFlag = params.caseSensitive ? "" : "-i";
+
+    // Use grep to search all markdown files under vault root
+    const command = `grep -rn ${caseFlag} --include="*.md" -m 1 ${shellQuote(query)} ${shellQuote(this.vaultPath)} 2>/dev/null | head -n ${limit}`;
+    const result = await this.execute(command);
+
+    const matches: VaultSearchMatch[] = [];
+    for (const rawLine of result.stdout.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) {
+        continue;
+      }
+      // grep output format: /absolute/path/to/file.md:linenum:content
+      const colonIdx = line.indexOf(":");
+      if (colonIdx === -1) {
+        continue;
+      }
+      const afterPath = line.slice(colonIdx + 1);
+      const secondColon = afterPath.indexOf(":");
+      if (secondColon === -1) {
+        continue;
+      }
+      const filePath = line.slice(0, colonIdx);
+      const lineNum = Number.parseInt(afterPath.slice(0, secondColon), 10);
+      const snippet = afterPath.slice(secondColon + 1).trim().slice(0, 240);
+
+      const relativePath = filePath.startsWith(this.vaultPath)
+        ? filePath.slice(this.vaultPath.length).replace(/^\//, "")
+        : filePath;
+
+      matches.push({ path: relativePath, line: Number.isNaN(lineNum) ? 0 : lineNum, snippet });
+    }
+
+    return matches;
+  }
+
+  async vaultReadNote(relativePath: string, maxChars = 20000): Promise<{
+    path: string;
+    content: string;
+    truncated: boolean;
+  }> {
+    this.assertVaultConfigured();
+
+    const safePath = relativePath.trim().replaceAll("\\", "/");
+    if (!safePath || safePath.startsWith("/")) {
+      throw new Error("Invalid note path.");
+    }
+    // Guard against directory traversal: reject any segment equal to ".."
+    const segments = safePath.split("/");
+    if (segments.some(seg => seg === "..")) {
+      throw new Error("Invalid note path.");
+    }
+    if (!/^[a-zA-Z0-9 _\-./À-ÿ]+\.md$/.test(safePath)) {
+      throw new Error("Note path must point to a .md file with allowed characters.");
+    }
+
+    const fullPath = `${this.vaultPath}/${safePath}`;
+    const safeMaxChars = Math.max(500, Math.min(maxChars, 200000));
+
+    // Check that the file exists and is a regular file
+    const checkResult = await this.execute(
+      `test -f ${shellQuote(fullPath)} && echo "ok" || echo "notfound"`
+    );
+    if (checkResult.stdout.trim() !== "ok") {
+      throw new Error(`Note not found: ${safePath}`);
+    }
+
+    // Read only the first safeMaxChars bytes to avoid flooding
+    const readResult = await this.execute(
+      `head -c ${safeMaxChars + 1} ${shellQuote(fullPath)}`
+    );
+
+    const content = readResult.stdout;
+    const truncated = content.length > safeMaxChars;
+
+    return {
+      path: safePath,
+      content: truncated ? `${content.slice(0, safeMaxChars)}\n...[truncated]` : content,
+      truncated
+    };
+  }
+
+  private assertVaultConfigured(): void {
+    this.assertConfigured();
+    if (!this.vaultPath) {
+      throw new Error("VAULT_SSH_PATH is required to use vault tools.");
+    }
+  }
+
   private assertConfigured(): void {
     if (!this.isConfigured()) {
       throw new Error("SERVER_SSH_HOST and SERVER_SSH_USERNAME are required.");
@@ -594,4 +737,8 @@ function parseFreeOutput(output: string): ServerMemoryInfo {
     }
   }
   return { total_mb: 0, used_mb: 0, free_mb: 0, available_mb: 0, use_percent: 0 };
+}
+
+function shellQuote(s: string): string {
+  return `'${s.replace(/'/g, "'\\''")}'`;
 }
