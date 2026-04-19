@@ -15,9 +15,9 @@ class RunPlatformHealthSuite extends Command
     protected $description = 'Executa a suite de testes do MMCloud Platform Health via n8n REST API';
 
     // n8n REST API
-    private string $n8nBaseUrl;
-    private string $n8nApiKey;
-    private string $webhookUrl;
+    private string $n8nBaseUrl = '';
+    private string $n8nApiKey = '';
+    private string $webhookUrl = '';
 
     // Configuração
     private int $pollIntervalMs = 3000;
@@ -25,9 +25,14 @@ class RunPlatformHealthSuite extends Command
 
     public function handle(): int
     {
-        $this->n8nBaseUrl = config('services.n8n.url');        // https://n8n.mmcriativos.cloud
-        $this->n8nApiKey  = config('services.n8n.api_key');
-        $this->webhookUrl = config('services.n8n.webhook_test_runner'); // POST webhook do test runner
+        $this->n8nBaseUrl = config('services.n8n.url') ?? '';        // https://n8n.mmcriativos.cloud
+        $this->n8nApiKey  = config('services.n8n.api_key') ?? '';
+        $this->webhookUrl = config('services.n8n.webhook_test_runner') ?? ''; // POST webhook do test runner
+
+        if (!$this->n8nBaseUrl || !$this->n8nApiKey || !$this->webhookUrl) {
+            $this->error('Configuração n8n incompleta. Defina as variáveis de ambiente N8N_URL, N8N_API_KEY e N8N_WEBHOOK_TEST_RUNNER no arquivo .env.');
+            return Command::FAILURE;
+        }
 
         $suite = $this->option('suite');
         $this->info("Iniciando Platform Health Suite: {$suite}");
