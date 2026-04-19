@@ -64,11 +64,15 @@ class RunPlatformHealthSuite extends Command
 
         try {
             // 1. Dispara o webhook do test runner
+            // Payload esperado pelo Set Defaults do Test Runner:
+            // target, tenant_slug, user_message, remoteJid, pushName, idMessage
             $response = Http::timeout(15)->post($this->webhookUrl, [
-                'route'     => $caso['route'],
-                'tenant_id' => $caso['tenant_id'],
-                'phone'     => '11958469546',
-                'message'   => $caso['message'],
+                'target'      => $caso['target'],
+                'tenant_slug' => $caso['tenant_slug'],
+                'user_message'=> $caso['message'],
+                'remoteJid'   => '11958469546@s.whatsapp.net',
+                'pushName'    => 'Tester',
+                'idMessage'   => 'TEST-' . $caso['id'] . '-' . time(),
             ]);
 
             if (!$response->successful()) {
@@ -236,7 +240,7 @@ class RunPlatformHealthSuite extends Command
             $content .= "## Caso de Teste\n\n";
             $content .= "- **ID:** {$r['id']}\n";
             $content .= "- **Cenário:** {$r['scenario']}\n";
-            $content .= "- **Tenant ID:** {$r['tenant_id']}\n";
+            $content .= "- **Tenant:** {$r['tenant_slug']}\n";
             $content .= "- **Último node:** {$lastNode}\n\n";
             $content .= "## Próximos Passos\n\n- [ ] Investigar no n8n via REST API\n- [ ] Corrigir\n- [ ] Re-rodar caso de teste para confirmar\n";
 
@@ -298,59 +302,55 @@ class RunPlatformHealthSuite extends Command
 
     private function getDailyCasos(): array
     {
-        // Webhook: POST https://n8n.mmcriativos.cloud/webhook/WRPPK93a5dttEwzA/webhook/test-runner
-        // Payload: { phone, message, instance }
-        // Instance do veetest: extrair do banco (ai_instances onde tenant_id = 5)
-
         return [
-            // GRUPO A — Onboarding (veetest, tenant_id: 5)
-            ['id'=>'A-001','scenario'=>'Cliente novo — primeira mensagem','route'=>'atendimento','tenant_id'=>5,'message'=>'Olá, quero saber sobre vocês'],
-            ['id'=>'A-002','scenario'=>'Cliente novo — já diz o nome','route'=>'atendimento','tenant_id'=>5,'message'=>'Oi, sou a Maria, quero agendar'],
-            ['id'=>'A-003','scenario'=>'Cliente novo — não diz o nome','route'=>'atendimento','tenant_id'=>5,'message'=>'Oi'],
-            ['id'=>'A-004','scenario'=>'Responde com nome após ser perguntado','route'=>'atendimento','tenant_id'=>5,'message'=>'Maria'],
+            // GRUPO A — Onboarding — target: atendimento (testa RAG, saudação, contexto)
+            ['id'=>'A-001','scenario'=>'Cliente novo — primeira mensagem','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá, quero saber sobre vocês'],
+            ['id'=>'A-002','scenario'=>'Cliente novo — já diz o nome','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi, sou a Maria, quero agendar'],
+            ['id'=>'A-003','scenario'=>'Cliente novo — não diz o nome','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi'],
+            ['id'=>'A-004','scenario'=>'Responde com nome após ser perguntado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Maria'],
 
-            // GRUPO B — Intent (veetest)
-            ['id'=>'B-001','scenario'=>'Intent: booking','route'=>'atendimento','tenant_id'=>5,'message'=>'Quero marcar um horário'],
-            ['id'=>'B-002','scenario'=>'Intent: informação/RAG','route'=>'atendimento','tenant_id'=>5,'message'=>'Quais serviços vocês oferecem?'],
-            ['id'=>'B-003','scenario'=>'Intent: small talk','route'=>'atendimento','tenant_id'=>5,'message'=>'Oi, tudo bem?'],
-            ['id'=>'B-004','scenario'=>'Intent: commercial intelligence','route'=>'atendimento','tenant_id'=>5,'message'=>'Vocês têm desconto?'],
-            ['id'=>'B-005','scenario'=>'Mensagem ambígua','route'=>'atendimento','tenant_id'=>5,'message'=>'Hmm'],
+            // GRUPO B — Intent — target: atendimento (classifica intenção e roteia)
+            ['id'=>'B-001','scenario'=>'Intent: booking','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quero marcar um horário'],
+            ['id'=>'B-002','scenario'=>'Intent: informação/RAG','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quais serviços vocês oferecem?'],
+            ['id'=>'B-003','scenario'=>'Intent: small talk','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi, tudo bem?'],
+            ['id'=>'B-004','scenario'=>'Intent: commercial intelligence','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Vocês têm desconto?'],
+            ['id'=>'B-005','scenario'=>'Mensagem ambígua','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Hmm'],
 
-            // GRUPO C — Fluxo atendimento (veetest)
-            ['id'=>'C-001','scenario'=>'Cliente retornando — contexto recuperado','route'=>'atendimento','tenant_id'=>5,'message'=>'Olá de novo'],
-            ['id'=>'C-002','scenario'=>'Memory update detectado','route'=>'atendimento','tenant_id'=>5,'message'=>'Pode anotar que prefiro horários de manhã'],
-            ['id'=>'C-003','scenario'=>'Salvar mensagens inbound/outbound','route'=>'atendimento','tenant_id'=>5,'message'=>'Teste de save'],
-            ['id'=>'C-004','scenario'=>'Token Count registrado','route'=>'atendimento','tenant_id'=>5,'message'=>'Quero informações'],
+            // GRUPO C — Fluxo atendimento — target: atendimento
+            ['id'=>'C-001','scenario'=>'Cliente retornando — contexto recuperado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá de novo'],
+            ['id'=>'C-002','scenario'=>'Memory update detectado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Pode anotar que prefiro horários de manhã'],
+            ['id'=>'C-003','scenario'=>'Salvar mensagens inbound/outbound','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Teste de save'],
+            ['id'=>'C-004','scenario'=>'Token Count registrado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quero informações'],
 
-            // GRUPO D — Entity Resolver (veetest)
-            ['id'=>'D-001','scenario'=>'Serviço identificado por nome exato','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação gratuita'],
-            ['id'=>'D-002','scenario'=>'Serviço com múltiplos candidatos','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação'],
-            ['id'=>'D-006','scenario'=>'Data em linguagem natural — amanhã','route'=>'agendamento','tenant_id'=>5,'message'=>'Quero agendar para amanhã'],
-            ['id'=>'D-007','scenario'=>'Horário em linguagem natural','route'=>'agendamento','tenant_id'=>5,'message'=>'Às 14h'],
-            ['id'=>'D-008','scenario'=>'Sem nenhuma entidade','route'=>'agendamento','tenant_id'=>5,'message'=>'Quero agendar'],
+            // GRUPO D — Entity Resolver — target: agendamento
+            ['id'=>'D-001','scenario'=>'Serviço identificado por nome exato','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita'],
+            ['id'=>'D-002','scenario'=>'Serviço com múltiplos candidatos','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação'],
+            ['id'=>'D-006','scenario'=>'Data em linguagem natural — amanhã','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar para amanhã'],
+            ['id'=>'D-007','scenario'=>'Horário em linguagem natural','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Às 14h'],
+            ['id'=>'D-008','scenario'=>'Sem nenhuma entidade','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar'],
 
-            // GRUPO E — Missing Fields (veetest)
-            ['id'=>'E-001','scenario'=>'Falta serviço','route'=>'agendamento','tenant_id'=>5,'message'=>'Quero agendar para amanhã às 10h'],
-            ['id'=>'E-002','scenario'=>'Falta data','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação gratuita às 10h'],
-            ['id'=>'E-003','scenario'=>'Falta horário','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação gratuita amanhã'],
-            ['id'=>'E-007','scenario'=>'Usuário envia tudo em uma mensagem','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação gratuita, amanhã às 10h'],
+            // GRUPO E — Missing Fields — target: agendamento
+            ['id'=>'E-001','scenario'=>'Falta serviço','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar para amanhã às 10h'],
+            ['id'=>'E-002','scenario'=>'Falta data','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita às 10h'],
+            ['id'=>'E-003','scenario'=>'Falta horário','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita amanhã'],
+            ['id'=>'E-007','scenario'=>'Usuário envia tudo em uma mensagem','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita, amanhã às 10h'],
 
-            // GRUPO K — Save Process (veetest)
-            ['id'=>'K-001','scenario'=>'Save missing fields — todos os 4 nodes','route'=>'agendamento','tenant_id'=>5,'message'=>'Quero agendar'],
-            ['id'=>'K-002','scenario'=>'Save disambiguous question','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação'],
+            // GRUPO K — Save Process — target: agendamento
+            ['id'=>'K-001','scenario'=>'Save missing fields — todos os 4 nodes','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar'],
+            ['id'=>'K-002','scenario'=>'Save disambiguous question','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação'],
 
-            // GRUPO L — Hub/Roteamento (veetest)
-            ['id'=>'L-001','scenario'=>'Mensagem de texto simples','route'=>'atendimento','tenant_id'=>5,'message'=>'Olá'],
-            ['id'=>'L-002','scenario'=>'Mensagem própria (fromMe)','route'=>'atendimento','tenant_id'=>5,'message'=>'Teste'],
-            ['id'=>'L-004','scenario'=>'Roteamento para MMCloud','route'=>'atendimento','tenant_id'=>5,'message'=>'Olá'],
+            // GRUPO L — Hub/Roteamento — target: atendimento
+            ['id'=>'L-001','scenario'=>'Mensagem de texto simples','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá'],
+            ['id'=>'L-002','scenario'=>'Mensagem própria (fromMe)','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Teste'],
+            ['id'=>'L-004','scenario'=>'Roteamento para MMCloud','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá'],
 
-            // GRUPO M — mmbeauty parcial (tenant_id: 3)
-            ['id'=>'M-001','scenario'=>'Desambiguação entre 6 profissionais','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero agendar'],
-            ['id'=>'M-002','scenario'=>'Profissional turno manhã','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero agendar de manhã'],
-            ['id'=>'M-003','scenario'=>'Profissional turno tarde','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero agendar de tarde'],
-            ['id'=>'M-005','scenario'=>'Serviço domicílio','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero Corte e Barba em Domicílio'],
-            ['id'=>'M-009','scenario'=>'Deadline zero — cancelamento sempre permitido','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero cancelar meu agendamento'],
-            ['id'=>'M-010','scenario'=>'Deadline zero — reagendamento sempre permitido','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero remarcar meu horário'],
+            // GRUPO M — mmbeauty parcial — target: agendamento
+            ['id'=>'M-001','scenario'=>'Desambiguação entre 6 profissionais','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar'],
+            ['id'=>'M-002','scenario'=>'Profissional turno manhã','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de manhã'],
+            ['id'=>'M-003','scenario'=>'Profissional turno tarde','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de tarde'],
+            ['id'=>'M-005','scenario'=>'Serviço domicílio','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero Corte e Barba em Domicílio'],
+            ['id'=>'M-009','scenario'=>'Deadline zero — cancelamento sempre permitido','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero cancelar meu agendamento'],
+            ['id'=>'M-010','scenario'=>'Deadline zero — reagendamento sempre permitido','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero remarcar meu horário'],
         ];
     }
 
@@ -359,36 +359,36 @@ class RunPlatformHealthSuite extends Command
         // Casos adicionais da suite semanal (grupos F, G, H, I, J, D completo, M completo)
         // veetest-b e veetest-c necessários para grupos F, G-002, H-007, I-002, J
         return [
-            // GRUPO F — Blocking (veetest-c, tenant_id: 7)
-            ['id'=>'F-001','scenario'=>'PreCheck OK — todos campos válidos','route'=>'agendamento','tenant_id'=>7,'message'=>'Avaliação Rápida amanhã às 10h'],
-            ['id'=>'F-002','scenario'=>'Blocked: sem disponibilidade no horário','route'=>'agendamento','tenant_id'=>7,'message'=>'Avaliação Rápida amanhã às 11h30'],
-            ['id'=>'F-003','scenario'=>'Blocked: profissional indisponível','route'=>'agendamento','tenant_id'=>7,'message'=>'Quero com o Prof Alpha às 11h'],
-            ['id'=>'F-005','scenario'=>'Blocked: serviço não disponível na data','route'=>'agendamento','tenant_id'=>7,'message'=>'Avaliação Inicial amanhã às 10h'],
+            // GRUPO F — Blocking — target: agendamento (veetest-c)
+            ['id'=>'F-001','scenario'=>'PreCheck OK — todos campos válidos','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Avaliação Rápida amanhã às 10h'],
+            ['id'=>'F-002','scenario'=>'Blocked: sem disponibilidade no horário','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Avaliação Rápida amanhã às 11h30'],
+            ['id'=>'F-003','scenario'=>'Blocked: profissional indisponível','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero com o Prof Alpha às 11h'],
+            ['id'=>'F-005','scenario'=>'Blocked: serviço não disponível na data','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Avaliação Inicial amanhã às 10h'],
 
-            // GRUPO G — Criação agendamento (veetest + veetest-b)
-            ['id'=>'G-001','scenario'=>'Agendamento presencial','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação gratuita amanhã às 10h'],
-            ['id'=>'G-002','scenario'=>'Agendamento virtual (Google Meet)','route'=>'agendamento','tenant_id'=>6,'message'=>'Consulta Virtual amanhã às 10h'],
-            ['id'=>'G-009','scenario'=>'Mensagem de confirmação enviada','route'=>'agendamento','tenant_id'=>5,'message'=>'Avaliação gratuita amanhã às 10h'],
+            // GRUPO G — Criação agendamento
+            ['id'=>'G-001','scenario'=>'Agendamento presencial','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita amanhã às 10h'],
+            ['id'=>'G-002','scenario'=>'Agendamento virtual (Google Meet)','target'=>'agendamento','tenant_slug'=>'veetest-b','message'=>'Consulta Virtual amanhã às 10h'],
+            ['id'=>'G-009','scenario'=>'Mensagem de confirmação enviada','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita amanhã às 10h'],
 
-            // GRUPO H — Reagendamento (veetest)
-            ['id'=>'H-001','scenario'=>'Reagendamento com ID explícito','route'=>'agendamento','tenant_id'=>5,'message'=>'Quero remarcar o agendamento'],
-            ['id'=>'H-007','scenario'=>'Reagendamento fora do prazo','route'=>'agendamento','tenant_id'=>7,'message'=>'Quero remarcar'],
+            // GRUPO H — Reagendamento
+            ['id'=>'H-001','scenario'=>'Reagendamento com ID explícito','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero remarcar o agendamento'],
+            ['id'=>'H-007','scenario'=>'Reagendamento fora do prazo','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero remarcar'],
 
             // GRUPO I — Cancelamento
-            ['id'=>'I-001','scenario'=>'Cancelamento dentro do prazo','route'=>'agendamento','tenant_id'=>5,'message'=>'Quero cancelar'],
-            ['id'=>'I-002','scenario'=>'Cancelamento fora do prazo','route'=>'agendamento','tenant_id'=>7,'message'=>'Quero cancelar'],
+            ['id'=>'I-001','scenario'=>'Cancelamento dentro do prazo','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero cancelar'],
+            ['id'=>'I-002','scenario'=>'Cancelamento fora do prazo','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero cancelar'],
 
             // GRUPO J — Desambiguação (veetest-c)
-            ['id'=>'J-002','scenario'=>'Múltiplos serviços — desambiguação','route'=>'agendamento','tenant_id'=>7,'message'=>'Quero Avaliação'],
-            ['id'=>'J-003','scenario'=>'Múltiplos profissionais — desambiguação','route'=>'agendamento','tenant_id'=>7,'message'=>'Quero agendar'],
+            ['id'=>'J-002','scenario'=>'Múltiplos serviços — desambiguação','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero Avaliação'],
+            ['id'=>'J-003','scenario'=>'Múltiplos profissionais — desambiguação','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero agendar'],
 
             // GRUPO M — mmbeauty semanal completo
-            ['id'=>'M-004','scenario'=>'Profissional manhã indisponível à tarde','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero com o Lucas às 16h'],
-            ['id'=>'M-006','scenario'=>'Serviço longo 150min','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero Platinado amanhã'],
-            ['id'=>'M-007','scenario'=>'Serviço curto 10min','route'=>'agendamento','tenant_id'=>3,'message'=>'Sobrancelha amanhã às 9h'],
-            ['id'=>'M-008','scenario'=>'Sábado — unidade encerra às 14h','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero agendar sábado às 15h'],
-            ['id'=>'M-011','scenario'=>'Desambiguação de serviço (nomes parecidos)','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero hidratação'],
-            ['id'=>'M-012','scenario'=>'Plano mensal com preço real','route'=>'agendamento','tenant_id'=>3,'message'=>'Quero o plano de corte'],
+            ['id'=>'M-004','scenario'=>'Profissional manhã indisponível à tarde','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero com o Lucas às 16h'],
+            ['id'=>'M-006','scenario'=>'Serviço longo 150min','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero Platinado amanhã'],
+            ['id'=>'M-007','scenario'=>'Serviço curto 10min','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Sobrancelha amanhã às 9h'],
+            ['id'=>'M-008','scenario'=>'Sábado — unidade encerra às 14h','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar sábado às 15h'],
+            ['id'=>'M-011','scenario'=>'Desambiguação de serviço (nomes parecidos)','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero hidratação'],
+            ['id'=>'M-012','scenario'=>'Plano mensal com preço real','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero o plano de corte'],
         ];
     }
 }
