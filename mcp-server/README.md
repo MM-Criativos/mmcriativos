@@ -81,6 +81,17 @@ Authorization: Bearer <MCP_AUTH_TOKEN>
 - `vee.obsidian.search` scans markdown files and returns path/line/snippet matches.
 - `vee.obsidian.read_note` reads one note with max size controls.
 
+## Vault behavior (SSH — production)
+
+When the mcp-server runs inside a Docker container it may not have direct filesystem access to the Obsidian vault on the host. The vault SSH tools solve this by reading notes over the existing SSH connection to the production server.
+
+- Set `VAULT_SSH_PATH` to the **absolute path** of the vault root **on the SSH server** (e.g. `/home/user/MM-Brain`).
+- Requires `SERVER_SSH_HOST` and `SERVER_SSH_USERNAME` to be configured.
+- Available tools (read-only):
+  - `vee.vault.health` — checks SSH connectivity and whether the vault path exists.
+  - `vee.vault.search` — searches all `.md` files under `VAULT_SSH_PATH` using `grep`.
+  - `vee.vault.read_note` — reads a single `.md` note by relative path.
+
 ## Server behavior (SSH)
 
 - Configure `SERVER_SSH_HOST`, `SERVER_SSH_USERNAME`, and either:

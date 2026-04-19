@@ -90,6 +90,7 @@ const SERVER_SSH_ALLOWED_LOG_PATHS = (process.env.SERVER_SSH_ALLOWED_LOG_PATHS ?
   .split(",")
   .map(s => s.trim())
   .filter(Boolean);
+const VAULT_SSH_PATH = (process.env.VAULT_SSH_PATH ?? "").trim();
 const CLAUDE_MCP_PUBLIC_URL = (process.env.CLAUDE_MCP_PUBLIC_URL ?? "").trim();
 const DB_READONLY_HOST = (process.env.DB_READONLY_HOST ?? "").trim();
 const DB_READONLY_PORT = Number.parseInt(process.env.DB_READONLY_PORT ?? "3306", 10);
@@ -135,7 +136,8 @@ const serverSshAdapter = new ServerSshAdapter({
   restartEnabled: SERVER_SSH_RESTART_ENABLED,
   allowedContainers: SERVER_SSH_ALLOWED_CONTAINERS,
   allowedServices: SERVER_SSH_ALLOWED_SERVICES,
-  allowedLogPaths: SERVER_SSH_ALLOWED_LOG_PATHS
+  allowedLogPaths: SERVER_SSH_ALLOWED_LOG_PATHS,
+  vaultPath: VAULT_SSH_PATH
 });
 
 const dbReadOnlyAdapter = new DatabaseReadOnlyAdapter({
@@ -205,6 +207,9 @@ const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_server_service_status", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_server_health_check", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_server_list_allowed_paths", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_vault_health", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_vault_search", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_vault_read_note", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_claude_connection_info", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_db_get_tenant_by_slug", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_db_get_client_by_phone", phase: "v0.2", permission: "read_only", status: "enabled" },
@@ -1897,6 +1902,95 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
+    "vee_vault_health",
+    {
+      title: "Vee Vault Health",
+      description:
+        "Checks vault accessibility via SSH. Returns whether VAULT_SSH_PATH exists on the remote server. Requires SERVER_SSH_* and VAULT_SSH_PATH to be configured."
+    },
+    async () =>
+      runAuditedTool({
+        toolName: "vee_vault_health",
+        permission: "read_only",
+        isWrite: false,
+        args: {},
+        errorContext: "Failed to check vault health",
+        handler: async () => {
+          const payload = await serverSshAdapter.vaultHealth();
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_vault_search",
+    {
+      title: "Vee Vault Search",
+      description:
+        "Searches markdown notes in the vault via SSH using grep. Requires SERVER_SSH_* and VAULT_SSH_PATH to be configured.",
+      inputSchema: {
+        query: z.string().min(1).describe("Search term"),
+        limit: z.number().int().min(1).max(100).optional().describe("Max results (default: 20)"),
+        caseSensitive: z.boolean().optional().describe("Case-sensitive search (default: false)")
+      }
+    },
+    async ({ query, limit, caseSensitive }) =>
+      runAuditedTool({
+        toolName: "vee_vault_search",
+        permission: "read_only",
+        isWrite: false,
+        args: { query, limit, caseSensitive },
+        errorContext: "Failed to search vault",
+        handler: async () => {
+          const matches = await serverSshAdapter.vaultSearch({ query, limit, caseSensitive });
+          const payload = { total: matches.length, matches };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_vault_read_note",
+    {
+      title: "Vee Vault Read Note",
+      description:
+        "Reads a single markdown note from the vault via SSH. Requires SERVER_SSH_* and VAULT_SSH_PATH to be configured.",
+      inputSchema: {
+        path: z.string().min(1).describe("Relative path inside the vault, e.g. Vee/tarefas.md"),
+        maxChars: z
+          .number()
+          .int()
+          .min(500)
+          .max(200000)
+          .optional()
+          .describe("Max chars returned (default: 20000)")
+      }
+    },
+    async ({ path, maxChars }) =>
+      runAuditedTool({
+        toolName: "vee_vault_read_note",
+        permission: "read_only",
+        isWrite: false,
+        args: { path, maxChars },
+        errorContext: "Failed to read vault note",
+        handler: async () => {
+          const note = await serverSshAdapter.vaultReadNote(path, maxChars);
+          const payload = { note };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
     "vee_claude_connection_info",
     {
       title: "Vee Claude Connection Info",
@@ -2558,6 +2652,7 @@ app.listen(PORT, HOST, () => {
       : "approval control disabled";
   const obsidianMode = obsidianAdapter.isConfigured() ? "obsidian enabled" : "obsidian disabled";
   const serverMode = serverSshAdapter.isConfigured() ? "server ssh enabled" : "server ssh disabled";
+  const vaultMode = serverSshAdapter.isVaultConfigured() ? "vault ssh enabled" : "vault ssh disabled";
   const dbMode = dbReadOnlyAdapter.isConfigured() ? "db readonly enabled" : "db readonly disabled";
   const dbWriteMode = dbWriteAdapter.isConfigured() ? "db write enabled" : "db write disabled";
   const claudeMode = CLAUDE_MCP_PUBLIC_URL ? "claude endpoint configured" : "claude endpoint auto";
@@ -2570,10 +2665,11 @@ app.listen(PORT, HOST, () => {
   console.log(`[Vee MCP] ${approvalMode}`);
   console.log(`[Vee MCP] ${obsidianMode}`);
   console.log(`[Vee MCP] ${serverMode}`);
+  console.log(`[Vee MCP] ${vaultMode}`);
   console.log(`[Vee MCP] ${dbMode}`);
   console.log(`[Vee MCP] ${dbWriteMode}`);
   console.log(`[Vee MCP] ${claudeMode}`);
   console.log(
-    "[Vee MCP] enabled tools: vee.health, vee.list_capabilities, vee.n8n.list_workflows, vee.n8n.get_workflow, vee.n8n.preview_workflow_diff, vee.n8n.list_recent_executions, vee.n8n.get_execution, vee.n8n.retry_execution, vee.n8n.stop_execution, vee.n8n.update_workflow, vee.n8n.patch_workflow_nodes, vee.n8n.rollback_workflow, vee.obsidian.health, vee.obsidian.search, vee.obsidian.read_note, vee.obsidian.create_note, vee.obsidian.append_to_note, vee.obsidian.update_note_section, vee.obsidian.append_to_daily_log, vee.obsidian.create_task_note, vee.server.status, vee.server.list_containers, vee.server.get_container_logs, vee.server.disk_usage, vee.server.memory_usage, vee.server.list_containers_detailed, vee.server.inspect_container, vee.server.restart_container, vee.server.tail_log, vee.server.service_status, vee.server.health_check, vee.server.list_allowed_paths, vee.claude.connection_info, vee.db.get_tenant_by_slug, vee.db.get_client_by_phone, vee.db.get_recent_ai_messages, vee.db.get_context_state, vee.db.get_booking_session, vee.db.get_recent_appointments, vee.db.get_project_summary, vee.db.get_pending_tasks, vee.db.get_user_preferences, vee.db.get_agent_execution_history, vee.db.update_project_status, vee.db.create_internal_task, vee.db.save_execution_note, vee.db.update_context_state, vee.db.register_incident, vee.db.attach_task_to_project, vee.db.mark_task_as_blocked, vee.db.mark_task_as_done"
+    "[Vee MCP] enabled tools: vee.health, vee.list_capabilities, vee.n8n.list_workflows, vee.n8n.get_workflow, vee.n8n.preview_workflow_diff, vee.n8n.list_recent_executions, vee.n8n.get_execution, vee.n8n.retry_execution, vee.n8n.stop_execution, vee.n8n.update_workflow, vee.n8n.patch_workflow_nodes, vee.n8n.rollback_workflow, vee.obsidian.health, vee.obsidian.search, vee.obsidian.read_note, vee.obsidian.create_note, vee.obsidian.append_to_note, vee.obsidian.update_note_section, vee.obsidian.append_to_daily_log, vee.obsidian.create_task_note, vee.server.status, vee.server.list_containers, vee.server.get_container_logs, vee.server.disk_usage, vee.server.memory_usage, vee.server.list_containers_detailed, vee.server.inspect_container, vee.server.restart_container, vee.server.tail_log, vee.server.service_status, vee.server.health_check, vee.server.list_allowed_paths, vee.vault.health, vee.vault.search, vee.vault.read_note, vee.claude.connection_info, vee.db.get_tenant_by_slug, vee.db.get_client_by_phone, vee.db.get_recent_ai_messages, vee.db.get_context_state, vee.db.get_booking_session, vee.db.get_recent_appointments, vee.db.get_project_summary, vee.db.get_pending_tasks, vee.db.get_user_preferences, vee.db.get_agent_execution_history, vee.db.update_project_status, vee.db.create_internal_task, vee.db.save_execution_note, vee.db.update_context_state, vee.db.register_incident, vee.db.attach_task_to_project, vee.db.mark_task_as_blocked, vee.db.mark_task_as_done"
   );
 });
