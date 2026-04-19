@@ -1,0 +1,115 @@
+# MMCloud — Instruções obrigatórias para Copilot / Claude Agent
+
+Você é engenheiro sênior do MMCloud. Siga estas instruções sem exceção — não invente alternativas.
+
+---
+
+## 1. n8n — REST API obrigatória
+
+**PROIBIDO usar qualquer MCP ou tool nativa de n8n.** Sempre use `Invoke-RestMethod` no PowerShell via `desktop-commander`.
+
+### Listar TODOS os workflows (comando exato):
+```powershell
+$h = @{ 'X-N8N-API-KEY' = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlYjE4MGIzOS0yNTZmLTRkNmQtYjg1NS04YzY3ZTk0MjNmNzgiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzc2MzYwNDExfQ.96Mm5Jyvxf-xZ5UkKAdtF5_jHe_4lO6tjYdVSC7Q4zM' }
+$r = Invoke-RestMethod 'https://n8n.mmcriativos.cloud/api/v1/workflows?limit=100' -Headers $h
+$r.data | Select-Object id, name, active | Format-Table -AutoSize
+```
+
+### Ler workflow completo (para inspecionar nodes):
+```powershell
+$h = @{ 'X-N8N-API-KEY' = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlYjE4MGIzOS0yNTZmLTRkNmQtYjg1NS04YzY3ZTk0MjNmNzgiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzc2MzYwNDExfQ.96Mm5Jyvxf-xZ5UkKAdtF5_jHe_4lO6tjYdVSC7Q4zM' }
+$wf = Invoke-RestMethod 'https://n8n.mmcriativos.cloud/api/v1/workflows/ID_AQUI' -Headers $h
+$wf.nodes | Select-Object id, name, type | Format-Table -AutoSize
+```
+
+### Execuções com erro:
+```powershell
+$h = @{ 'X-N8N-API-KEY' = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlYjE4MGIzOS0yNTZmLTRkNmQtYjg1NS04YzY3ZTk0MjNmNzgiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzc2MzYwNDExfQ.96Mm5Jyvxf-xZ5UkKAdtF5_jHe_4lO6tjYdVSC7Q4zM' }
+Invoke-RestMethod 'https://n8n.mmcriativos.cloud/api/v1/executions?workflowId=ID&status=error&limit=5' -Headers $h | Select-Object -ExpandProperty data | Select-Object id, startedAt, stoppedAt, status
+```
+
+### IDs fixos — não precisa buscar:
+| Workflow | ID |
+|---|---|
+| Vee / Hub | `0KAtAJnktU7PrEmo` |
+| Agente de Atendimento | `AcTwVVZ86JUuDcX_byb3B` |
+| Agente de Agendamento | `8mxQiOUi87vJiO4I` |
+| Agente de RAG | `LZVyh8yTCSk6eyzRdRhQu` |
+| Commercial Intelligence | `0y50Ottb8GoUDreITIGet` |
+| Entity Resolver | `z55QbNdLnd3r8s3q3cgXw` |
+| Save Process | `cdbKOKD6EsPXU_YvhRV63` |
+| Token Count | `3CxsGnIwx_VUXZ7TDSRrs` |
+| Test Runner | `WRPPK93a5dttEwzA` |
+
+---
+
+## 2. SSH — helper Python obrigatório
+
+**PROIBIDO usar `ssh` nativo do Windows** (pede senha interativamente e trava). Use sempre o helper:
+
+```powershell
+python C:\Users\User\.ssh\ssh_exec.py "COMANDO LINUX AQUI"
+```
+
+### Exemplos:
+```powershell
+# Listar containers
+python C:\Users\User\.ssh\ssh_exec.py "docker ps --format '{{.Names}}'"
+
+# Logs de container (últimas 50 linhas)
+python C:\Users\User\.ssh\ssh_exec.py "docker logs --tail 50 NOME_CONTAINER"
+
+# Logs filtrando erros
+python C:\Users\User\.ssh\ssh_exec.py "docker logs --tail 200 NOME_CONTAINER 2>&1 | grep -i 'error\|exception\|fatal'"
+
+# Query MySQL
+python C:\Users\User\.ssh\ssh_exec.py "docker exec \$(docker ps --format '{{.Names}}' | grep mysql-mmcc | head -1) mysql -u mysql -pM17h2487** mmcc -e 'SELECT id, name, slug FROM tenants LIMIT 20'"
+```
+
+**IMPORTANTE:** o container MySQL tem hash dinâmico — sempre pegue o nome atual com `docker ps | grep mysql-mmcc` dentro do mesmo comando.
+
+---
+
+## 3. MySQL — regras obrigatórias
+
+- **SEMPRE** especifique colunas explícitas no SELECT — nunca `SELECT *`
+- **SEMPRE** use `LIMIT` — mínimo `LIMIT 20`, máximo `LIMIT 100`
+- **NUNCA** execute UPDATE ou DELETE sem confirmação explícita do usuário
+
+Colunas úteis por tabela:
+
+| Tabela | Colunas para SELECT |
+|---|---|
+| `tenants` | `id, name, slug, active` |
+| `units` | `id, tenant_id, name, active` |
+| `ai_agent_configs` | `id, tenant_id, system_prompt, temperature` |
+| `ai_instances` | `id, tenant_id, instance_name` |
+| `appointments` | `id, tenant_id, professional_id, service_id, status, created_at` |
+| `unit_settings` | `id, unit_id, key, value` |
+
+---
+
+## 4. Infraestrutura de testes
+
+```powershell
+# Disparar teste
+$body = '{"route":"atendimento","tenant_id":5,"phone":"5511999999999","message":"Ola"}'
+Invoke-RestMethod 'https://n8n.mmcriativos.cloud/webhook/WRPPK93a5dttEwzA/webhook/test-runner' -Method POST -Body $body -ContentType 'application/json'
+
+# Ver resultado (sucesso = chegou no node sendText)
+$h = @{ 'X-N8N-API-KEY' = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlYjE4MGIzOS0yNTZmLTRkNmQtYjg1NS04YzY3ZTk0MjNmNzgiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzc2MzYwNDExfQ.96Mm5Jyvxf-xZ5UkKAdtF5_jHe_4lO6tjYdVSC7Q4zM' }
+Invoke-RestMethod 'https://n8n.mmcriativos.cloud/api/v1/executions?workflowId=WRPPK93a5dttEwzA&limit=1' -Headers $h | Select-Object -ExpandProperty data | Select-Object id, status, stoppedAt
+```
+
+---
+
+## 5. Vault (Obsidian em produção)
+
+Use o MCP `vee-mmcriativos` disponível neste workspace: `vee_obsidian_read_note`, `vee_obsidian_search`, `vee_obsidian_append_to_note`.
+
+---
+
+## 6. Prompts disponíveis
+
+Use `#nome-do-prompt` no chat para contexto extra:
+`#n8n` · `#n8n-inspect` · `#n8n-debug` · `#n8n-edit` · `#n8n-logs` · `#log`

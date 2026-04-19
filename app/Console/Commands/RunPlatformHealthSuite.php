@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 class RunPlatformHealthSuite extends Command
 {
-    protected $signature = 'vee:platform-health {--suite=daily : daily ou weekly}';
+    protected $signature = 'vee:platform-health {--suite=daily : daily ou weekly} {--group= : letra do grupo (A..M)}';
     protected $description = 'Executa a suite de testes do MMCloud Platform Health via n8n REST API';
 
     // n8n REST API
@@ -19,9 +19,18 @@ class RunPlatformHealthSuite extends Command
     private string $n8nApiKey;
     private string $webhookUrl;
 
-    // Configuração
-    private int $pollIntervalMs = 3000;
+    // ConfiguraÃ§Ã£o
     private int $maxPollSeconds = 60;
+
+    // Workflow IDs para encontrar execuÃ§Ãµes por timestamp
+    // target=atendimento â†’ polling no Agente de Atendimento
+    // target=agendamento â†’ polling no Agente de Agendamento
+    // target=full â†’ Hub chama Atendimento como sub-workflow â†’ polling no Atendimento
+    private array $targetWorkflowMap = [
+        'atendimento' => 'AcTwVVZ86JUuDcX_byb3B',
+        'agendamento' => '8mxQiOUi87vJiO4I',
+        'full'        => 'AcTwVVZ86JUuDcX_byb3B', // Hub â†’ Atendimento (sub-workflow)
+    ];
 
     public function handle(): int
     {
@@ -33,13 +42,24 @@ class RunPlatformHealthSuite extends Command
         $this->info("Iniciando Platform Health Suite: {$suite}");
 
         $casos = $this->getCasos($suite);
+        $group = strtoupper((string) $this->option('group'));
+        if ($group !== '') {
+            $casos = array_values(array_filter($casos, fn($caso) => str_starts_with(($caso['id'] ?? ''), "{$group}-")));
+            $this->info("Filtro de grupo aplicado: {$group} (" . count($casos) . " casos)");
+        }
+
+        if (empty($casos)) {
+            $this->error('Nenhum caso encontrado com os filtros informados.');
+            return Command::FAILURE;
+        }
+
         $results = [];
 
         foreach ($casos as $caso) {
             $result = $this->runCaso($caso);
             $results[] = $result;
             $this->line($this->formatLine($result));
-            usleep($this->pollIntervalMs * 1000);
+            sleep(2); // pausa entre casos para evitar execuÃ§Ãµes simultÃ¢neas no mesmo workflow
         }
 
         $this->saveResults($results, $suite);
@@ -51,7 +71,7 @@ class RunPlatformHealthSuite extends Command
         $timeout  = count(array_filter($results, fn($r) => $r['status'] === 'timeout'));
         $skip     = count(array_filter($results, fn($r) => $r['status'] === 'skip'));
 
-        $this->info("✅ Pass: {$pass} | ⚠️ Known-fail: {$knownFail} | 🔴 New-fail: {$newFail} | ⏱ Timeout: {$timeout} | ⤷ Skip: {$skip}");
+        $this->info("âœ… Pass: {$pass} | âš ï¸ Known-fail: {$knownFail} | ðŸ”´ New-fail: {$newFail} | â± Timeout: {$timeout} | â¤· Skip: {$skip}");
 
         return $newFail > 0 ? Command::FAILURE : Command::SUCCESS;
     }
@@ -63,17 +83,27 @@ class RunPlatformHealthSuite extends Command
         }
 
         try {
-            // 1. Dispara o webhook do test runner
-            // Payload esperado pelo Set Defaults do Test Runner:
-            // target, tenant_slug, user_message, remoteJid, pushName, idMessage
-            $response = Http::timeout(15)->post($this->webhookUrl, [
+            // 1. Marca timestamp antes de disparar para encontrar a execuÃ§Ã£o depois
+            $beforeTimestamp = now()->subSeconds(2)->timestamp; // 2s buffer para clock skew
+
+            // 2. Dispara o webhook do test runner
+            $payload = [
                 'target'      => $caso['target'],
                 'tenant_slug' => $caso['tenant_slug'],
                 'user_message'=> $caso['message'],
                 'remoteJid'   => '11958469546@s.whatsapp.net',
                 'pushName'    => 'Tester',
                 'idMessage'   => 'TEST-' . $caso['id'] . '-' . time(),
-            ]);
+            ];
+
+            // Alguns cenarios (ex.: agendamento direto) exigem contexto extra.
+            foreach (['tenant_id', 'tenant_api_token', 'client_id'] as $optionalField) {
+                if (array_key_exists($optionalField, $caso)) {
+                    $payload[$optionalField] = $caso[$optionalField];
+                }
+            }
+
+            $response = Http::timeout(90)->post($this->webhookUrl, $payload);
 
             if (!$response->successful()) {
                 return array_merge($caso, [
@@ -82,16 +112,23 @@ class RunPlatformHealthSuite extends Command
                 ]);
             }
 
-            $executionId = $response->json('executionId') ?? null;
+            // 3. Para target=full o Hub Ã© async â€” aguarda processamento
+            if ($caso['target'] === 'full') {
+                sleep(20);
+            }
+
+            // 4. Encontra a execuÃ§Ã£o do workflow-alvo disparada apÃ³s o timestamp
+            $workflowId  = $this->targetWorkflowMap[$caso['target']] ?? null;
+            $executionId = $this->findExecutionAfter($workflowId, $beforeTimestamp);
 
             if (!$executionId) {
                 return array_merge($caso, [
-                    'status' => 'new-fail',
-                    'detail' => 'Webhook não retornou executionId',
+                    'status' => 'timeout',
+                    'detail' => "Nenhuma execuÃ§Ã£o encontrada apÃ³s disparar o teste",
                 ]);
             }
 
-            // 2. Polling da execução via REST API
+            // 5. Polling atÃ© a execuÃ§Ã£o terminar
             $status = $this->pollExecution($executionId);
 
             return array_merge($caso, $status);
@@ -104,17 +141,107 @@ class RunPlatformHealthSuite extends Command
         }
     }
 
+    /**
+     * Busca o ID da execuÃ§Ã£o mais recente do workflow disparada apÃ³s $beforeTimestamp.
+     * Tenta por atÃ© $maxPollSeconds com polling.
+     */
+    private function resetBookingSessionIfNeeded(array $caso): void
+    {
+        if (($caso['target'] ?? '') !== 'agendamento') {
+            return;
+        }
+
+        if (
+            !array_key_exists('tenant_id', $caso) ||
+            !array_key_exists('tenant_api_token', $caso) ||
+            !array_key_exists('client_id', $caso)
+        ) {
+            return;
+        }
+
+        $tenantSlug = (string) ($caso['tenant_slug'] ?? '');
+        $tenantId = (string) $caso['tenant_id'];
+        $tenantToken = (string) $caso['tenant_api_token'];
+        $clientId = (string) $caso['client_id'];
+
+        if ($tenantSlug === '' || $tenantId === '' || $tenantToken === '' || $clientId === '') {
+            return;
+        }
+
+        $headers = [
+            'Accept' => 'application/json',
+            'X-MMCloud-Header' => $tenantToken,
+            'X-Tenant-Id' => $tenantId,
+        ];
+
+        $baseUrl = "https://api.mmcriativos.cloud/api/external/tenants/{$tenantSlug}/booking-sessions";
+
+        try {
+            $current = Http::withHeaders($headers)
+                ->timeout(10)
+                ->get("{$baseUrl}/current", ['customer_id' => $clientId]);
+
+            if (!$current->successful()) {
+                return;
+            }
+
+            $bookingSessionId = data_get($current->json(), 'booking_session.id');
+            if (!$bookingSessionId) {
+                return;
+            }
+
+            Http::withHeaders($headers)
+                ->timeout(10)
+                ->delete("{$baseUrl}/{$bookingSessionId}");
+        } catch (\Throwable $e) {
+            Log::warning("resetBookingSessionIfNeeded error: {$e->getMessage()}");
+        }
+    }
+
+    private function findExecutionAfter(string $workflowId, int $beforeTimestamp): ?string
+    {
+        $beforeDate = date('Y-m-d\TH:i:s\Z', $beforeTimestamp);
+        $start = time();
+
+        while ((time() - $start) < $this->maxPollSeconds) {
+            try {
+                $response = Http::withHeaders(['X-N8N-API-KEY' => $this->n8nApiKey])
+                    ->timeout(10)
+                    ->get("{$this->n8nBaseUrl}/api/v1/executions", [
+                        'workflowId' => $workflowId,
+                        'limit'      => 5,
+                    ]);
+
+                if ($response->successful()) {
+                    foreach ($response->json('data', []) as $exec) {
+                        if (($exec['startedAt'] ?? '') >= $beforeDate) {
+                            return (string) $exec['id'];
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning("findExecutionAfter error: {$e->getMessage()}");
+            }
+
+            sleep(3);
+        }
+
+        return null;
+    }
+
     private function pollExecution(string $executionId): array
     {
         $start = time();
 
         while ((time() - $start) < $this->maxPollSeconds) {
-            sleep(intval($this->pollIntervalMs / 1000));
+            sleep(3);
 
             try {
                 $response = Http::withHeaders([
                     'X-N8N-API-KEY' => $this->n8nApiKey,
-                ])->timeout(10)->get("{$this->n8nBaseUrl}/api/v1/executions/{$executionId}");
+                ])->timeout(10)->get("{$this->n8nBaseUrl}/api/v1/executions/{$executionId}", [
+                    'includeData' => 'true',
+                ]);
 
                 if (!$response->successful()) {
                     continue;
@@ -132,35 +259,61 @@ class RunPlatformHealthSuite extends Command
             }
         }
 
-        return ['status' => 'timeout', 'detail' => "Execução não finalizou em {$this->maxPollSeconds}s"];
+        return ['status' => 'timeout', 'detail' => "ExecuÃ§Ã£o nÃ£o finalizou em {$this->maxPollSeconds}s"];
     }
 
     private function classifyExecution(array $execution): array
     {
         $execStatus = $execution['status'] ?? 'unknown';
         $data = $execution['data'] ?? [];
-
-        // Critério de sucesso: chegou ao node "Call 'Vee - Send Text'" (qualquer variante)
         $lastNode = $this->getLastNode($data);
 
         if ($execStatus === 'error') {
             $errorMsg = $data['resultData']['error']['message'] ?? 'Erro desconhecido';
-            return ['status' => 'new-fail', 'detail' => "Erro na execução: {$errorMsg}", 'lastNode' => $lastNode];
+            return ['status' => 'new-fail', 'detail' => "Erro na execucao: {$errorMsg}", 'lastNode' => $lastNode];
         }
 
-        if (str_contains(strtolower($lastNode), 'send text') || str_contains(strtolower($lastNode), 'vee - send')) {
-            return ['status' => 'pass', 'detail' => "Chegou ao Send Text", 'lastNode' => $lastNode];
+        if ($this->isSendTextNode($lastNode)) {
+            return ['status' => 'pass', 'detail' => 'Chegou ao Send Text', 'lastNode' => $lastNode];
         }
 
-        // Verifica known-fails
-        $knownFailNodes = ['Save Process', 'cdbKOKD6EsPXU'];
-        foreach ($knownFailNodes as $known) {
-            if (str_contains($lastNode, $known)) {
-                return ['status' => 'known-fail', 'detail' => "Known-fail em: {$lastNode}", 'lastNode' => $lastNode];
+        // Quando o atendimento roteia para agendamento via executeWorkflow,
+        // o Send Text pode acontecer na subexecucao.
+        $subExecutionId = $this->getSubExecutionIdFromNode($data, $lastNode);
+        if (!$subExecutionId && $this->isScheduleHandoffNode($lastNode)) {
+            $subExecutionId = $this->findAnySubExecutionId($data);
+        }
+
+        if ($subExecutionId) {
+            $subExecution = $this->fetchExecution($subExecutionId);
+            if ($subExecution) {
+                $subData = $subExecution['data'] ?? [];
+                $subStatus = $subExecution['status'] ?? 'unknown';
+                $subLastNode = $this->getLastNode($subData);
+                $composedLastNode = "{$lastNode} -> {$subLastNode}";
+
+                if ($subStatus === 'error') {
+                    $errorMsg = $subData['resultData']['error']['message'] ?? 'Erro desconhecido';
+                    return ['status' => 'new-fail', 'detail' => "Erro na subexecucao {$subExecutionId}: {$errorMsg}", 'lastNode' => $composedLastNode];
+                }
+
+                if ($this->isSendTextNode($subLastNode)) {
+                    return ['status' => 'pass', 'detail' => "Chegou ao Send Text na subexecucao {$subExecutionId}", 'lastNode' => $composedLastNode];
+                }
+
+                if ($this->isKnownFailNode($subLastNode)) {
+                    return ['status' => 'known-fail', 'detail' => "Known-fail na subexecucao {$subExecutionId}: {$subLastNode}", 'lastNode' => $composedLastNode];
+                }
+
+                return ['status' => 'new-fail', 'detail' => "Nao chegou ao Send Text na subexecucao {$subExecutionId}. Ultimo node: {$subLastNode}", 'lastNode' => $composedLastNode];
             }
         }
 
-        return ['status' => 'new-fail', 'detail' => "Não chegou ao Send Text. Último node: {$lastNode}", 'lastNode' => $lastNode];
+        if ($this->isKnownFailNode($lastNode)) {
+            return ['status' => 'known-fail', 'detail' => "Known-fail em: {$lastNode}", 'lastNode' => $lastNode];
+        }
+
+        return ['status' => 'new-fail', 'detail' => "Nao chegou ao Send Text. Ultimo node: {$lastNode}", 'lastNode' => $lastNode];
     }
 
     private function getLastNode(array $data): string
@@ -172,6 +325,91 @@ class RunPlatformHealthSuite extends Command
         return end($nodes) ?: 'desconhecido';
     }
 
+    private function isSendTextNode(string $nodeName): bool
+    {
+        $node = strtolower($nodeName);
+        return str_contains($node, 'send text') || str_contains($node, 'vee - send');
+    }
+
+    private function isKnownFailNode(string $nodeName): bool
+    {
+        $knownFailNodes = ['Save Process', 'cdbKOKD6EsPXU'];
+        foreach ($knownFailNodes as $known) {
+            if (str_contains($nodeName, $known)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function isScheduleHandoffNode(string $nodeName): bool
+    {
+        $lower = strtolower($nodeName);
+        return str_contains($lower, 'agendamento') || str_contains($lower, 'schedule');
+    }
+
+    private function getSubExecutionIdFromNode(array $data, string $nodeName): ?string
+    {
+        $runData = $data['resultData']['runData'] ?? [];
+        $nodeRuns = $runData[$nodeName] ?? null;
+        if (!is_array($nodeRuns)) {
+            return null;
+        }
+
+        foreach ($nodeRuns as $run) {
+            if (!is_array($run)) {
+                continue;
+            }
+            $subExecutionId = $run['metadata']['subExecution']['executionId'] ?? null;
+            if (!empty($subExecutionId)) {
+                return (string) $subExecutionId;
+            }
+        }
+
+        return null;
+    }
+
+    private function findAnySubExecutionId(array $data): ?string
+    {
+        $runData = $data['resultData']['runData'] ?? [];
+        foreach ($runData as $nodeRuns) {
+            if (!is_array($nodeRuns)) {
+                continue;
+            }
+            foreach ($nodeRuns as $run) {
+                if (!is_array($run)) {
+                    continue;
+                }
+                $subExecutionId = $run['metadata']['subExecution']['executionId'] ?? null;
+                if (!empty($subExecutionId)) {
+                    return (string) $subExecutionId;
+                }
+            }
+        }
+        return null;
+    }
+
+    private function fetchExecution(string $executionId): ?array
+    {
+        try {
+            $this->resetBookingSessionIfNeeded($caso);
+            $response = Http::withHeaders([
+                'X-N8N-API-KEY' => $this->n8nApiKey,
+            ])->timeout(10)->get("{$this->n8nBaseUrl}/api/v1/executions/{$executionId}", [
+                'includeData' => 'true',
+            ]);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::warning("fetchExecution error ({$executionId}): {$e->getMessage()}");
+            return null;
+        }
+    }
+
     private function saveResults(array $results, string $suite): void
     {
         $date = Carbon::now()->format('Y-m-d');
@@ -181,20 +419,20 @@ class RunPlatformHealthSuite extends Command
         $timeout  = count(array_filter($results, fn($r) => $r['status'] === 'timeout'));
         $skip     = count(array_filter($results, fn($r) => $r['status'] === 'skip'));
 
-        $md = "# Platform Health — {$date} ({$suite})\n\n";
-        $md .= "**Resultado:** ✅ {$pass} pass | ⚠️ {$knownFail} known-fail | 🔴 {$newFail} new-fail | ⏱ {$timeout} timeout | ⤷ {$skip} skip\n\n";
+        $md = "# Platform Health â€” {$date} ({$suite})\n\n";
+        $md .= "**Resultado:** âœ… {$pass} pass | âš ï¸ {$knownFail} known-fail | ðŸ”´ {$newFail} new-fail | â± {$timeout} timeout | â¤· {$skip} skip\n\n";
         $md .= "## Casos\n\n";
-        $md .= "| ID | Cenário | Status | Detalhe | Último Node |\n";
+        $md .= "| ID | CenÃ¡rio | Status | Detalhe | Ãšltimo Node |\n";
         $md .= "|---|---|---|---|---|\n";
 
         foreach ($results as $r) {
             $icon = match($r['status']) {
-                'pass'       => '✅',
-                'known-fail' => '⚠️',
-                'new-fail'   => '🔴',
-                'timeout'    => '⏱',
-                'skip'       => '⤷',
-                default      => '❓',
+                'pass'       => 'âœ…',
+                'known-fail' => 'âš ï¸',
+                'new-fail'   => 'ðŸ”´',
+                'timeout'    => 'â±',
+                'skip'       => 'â¤·',
+                default      => 'â“',
             };
             $id       = $r['id'] ?? '-';
             $scenario = addslashes($r['scenario'] ?? '-');
@@ -204,10 +442,10 @@ class RunPlatformHealthSuite extends Command
         }
 
         if ($newFail > 0) {
-            $md .= "\n## ⚠️ Ação Necessária\n\n";
+            $md .= "\n## âš ï¸ AÃ§Ã£o NecessÃ¡ria\n\n";
             foreach ($results as $r) {
                 if ($r['status'] === 'new-fail') {
-                    $md .= "- **{$r['id']}** — {$r['scenario']}: {$r['detail']}\n";
+                    $md .= "- **{$r['id']}** â€” {$r['scenario']}: {$r['detail']}\n";
                 }
             }
         }
@@ -215,7 +453,7 @@ class RunPlatformHealthSuite extends Command
         // Salva via Obsidian MCP (POST para o vee-mcp)
         $this->saveToObsidian("MMCloud/testes/resultados-{$date}.md", $md, "Platform Health {$date}");
 
-        // Salva também localmente em storage/logs para debug
+        // Salva tambÃ©m localmente em storage/logs para debug
         Storage::disk('local')->put("platform-health/resultados-{$date}.json", json_encode($results, JSON_PRETTY_PRINT));
     }
 
@@ -224,29 +462,29 @@ class RunPlatformHealthSuite extends Command
         $newFails = array_filter($results, fn($r) => $r['status'] === 'new-fail');
         if (empty($newFails)) return;
 
-        // Busca o próximo número de BUG disponível
+        // Busca o prÃ³ximo nÃºmero de BUG disponÃ­vel
         $bugNum = $this->getNextBugNumber();
 
         foreach ($newFails as $r) {
             $bugId   = sprintf('BUG-%03d', $bugNum);
             $date    = Carbon::now()->format('Y-m-d');
             $lastNode = $r['lastNode'] ?? 'desconhecido';
-            $content = "# {$bugId} — {$r['scenario']}\n\n";
+            $content = "# {$bugId} â€” {$r['scenario']}\n\n";
             $content .= "**Data:** {$date}\n";
-            $content .= "**Status:** ❌ Aberto\n";
+            $content .= "**Status:** âŒ Aberto\n";
             $content .= "**Severidade:** Alta\n";
-            $content .= "**Detectado por:** Platform Health Suite (automático)\n\n";
-            $content .= "## Descrição\n\n{$r['detail']}\n\n";
+            $content .= "**Detectado por:** Platform Health Suite (automÃ¡tico)\n\n";
+            $content .= "## DescriÃ§Ã£o\n\n{$r['detail']}\n\n";
             $content .= "## Caso de Teste\n\n";
             $content .= "- **ID:** {$r['id']}\n";
-            $content .= "- **Cenário:** {$r['scenario']}\n";
+            $content .= "- **CenÃ¡rio:** {$r['scenario']}\n";
             $content .= "- **Tenant:** {$r['tenant_slug']}\n";
-            $content .= "- **Último node:** {$lastNode}\n\n";
-            $content .= "## Próximos Passos\n\n- [ ] Investigar no n8n via REST API\n- [ ] Corrigir\n- [ ] Re-rodar caso de teste para confirmar\n";
+            $content .= "- **Ãšltimo node:** {$lastNode}\n\n";
+            $content .= "## PrÃ³ximos Passos\n\n- [ ] Investigar no n8n via REST API\n- [ ] Corrigir\n- [ ] Re-rodar caso de teste para confirmar\n";
 
             $path = "tecnico/bugs/{$bugId}-" . Str::slug($r['scenario']) . ".md";
             $this->saveToObsidian($path, $content, $bugId);
-            $this->warn("🔴 BUG criado: {$bugId} — {$r['scenario']}");
+            $this->warn("ðŸ”´ BUG criado: {$bugId} â€” {$r['scenario']}");
             $bugNum++;
         }
     }
@@ -263,35 +501,35 @@ class RunPlatformHealthSuite extends Command
             ]);
         } catch (\Exception $e) {
             Log::warning("Obsidian save failed: {$e->getMessage()}");
-            // Não quebra o comando se o Obsidian falhar
+            // NÃ£o quebra o comando se o Obsidian falhar
         }
     }
 
     private function getNextBugNumber(): int
     {
-        // Lê o README de bugs para descobrir o próximo número
-        // Fallback: começa em 004 (001, 002, 003 já existem)
+        // LÃª o README de bugs para descobrir o prÃ³ximo nÃºmero
+        // Fallback: comeÃ§a em 004 (001, 002, 003 jÃ¡ existem)
         return 4;
     }
 
     private function formatLine(array $r): string
     {
         $icon = match($r['status']) {
-            'pass'       => '✅',
-            'known-fail' => '⚠️',
-            'new-fail'   => '🔴',
-            'timeout'    => '⏱',
-            'skip'       => '⤷',
-            default      => '❓',
+            'pass'       => 'âœ…',
+            'known-fail' => 'âš ï¸',
+            'new-fail'   => 'ðŸ”´',
+            'timeout'    => 'â±',
+            'skip'       => 'â¤·',
+            default      => 'â“',
         };
-        return "{$icon} [{$r['id']}] {$r['scenario']} — {$r['detail']}";
+        return "{$icon} [{$r['id']}] {$r['scenario']} â€” {$r['detail']}";
     }
 
     private function getCasos(string $suite): array
     {
-        // Suite diária: grupos A, B, C, D, E, K, L + M parcial
+        // Suite diÃ¡ria: grupos A, B, C, D, E, K, L + M parcial
         // Suite semanal: todos os 81 casos
-        // Retorna array com os casos — ver casos-de-teste.md para lista completa
+        // Retorna array com os casos â€” ver casos-de-teste.md para lista completa
 
         $daily = $this->getDailyCasos();
         if ($suite === 'weekly') {
@@ -303,92 +541,92 @@ class RunPlatformHealthSuite extends Command
     private function getDailyCasos(): array
     {
         return [
-            // GRUPO A — Onboarding — target: atendimento (testa RAG, saudação, contexto)
-            ['id'=>'A-001','scenario'=>'Cliente novo — primeira mensagem','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá, quero saber sobre vocês'],
-            ['id'=>'A-002','scenario'=>'Cliente novo — já diz o nome','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi, sou a Maria, quero agendar'],
-            ['id'=>'A-003','scenario'=>'Cliente novo — não diz o nome','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi'],
-            ['id'=>'A-004','scenario'=>'Responde com nome após ser perguntado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Maria'],
+            // GRUPO A â€” Onboarding â€” target: atendimento (testa RAG, saudaÃ§Ã£o, contexto)
+            ['id'=>'A-001','scenario'=>'Cliente novo â€” primeira mensagem','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'OlÃ¡, quero saber sobre vocÃªs'],
+            ['id'=>'A-002','scenario'=>'Cliente novo â€” jÃ¡ diz o nome','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi, sou a Maria, quero agendar'],
+            ['id'=>'A-003','scenario'=>'Cliente novo â€” nÃ£o diz o nome','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi'],
+            ['id'=>'A-004','scenario'=>'Responde com nome apÃ³s ser perguntado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Maria'],
 
-            // GRUPO B — Intent — target: atendimento (classifica intenção e roteia)
-            ['id'=>'B-001','scenario'=>'Intent: booking','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quero marcar um horário'],
-            ['id'=>'B-002','scenario'=>'Intent: informação/RAG','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quais serviços vocês oferecem?'],
+            // GRUPO B â€” Intent â€” target: atendimento (classifica intenÃ§Ã£o e roteia)
+            ['id'=>'B-001','scenario'=>'Intent: booking','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quero marcar um horÃ¡rio'],
+            ['id'=>'B-002','scenario'=>'Intent: informaÃ§Ã£o/RAG','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quais serviÃ§os vocÃªs oferecem?'],
             ['id'=>'B-003','scenario'=>'Intent: small talk','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Oi, tudo bem?'],
-            ['id'=>'B-004','scenario'=>'Intent: commercial intelligence','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Vocês têm desconto?'],
-            ['id'=>'B-005','scenario'=>'Mensagem ambígua','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Hmm'],
+            ['id'=>'B-004','scenario'=>'Intent: commercial intelligence','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'VocÃªs tÃªm desconto?'],
+            ['id'=>'B-005','scenario'=>'Mensagem ambÃ­gua','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Hmm'],
 
-            // GRUPO C — Fluxo atendimento — target: atendimento
-            ['id'=>'C-001','scenario'=>'Cliente retornando — contexto recuperado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá de novo'],
-            ['id'=>'C-002','scenario'=>'Memory update detectado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Pode anotar que prefiro horários de manhã'],
+            // GRUPO C â€” Fluxo atendimento â€” target: atendimento
+            ['id'=>'C-001','scenario'=>'Cliente retornando â€” contexto recuperado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'OlÃ¡ de novo'],
+            ['id'=>'C-002','scenario'=>'Memory update detectado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Pode anotar que prefiro horÃ¡rios de manhÃ£'],
             ['id'=>'C-003','scenario'=>'Salvar mensagens inbound/outbound','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Teste de save'],
-            ['id'=>'C-004','scenario'=>'Token Count registrado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quero informações'],
+            ['id'=>'C-004','scenario'=>'Token Count registrado','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Quero informaÃ§Ãµes'],
 
-            // GRUPO D — Entity Resolver — target: agendamento
-            ['id'=>'D-001','scenario'=>'Serviço identificado por nome exato','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita'],
-            ['id'=>'D-002','scenario'=>'Serviço com múltiplos candidatos','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação'],
-            ['id'=>'D-006','scenario'=>'Data em linguagem natural — amanhã','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar para amanhã'],
-            ['id'=>'D-007','scenario'=>'Horário em linguagem natural','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Às 14h'],
-            ['id'=>'D-008','scenario'=>'Sem nenhuma entidade','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar'],
+            // GRUPO D â€” Entity Resolver â€” target: agendamento
+            ['id'=>'D-001','scenario'=>'ServiÃ§o identificado por nome exato','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o gratuita','tenant_id'=>5,'tenant_api_token'=>'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d','client_id'=>6],
+            ['id'=>'D-002','scenario'=>'ServiÃ§o com mÃºltiplos candidatos','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o','tenant_id'=>5,'tenant_api_token'=>'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d','client_id'=>6],
+            ['id'=>'D-006','scenario'=>'Data em linguagem natural â€” amanhÃ£','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar para amanhÃ£','tenant_id'=>5,'tenant_api_token'=>'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d','client_id'=>6],
+            ['id'=>'D-007','scenario'=>'HorÃ¡rio em linguagem natural','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar de tarde','tenant_id'=>5,'tenant_api_token'=>'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d','client_id'=>6],
+            ['id'=>'D-008','scenario'=>'Sem nenhuma entidade','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar','tenant_id'=>5,'tenant_api_token'=>'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d','client_id'=>6],
 
-            // GRUPO E — Missing Fields — target: agendamento
-            ['id'=>'E-001','scenario'=>'Falta serviço','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar para amanhã às 10h'],
-            ['id'=>'E-002','scenario'=>'Falta data','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita às 10h'],
-            ['id'=>'E-003','scenario'=>'Falta horário','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita amanhã'],
-            ['id'=>'E-007','scenario'=>'Usuário envia tudo em uma mensagem','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita, amanhã às 10h'],
+            // GRUPO E â€” Missing Fields â€” target: agendamento
+            ['id'=>'E-001','scenario'=>'Falta serviÃ§o','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar para amanhÃ£ Ã s 10h'],
+            ['id'=>'E-002','scenario'=>'Falta data','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o gratuita Ã s 10h'],
+            ['id'=>'E-003','scenario'=>'Falta horÃ¡rio','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o gratuita amanhÃ£'],
+            ['id'=>'E-007','scenario'=>'UsuÃ¡rio envia tudo em uma mensagem','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o gratuita, amanhÃ£ Ã s 10h'],
 
-            // GRUPO K — Save Process — target: agendamento
-            ['id'=>'K-001','scenario'=>'Save missing fields — todos os 4 nodes','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar'],
-            ['id'=>'K-002','scenario'=>'Save disambiguous question','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação'],
+            // GRUPO K â€” Save Process â€” target: agendamento
+            ['id'=>'K-001','scenario'=>'Save missing fields â€” todos os 4 nodes','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero agendar'],
+            ['id'=>'K-002','scenario'=>'Save disambiguous question','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o'],
 
-            // GRUPO L — Hub/Roteamento — target: atendimento
-            ['id'=>'L-001','scenario'=>'Mensagem de texto simples','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá'],
-            ['id'=>'L-002','scenario'=>'Mensagem própria (fromMe)','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Teste'],
-            ['id'=>'L-004','scenario'=>'Roteamento para MMCloud','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá'],
+            // GRUPO L â€” Hub/Roteamento â€” target: atendimento
+            ['id'=>'L-001','scenario'=>'Mensagem de texto simples','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'OlÃ¡'],
+            ['id'=>'L-002','scenario'=>'Mensagem prÃ³pria (fromMe)','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Teste'],
+            ['id'=>'L-004','scenario'=>'Roteamento para MMCloud','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'OlÃ¡'],
 
-            // GRUPO M — mmbeauty parcial — target: full (fluxo completo Hub→Atendimento→Agendamento)
-            ['id'=>'M-001','scenario'=>'Desambiguação entre 6 profissionais','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar'],
-            ['id'=>'M-002','scenario'=>'Profissional turno manhã','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de manhã'],
+            // GRUPO M â€” mmbeauty parcial â€” target: full (fluxo completo Hubâ†’Atendimentoâ†’Agendamento)
+            ['id'=>'M-001','scenario'=>'DesambiguaÃ§Ã£o entre 6 profissionais','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar'],
+            ['id'=>'M-002','scenario'=>'Profissional turno manhÃ£','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de manhÃ£'],
             ['id'=>'M-003','scenario'=>'Profissional turno tarde','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de tarde'],
-            ['id'=>'M-005','scenario'=>'Serviço domicílio','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero Corte e Barba em Domicílio'],
-            ['id'=>'M-009','scenario'=>'Deadline zero — cancelamento sempre permitido','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero cancelar meu agendamento'],
-            ['id'=>'M-010','scenario'=>'Deadline zero — reagendamento sempre permitido','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero remarcar meu horário'],
+            ['id'=>'M-005','scenario'=>'ServiÃ§o domicÃ­lio','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero Corte e Barba em DomicÃ­lio'],
+            ['id'=>'M-009','scenario'=>'Deadline zero â€” cancelamento sempre permitido','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero cancelar meu agendamento'],
+            ['id'=>'M-010','scenario'=>'Deadline zero â€” reagendamento sempre permitido','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero remarcar meu horÃ¡rio'],
         ];
     }
 
     private function getWeeklyCasos(): array
     {
         // Casos adicionais da suite semanal (grupos F, G, H, I, J, D completo, M completo)
-        // veetest-b e veetest-c necessários para grupos F, G-002, H-007, I-002, J
+        // veetest-b e veetest-c necessÃ¡rios para grupos F, G-002, H-007, I-002, J
         return [
-            // GRUPO F — Blocking — target: agendamento (veetest-c)
-            ['id'=>'F-001','scenario'=>'PreCheck OK — todos campos válidos','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Avaliação Rápida amanhã às 10h'],
-            ['id'=>'F-002','scenario'=>'Blocked: sem disponibilidade no horário','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Avaliação Rápida amanhã às 11h30'],
-            ['id'=>'F-003','scenario'=>'Blocked: profissional indisponível','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero com o Prof Alpha às 11h'],
-            ['id'=>'F-005','scenario'=>'Blocked: serviço não disponível na data','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Avaliação Inicial amanhã às 10h'],
+            // GRUPO F â€” Blocking â€” target: agendamento (veetest-c)
+            ['id'=>'F-001','scenario'=>'PreCheck OK â€” todos campos vÃ¡lidos','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'AvaliaÃ§Ã£o RÃ¡pida amanhÃ£ Ã s 10h'],
+            ['id'=>'F-002','scenario'=>'Blocked: sem disponibilidade no horÃ¡rio','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'AvaliaÃ§Ã£o RÃ¡pida amanhÃ£ Ã s 11h30'],
+            ['id'=>'F-003','scenario'=>'Blocked: profissional indisponÃ­vel','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero com o Prof Alpha Ã s 11h'],
+            ['id'=>'F-005','scenario'=>'Blocked: serviÃ§o nÃ£o disponÃ­vel na data','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'AvaliaÃ§Ã£o Inicial amanhÃ£ Ã s 10h'],
 
-            // GRUPO G — Criação agendamento
-            ['id'=>'G-001','scenario'=>'Agendamento presencial','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita amanhã às 10h'],
-            ['id'=>'G-002','scenario'=>'Agendamento virtual (Google Meet)','target'=>'agendamento','tenant_slug'=>'veetest-b','message'=>'Consulta Virtual amanhã às 10h'],
-            ['id'=>'G-009','scenario'=>'Mensagem de confirmação enviada','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Avaliação gratuita amanhã às 10h'],
+            // GRUPO G â€” CriaÃ§Ã£o agendamento
+            ['id'=>'G-001','scenario'=>'Agendamento presencial','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o gratuita amanhÃ£ Ã s 10h'],
+            ['id'=>'G-002','scenario'=>'Agendamento virtual (Google Meet)','target'=>'agendamento','tenant_slug'=>'veetest-b','message'=>'Consulta Virtual amanhÃ£ Ã s 10h'],
+            ['id'=>'G-009','scenario'=>'Mensagem de confirmaÃ§Ã£o enviada','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'AvaliaÃ§Ã£o gratuita amanhÃ£ Ã s 10h'],
 
-            // GRUPO H — Reagendamento
-            ['id'=>'H-001','scenario'=>'Reagendamento com ID explícito','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero remarcar o agendamento'],
+            // GRUPO H â€” Reagendamento
+            ['id'=>'H-001','scenario'=>'Reagendamento com ID explÃ­cito','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero remarcar o agendamento'],
             ['id'=>'H-007','scenario'=>'Reagendamento fora do prazo','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero remarcar'],
 
-            // GRUPO I — Cancelamento
+            // GRUPO I â€” Cancelamento
             ['id'=>'I-001','scenario'=>'Cancelamento dentro do prazo','target'=>'agendamento','tenant_slug'=>'veetest','message'=>'Quero cancelar'],
             ['id'=>'I-002','scenario'=>'Cancelamento fora do prazo','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero cancelar'],
 
-            // GRUPO J — Desambiguação (veetest-c)
-            ['id'=>'J-002','scenario'=>'Múltiplos serviços — desambiguação','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero Avaliação'],
-            ['id'=>'J-003','scenario'=>'Múltiplos profissionais — desambiguação','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero agendar'],
+            // GRUPO J â€” DesambiguaÃ§Ã£o (veetest-c)
+            ['id'=>'J-002','scenario'=>'MÃºltiplos serviÃ§os â€” desambiguaÃ§Ã£o','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero AvaliaÃ§Ã£o'],
+            ['id'=>'J-003','scenario'=>'MÃºltiplos profissionais â€” desambiguaÃ§Ã£o','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero agendar'],
 
-            // GRUPO M — mmbeauty semanal completo — target: full
-            ['id'=>'M-004','scenario'=>'Profissional manhã indisponível à tarde','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero com o Lucas às 16h'],
-            ['id'=>'M-006','scenario'=>'Serviço longo 150min','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero Platinado amanhã'],
-            ['id'=>'M-007','scenario'=>'Serviço curto 10min','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Sobrancelha amanhã às 9h'],
-            ['id'=>'M-008','scenario'=>'Sábado — unidade encerra às 14h','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar sábado às 15h'],
-            ['id'=>'M-011','scenario'=>'Desambiguação de serviço (nomes parecidos)','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero hidratação'],
-            ['id'=>'M-012','scenario'=>'Plano mensal com preço real','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero o plano de corte'],
+            // GRUPO M â€” mmbeauty semanal completo â€” target: full
+            ['id'=>'M-004','scenario'=>'Profissional manhÃ£ indisponÃ­vel Ã  tarde','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero com o Lucas Ã s 16h'],
+            ['id'=>'M-006','scenario'=>'ServiÃ§o longo 150min','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero Platinado amanhÃ£'],
+            ['id'=>'M-007','scenario'=>'ServiÃ§o curto 10min','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Sobrancelha amanhÃ£ Ã s 9h'],
+            ['id'=>'M-008','scenario'=>'SÃ¡bado â€” unidade encerra Ã s 14h','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar sÃ¡bado Ã s 15h'],
+            ['id'=>'M-011','scenario'=>'DesambiguaÃ§Ã£o de serviÃ§o (nomes parecidos)','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero hidrataÃ§Ã£o'],
+            ['id'=>'M-012','scenario'=>'Plano mensal com preÃ§o real','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero o plano de corte'],
         ];
     }
 }
