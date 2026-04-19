@@ -15,9 +15,9 @@ class RunPlatformHealthSuite extends Command
     protected $description = 'Executa a suite de testes do MMCloud Platform Health via n8n REST API';
 
     // n8n REST API
-    private string $n8nBaseUrl;
-    private string $n8nApiKey;
-    private string $webhookUrl;
+    private string $n8nBaseUrl = '';
+    private string $n8nApiKey = '';
+    private string $webhookUrl = '';
 
     // Configuração
     private int $pollIntervalMs = 3000;
