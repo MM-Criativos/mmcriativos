@@ -344,13 +344,13 @@ class RunPlatformHealthSuite extends Command
             ['id'=>'L-002','scenario'=>'Mensagem própria (fromMe)','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Teste'],
             ['id'=>'L-004','scenario'=>'Roteamento para MMCloud','target'=>'atendimento','tenant_slug'=>'veetest','message'=>'Olá'],
 
-            // GRUPO M — mmbeauty parcial — target: agendamento
-            ['id'=>'M-001','scenario'=>'Desambiguação entre 6 profissionais','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar'],
-            ['id'=>'M-002','scenario'=>'Profissional turno manhã','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de manhã'],
-            ['id'=>'M-003','scenario'=>'Profissional turno tarde','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de tarde'],
-            ['id'=>'M-005','scenario'=>'Serviço domicílio','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero Corte e Barba em Domicílio'],
-            ['id'=>'M-009','scenario'=>'Deadline zero — cancelamento sempre permitido','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero cancelar meu agendamento'],
-            ['id'=>'M-010','scenario'=>'Deadline zero — reagendamento sempre permitido','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero remarcar meu horário'],
+            // GRUPO M — mmbeauty parcial — target: full (fluxo completo Hub→Atendimento→Agendamento)
+            ['id'=>'M-001','scenario'=>'Desambiguação entre 6 profissionais','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar'],
+            ['id'=>'M-002','scenario'=>'Profissional turno manhã','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de manhã'],
+            ['id'=>'M-003','scenario'=>'Profissional turno tarde','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar de tarde'],
+            ['id'=>'M-005','scenario'=>'Serviço domicílio','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero Corte e Barba em Domicílio'],
+            ['id'=>'M-009','scenario'=>'Deadline zero — cancelamento sempre permitido','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero cancelar meu agendamento'],
+            ['id'=>'M-010','scenario'=>'Deadline zero — reagendamento sempre permitido','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero remarcar meu horário'],
         ];
     }
 
@@ -382,13 +382,13 @@ class RunPlatformHealthSuite extends Command
             ['id'=>'J-002','scenario'=>'Múltiplos serviços — desambiguação','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero Avaliação'],
             ['id'=>'J-003','scenario'=>'Múltiplos profissionais — desambiguação','target'=>'agendamento','tenant_slug'=>'veetest-c','message'=>'Quero agendar'],
 
-            // GRUPO M — mmbeauty semanal completo
-            ['id'=>'M-004','scenario'=>'Profissional manhã indisponível à tarde','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero com o Lucas às 16h'],
-            ['id'=>'M-006','scenario'=>'Serviço longo 150min','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero Platinado amanhã'],
-            ['id'=>'M-007','scenario'=>'Serviço curto 10min','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Sobrancelha amanhã às 9h'],
-            ['id'=>'M-008','scenario'=>'Sábado — unidade encerra às 14h','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero agendar sábado às 15h'],
-            ['id'=>'M-011','scenario'=>'Desambiguação de serviço (nomes parecidos)','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero hidratação'],
-            ['id'=>'M-012','scenario'=>'Plano mensal com preço real','target'=>'agendamento','tenant_slug'=>'mmbeauty','message'=>'Quero o plano de corte'],
+            // GRUPO M — mmbeauty semanal completo — target: full
+            ['id'=>'M-004','scenario'=>'Profissional manhã indisponível à tarde','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero com o Lucas às 16h'],
+            ['id'=>'M-006','scenario'=>'Serviço longo 150min','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero Platinado amanhã'],
+            ['id'=>'M-007','scenario'=>'Serviço curto 10min','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Sobrancelha amanhã às 9h'],
+            ['id'=>'M-008','scenario'=>'Sábado — unidade encerra às 14h','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero agendar sábado às 15h'],
+            ['id'=>'M-011','scenario'=>'Desambiguação de serviço (nomes parecidos)','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero hidratação'],
+            ['id'=>'M-012','scenario'=>'Plano mensal com preço real','target'=>'full','tenant_slug'=>'mmbeauty','message'=>'Quero o plano de corte'],
         ];
     }
 }
