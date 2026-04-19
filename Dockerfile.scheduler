@@ -49,4 +49,4 @@ RUN mkdir -p /app/storage/app/public \
 
 EXPOSE 80
 
-CMD ["php", "artisan", "schedule:run", "--verbose", "--no-interaction"]
+CMD ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
