@@ -74,5 +74,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('exchange:update')->dailyAt('06:00');
+        $schedule->command('vee:platform-health --suite=daily')->dailyAt('06:10');
+        $schedule->command('vee:platform-health --suite=weekly')->sundays()->at('06:30');
     })
     ->create();

@@ -57,4 +57,15 @@ return [
         'internal_token' => env('VEE_MCP_INTERNAL_TOKEN'),
     ],
 
+    'n8n' => [
+        'url' => env('N8N_URL'),
+        'api_key' => env('N8N_API_KEY'),
+        'webhook_test_runner' => env('N8N_WEBHOOK_TEST_RUNNER'),
+    ],
+
+    'vee_mcp' => [
+        'url' => env('VEE_MCP_URL'),
+        'token' => env('VEE_MCP_TOKEN'),
+    ],
+
 ];
