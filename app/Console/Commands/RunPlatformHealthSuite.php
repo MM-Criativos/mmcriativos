@@ -32,6 +32,24 @@ class RunPlatformHealthSuite extends Command
         'full'        => 'AcTwVVZ86JUuDcX_byb3B', // Hub â†’ Atendimento (sub-workflow)
     ];
 
+    private array $agendamentoTenantCreds = [
+        'veetest' => [
+            'tenant_id' => 5,
+            'tenant_api_token' => 'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d',
+            'client_id' => 6,
+        ],
+        'veetest-b' => [
+            'tenant_id' => 6,
+            'tenant_api_token' => '373bc31cc54ae92e5ff7ff841463896fc9a33f0b1f31d5de96a95c05171a',
+            'client_id' => 8,
+        ],
+        'veetest-c' => [
+            'tenant_id' => 7,
+            'tenant_api_token' => '47e01d7aebf248ec658529781129c3e3c610a1bc03cfc94da0e9ecb3bd7a812f',
+            'client_id' => 7,
+        ],
+    ];
+
     public function handle(): int
     {
         $this->n8nBaseUrl = config('services.n8n.url');        // https://n8n.mmcriativos.cloud
@@ -96,6 +114,8 @@ class RunPlatformHealthSuite extends Command
                 'idMessage'   => 'TEST-' . $caso['id'] . '-' . time(),
             ];
 
+            $payload = $this->injectAgendamentoCredentials($caso, $payload);
+
             // Alguns cenarios (ex.: agendamento direto) exigem contexto extra.
             foreach (['tenant_id', 'tenant_api_token', 'client_id'] as $optionalField) {
                 if (array_key_exists($optionalField, $caso)) {
@@ -103,7 +123,7 @@ class RunPlatformHealthSuite extends Command
                 }
             }
 
-            $response = Http::timeout(90)->post($this->webhookUrl, $payload);
+            $response = $this->dispatchWebhook($payload);
 
             if (!$response->successful()) {
                 return array_merge($caso, [
@@ -227,6 +247,51 @@ class RunPlatformHealthSuite extends Command
         }
 
         return null;
+    }
+
+    private function injectAgendamentoCredentials(array $caso, array $payload): array
+    {
+        if (($caso['target'] ?? '') !== 'agendamento') {
+            return $payload;
+        }
+
+        $tenantSlug = (string) ($caso['tenant_slug'] ?? '');
+        $creds = $this->agendamentoTenantCreds[$tenantSlug] ?? null;
+        if (!is_array($creds)) {
+            return $payload;
+        }
+
+        $payload['tenant_id'] = $payload['tenant_id'] ?? $creds['tenant_id'];
+        $payload['tenant_api_token'] = $payload['tenant_api_token'] ?? $creds['tenant_api_token'];
+        $payload['client_id'] = $payload['client_id'] ?? $creds['client_id'];
+
+        return $payload;
+    }
+
+    private function dispatchWebhook(array $payload, int $maxAttempts = 2)
+    {
+        $attempt = 1;
+        $lastResponse = null;
+
+        while ($attempt <= $maxAttempts) {
+            try {
+                $response = Http::timeout(90)->post($this->webhookUrl, $payload);
+                if ($response->successful()) {
+                    return $response;
+                }
+
+                $lastResponse = $response;
+            } catch (\Throwable $e) {
+                Log::warning("PlatformHealth webhook attempt {$attempt} failed: {$e->getMessage()}");
+            }
+
+            $attempt++;
+            if ($attempt <= $maxAttempts) {
+                sleep(2);
+            }
+        }
+
+        return $lastResponse ?? Http::response(['error' => 'webhook_failed'], 599);
     }
 
     private function pollExecution(string $executionId): array

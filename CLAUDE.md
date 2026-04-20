@@ -105,11 +105,45 @@ Invoke-RestMethod 'https://n8n.mmcriativos.cloud/api/v1/executions?workflowId=WR
 
 ## 5. Vault (Obsidian em produção)
 
-Use o MCP `vee-mmcriativos` disponível neste workspace: `vee_obsidian_read_note`, `vee_obsidian_search`, `vee_obsidian_append_to_note`.
+**Fonte de conhecimento principal: SSH no container `vee-mcp`**, montado em `/obsidian`.
+
+Sempre que o usuário perguntar sobre o vault, busque diretamente via SSH:
+
+```powershell
+# Listar notas na raiz
+python C:\Users\User\.ssh\ssh_exec.py "docker exec \$(docker ps --format '{{.Names}}' | grep vee-mcp | head -1) ls /obsidian"
+
+# Ler uma nota
+python C:\Users\User\.ssh\ssh_exec.py "docker exec \$(docker ps --format '{{.Names}}' | grep vee-mcp | head -1) cat '/obsidian/CAMINHO/DA/NOTA.md'"
+
+# Buscar por conteúdo
+python C:\Users\User\.ssh\ssh_exec.py "docker exec \$(docker ps --format '{{.Names}}' | grep vee-mcp | head -1) grep -rl 'TERMO' /obsidian"
+```
+
+O MCP `vee-mmcriativos` (`vee_obsidian_read_note`, `vee_obsidian_search`, `vee_obsidian_append_to_note`) pode ser usado como fallback, mas o SSH é a fonte primária.
 
 ---
 
-## 6. Prompts disponíveis
+## 6. Memória compartilhada entre agentes
+
+O arquivo `Sessoes/agentes-log.md` no vault é a memória compartilhada entre Claude Code e Codex.
+
+**Ao iniciar toda sessão:** leia as últimas entradas via SSH:
+```powershell
+python C:\Users\User\.ssh\ssh_exec.py "docker exec mm-criativos_vee-mcp.1.2o0z3sstii9c2c99re4ck1dr5 cat /obsidian/Sessoes/agentes-log.md"
+```
+(ou via MCP: `vee_obsidian_read_note` path `Sessoes/agentes-log.md`)
+
+**Ao concluir ação relevante:** registre no topo do arquivo via MCP `vee_obsidian_append_to_note`:
+```
+## YYYY-MM-DD HH:MM — [Claude Code] — [projeto/contexto]
+- O que foi feito
+- Pendente: o que ficou (se houver)
+```
+
+---
+
+## 7. Prompts disponíveis
 
 Use `#nome-do-prompt` no chat para contexto extra:
 `#n8n` · `#n8n-inspect` · `#n8n-debug` · `#n8n-edit` · `#n8n-logs` · `#log`
