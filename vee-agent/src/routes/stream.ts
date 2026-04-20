@@ -83,14 +83,12 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
     { role: "user", content: userMessage }
   ];
 
-  // Load tools (only for cowork mode)
+  // Load tools (all modes)
   let tools: ChatCompletionTool[] = [];
-  if (mode === "cowork") {
-    try {
-      tools = await getOpenAITools();
-    } catch {
-      sseWrite(res, { type: "warning", message: "MCP tools unavailable, running without tools" });
-    }
+  try {
+    tools = await getOpenAITools();
+  } catch {
+    sseWrite(res, { type: "warning", message: "MCP tools unavailable, running without tools" });
   }
 
   emitLog({
