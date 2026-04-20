@@ -1,12 +1,12 @@
 <style>
     /* Modo claro */
-    .icon-project.fa-duotone::before,
+    .icon-project.fa-solid::before,
     .icon-project.fad::before {
         color: rgb(255 136 0) !important;
         /* Camada primária */
     }
 
-    .icon-project.fa-duotone::after,
+    .icon-project.fa-solid::after,
     .icon-project.fad::after {
         color: rgb(0 0 0) !important;
         /* Camada secundária */
@@ -14,13 +14,13 @@
     }
 
     /* Modo escuro */
-    .dark .icon-project.fa-duotone::before,
+    .dark .icon-project.fa-solid::before,
     .dark .icon-project.fad::before {
         color: rgb(255 136 0) !important;
         /* Mantém o laranja */
     }
 
-    .dark .icon-project.fa-duotone::after,
+    .dark .icon-project.fa-solid::after,
     .dark .icon-project.fad::after {
         color: rgb(255 255 255) !important;
         /* Cinza escuro no dark mode */
@@ -136,7 +136,7 @@
                 </div>
                 <button type="button" data-modal-hide="edit-task-modal-{{ $task->id }}"
                     class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                    <i data-lucide="x" class="text-lg"></i>
                 </button>
             </div>
 
@@ -326,7 +326,7 @@
                             <button type="button"
                                 class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border hover:bg-[#ff8800] dark:hover:!bg-[#ff8800] border-gray-300 text-sm text-gray-700"
                                 @click="addItem()">
-                                <i class="fa-solid fa-plus"></i>
+                                <i data-lucide="plus"></i>
                                 Adicionar item
                             </button>
                         </div>
@@ -392,7 +392,7 @@
                                     <button type="button"
                                         class="inline-flex items-center gap-1 text-red-600 hover:text-red-700"
                                         @click="removeItem(index)">
-                                        <i class="fa-solid fa-trash"></i>
+                                        <i data-lucide="trash-2"></i>
                                         Remover
                                     </button>
                                 </div>
@@ -408,7 +408,7 @@
                         </button>
                         <button type="submit"
                             class="btn btn-mmcriativos inline-flex items-center gap-2 px-5 py-2.5 text-white rounded-md text-sm font-medium">
-                            <i class="fa-duotone fa-solid fa-pen-circle fa-2x icon-project"></i>
+                            <i data-lucide="pen" class="fa-2x icon-project"></i>
                             Atualizar tarefa
                         </button>
                     </div>

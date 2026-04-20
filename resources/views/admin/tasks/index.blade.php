@@ -70,25 +70,25 @@
     $navbarTabs = [
         [
             'label' => 'Dashboard',
-            'icon' => 'fa-duotone fa-list-check',
+            'icon' => 'list-checks',
             'route' => route('admin.tasks.index'),
             'active' => request()->routeIs('admin.tasks.index'),
         ],
         [
             'label' => 'Calendário',
-            'icon' => 'fa-duotone fa-calendar-days',
+            'icon' => 'calendar-days',
             'route' => route('admin.tasks.calendar'),
             'active' => request()->routeIs('admin.tasks.calendar'),
         ],
         [
             'label' => 'Kanban',
-            'icon' => 'fa-duotone fa-chart-kanban',
+            'icon' => 'bar-chart-2',
             'route' => route('admin.tasks.kanban'),
             'active' => request()->routeIs('admin.tasks.kanban'),
         ],
         [
             'label' => 'Finalizadas',
-            'icon' => 'fa-duotone fa-circle-check',
+            'icon' => 'circle-check',
             'route' => route('admin.tasks.completed'),
             'active' => request()->routeIs('admin.tasks.completed'),
         ],
@@ -139,7 +139,7 @@
 
                             <span
                                 class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 dark:text-neutral-400">
-                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <i data-lucide="search"></i>
                             </span>
                         </div>
                     </form>
@@ -298,7 +298,7 @@
                                         @if ($task->project)
                                             <a href="{{ route('admin.projects.steps.show', [$task->project, 'tab' => 'development']) }}"
                                                 class="tasks-viewdt-btn inline-flex items-center justify-center w-12 h-10 rounded-md">
-                                                <i class="fa-duotone fa-arrow-right-to-arc icon-project"></i>
+                                                <i data-lucide="arrow-right" class="icon-project"></i>
                                             </a>
                                         @else
                                             <span class="text-xs text-neutral-500">Projeto indisponível</span>

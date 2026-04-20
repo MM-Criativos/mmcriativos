@@ -3,7 +3,7 @@
         <h3 class="text-lg font-semibold text-gray-800">Processos do Projeto</h3>
         <a href="{{ route('admin.processes.index') }}" target="_blank"
             class="btn-mmcriativos inline-flex items-center gap-2 px-4 py-2 rounded">
-            <i class="fa-duotone fa-solid fa-arrow-progress icon-project"></i>
+            <i data-lucide="network" class="icon-project"></i>
             <span>Gerenciar processos</span>
         </a>
     </div>
@@ -25,7 +25,7 @@
         </div>
         <div class="col-span-2 flex items-end justify-end">
             <button class="btn-mmcriativos inline-flex items-center justify-center px-4 py-3 rounded">
-                <i class="fa-duotone fa-solid fa-circle-plus icon-project mr-2"></i>Adicionar Processo
+                <i data-lucide="circle-plus" class="icon-project mr-2"></i>Adicionar Processo
             </button>
         </div>
     </form>
@@ -39,7 +39,7 @@
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="openUploadModal('upload-pp-{{ $pp->id }}')"
                             class="btn-mmcriativos inline-flex items-center gap-1 px-4 py-2 rounded">
-                            <i class="fa-duotone fa-solid fa-image icon-project mr-2"></i> Adicionar Imagens
+                            <i data-lucide="image" class="icon-project mr-2"></i> Adicionar Imagens
                         </button>
                         <form method="POST" action="{{ route('admin.project-processes.destroy', $pp) }}"
                             class="js-process-destroy" data-id="{{ $pp->id }}"
@@ -47,7 +47,7 @@
                             @csrf @method('DELETE')
                             <button
                                 class="inline-flex items-center gap-1 w-full px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 rounded-md">
-                                <i class="fa-regular fa-trash"></i>
+                                <i data-lucide="trash-2"></i>
                             </button>
                         </form>
                     </div>
@@ -69,7 +69,7 @@
                         <label class="block text-sm font-medium text-gray-800 mb-1">Atualizar</label>
                         <button class="btn-mmcriativos inline-flex items-center justify-center w-full px-4 py-5 rounded"
                             title="Salvar">
-                            <i class="fa-duotone fa-solid fa-arrow-rotate-right icon-project"></i>
+                            <i data-lucide="rotate-cw" class="icon-project"></i>
                         </button>
                     </div>
                 </form>
@@ -90,7 +90,7 @@
                                 <div class="flex items-center justify-between mb-4">
                                     <h4 class="font-semibold">Editar Imagem</h4>
                                     <button type="button" onclick="closeUploadModal('edit-img-{{ $img->id }}')">
-                                        <i class="fa-solid fa-xmark"></i>
+                                        <i data-lucide="x"></i>
                                     </button>
                                 </div>
                                 <form id="img-form-{{ $img->id }}" method="POST"
@@ -136,7 +136,7 @@
                                             @csrf @method('DELETE')
                                             <button
                                                 class="w-full px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 rounded-md">
-                                                <i class="fa-regular fa-trash-can"></i>
+                                                <i data-lucide="trash-2"></i>
                                             </button>
                                         </form>
                                     </div>
@@ -153,7 +153,7 @@
                         <div class="flex items-center justify-between mb-4">
                             <h4 class="font-semibold">Adicionar Imagens</h4>
                             <button type="button" onclick="closeUploadModal('upload-pp-{{ $pp->id }}')">
-                                <i class="fa-duotone fa-solid fa-xmark icon-project"></i>
+                                <i data-lucide="x" class="icon-project"></i>
                             </button>
                         </div>
                         <form method="POST" action="{{ route('admin.project-processes.images.store', $pp) }}"

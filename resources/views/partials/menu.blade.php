@@ -115,7 +115,7 @@
             <div class="main-menu__right" style="display:flex; align-items:center; gap:10px;">
                 <!-- Botão Menu (glass) -->
                 <button type="button" class="glass-btn js-open-menu" aria-label="Abrir menu">
-                    <i class="fa-solid fa-bars"></i>
+                    <i data-lucide="menu"></i>
                     <span class="d-none d-md-inline">Menu</span>
                 </button>
 
@@ -140,7 +140,7 @@
     <div id="siteOverlayMenu" class="site-menu-overlay" aria-hidden="true">
         <div class="site-menu-panel">
             <button class="glass-btn site-menu-close js-close-menu" aria-label="Fechar menu"><i
-                    class="fa-solid fa-xmark"></i></button>
+                    data-lucide="x"></i></button>
             <ul class="site-menu-list">
                 <li><a href="{{ route('about') }}">Sobre</a></li>
                 <li><a href="{{ route('contact') }}">Contato</a></li>

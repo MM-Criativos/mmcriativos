@@ -175,7 +175,7 @@
 
             <div class="pt-4 border-t border-gray-200 flex justify-center">
                 <button type="submit" class="btn btn-mmcriativos inline-flex items-center gap-2 px-5 py-3 ">
-                    <i class="fa-duotone fa-solid fa-arrow-down-to-arc icon-project"></i>
+                    <i data-lucide="arrow-down" class="icon-project"></i>
                     <span>Salvar kickoff</span>
                 </button>
             </div>

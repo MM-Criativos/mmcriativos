@@ -54,7 +54,7 @@
                                     @else
                                         <div id="preview-cover"
                                             class="flex items-center justify-center w-full bg-[#f5f5f5] dark:bg-dark-800 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Cover
+                                            <i data-lucide="image" class="text-base mr-1"></i> Cover
                                         </div>
                                     @endif
                                 </div>
@@ -83,7 +83,7 @@
                                             border border-dashed border-gray-300
                                             rounded text-gray-400 text-xs text-center
                                              group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Imagem
+                                            <i data-lucide="image" class="text-base mr-1"></i> Imagem
                                         </div>
                                     @endif
                                 </div>

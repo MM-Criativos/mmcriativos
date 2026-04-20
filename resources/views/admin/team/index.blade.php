@@ -16,7 +16,7 @@
                     </div>
                     <a href="{{ route('admin.classes.index') }}"
                         class="btn btn-mmcriativos text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
-                        <i class="fa-duotone fa-solid fa-eye icon-project"></i>
+                        <i data-lucide="eye" class="icon-project"></i>
                         Ver classes
                     </a>
                 </div>
@@ -72,7 +72,7 @@
                                                             @method('PUT')
                                                             <button
                                                                 class="inline-flex items-center gap-1 px-3 py-2 bg-green-800 text-white rounded text-xs hover:bg-green-700">
-                                                                <i class="fa-solid fa-check"></i> Aprovar
+                                                                <i data-lucide="check"></i> Aprovar
                                                             </button>
                                                         </form>
                                                     @else
@@ -88,7 +88,7 @@
                                                             @method('DELETE')
                                                             <button
                                                                 class="inline-flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded text-xs hover:bg-red-700"><i
-                                                                    class="fa-regular fa-trash"></i> Excluir</button>
+                                                                    data-lucide="trash-2"></i> Excluir</button>
                                                         </form>
                                                     @endif
                                                 </div>
@@ -97,7 +97,7 @@
                                                 <div class="flex items-center gap-2">
                                                     <a href="{{ route('admin.team.edit', $user) }}"
                                                         class="inline-flex items-center gap-1 px-3 py-2 btn-mmcriativos rounded-md">
-                                                        <i class="fa-duotone fa-pen-to-square icon-project"></i> Editar
+                                                        <i data-lucide="square-pen" class="icon-project"></i> Editar
                                                     </a>
                                                 </div>
                                             </td>

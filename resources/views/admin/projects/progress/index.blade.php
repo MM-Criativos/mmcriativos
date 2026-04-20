@@ -61,7 +61,7 @@
                                 <div class="flex items-center justify-between mt-auto">
                                     <a href="{{ route('admin.projects.steps.show', ['project' => $project, 'tab' => 'delivery']) }}"
                                         class="inline-flex items-center gap-1 px-5 py-3 btn-mmcriativos rounded-md">
-                                        <i class="fa-duotone fa-regular fa-pen-to-square icon-project mr-2"></i>
+                                        <i data-lucide="square-pen" class="icon-project mr-2"></i>
                                         <span>Editar</span>
                                     </a>
                                     <form method="POST" action="{{ route('admin.projects.destroy', $project) }}"
@@ -70,7 +70,7 @@
                                         @method('DELETE')
                                         <button type="submit"
                                             class="inline-flex items-center gap-1 px-5 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5] dark:hover:bg-[#262626] hover:text-red-500">
-                                            <i class="fa-regular fa-trash"></i>
+                                            <i data-lucide="trash-2"></i>
                                         </button>
                                     </form>
                                 </div>

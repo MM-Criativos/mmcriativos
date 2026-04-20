@@ -63,7 +63,7 @@
                                     @else
                                         <div id="preview-thumb"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Thumb
+                                            <i data-lucide="image" class="text-base mr-1"></i> Thumb
                                         </div>
                                     @endif
                                 </div>
@@ -100,7 +100,7 @@
                                     @else
                                         <div id="preview-cover"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-file-video text-base mr-1"></i> Vídeo
+                                            <i data-lucide="file-video" class="text-base mr-1"></i> Vídeo
                                         </div>
                                     @endif
                                 </div>
@@ -255,7 +255,7 @@
                                     <div class="col-span-2 flex gap-2 justify-end">
                                         <button
                                             class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
-                                            <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
+                                            <i data-lucide="rotate-cw" class="icon-project"></i>
                                             <span></span>
                                         </button>
                                         <form method="POST" action="{{ route('admin.benefits.destroy', $benefit) }}"
@@ -263,7 +263,7 @@
                                             @csrf @method('DELETE')
                                             <button
                                                 class="flex-1 inline-flex items-center justify-center px-4 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500">
-                                                <i class="fa-regular fa-trash-can"></i>
+                                                <i data-lucide="trash-2"></i>
                                                 <span></span>
                                             </button>
                                         </form>
@@ -297,7 +297,7 @@
                                 <div class="col-span-1 flex items-end">
                                     <button type="submit"
                                         class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
-                                        <i class="fa-duotone fa-solid fa-plus-circle icon-project"></i>
+                                        <i data-lucide="circle-plus" class="icon-project"></i>
                                         <span></span>
                                     </button>
                                 </div>
@@ -339,7 +339,7 @@
                                     <div class="col-span-2 flex gap-2 justify-end">
                                         <button
                                             class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
-                                            <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
+                                            <i data-lucide="rotate-cw" class="icon-project"></i>
                                             <span></span>
                                         </button>
 
@@ -348,7 +348,7 @@
                                             @csrf @method('DELETE')
                                             <button
                                                 class="flex-1 inline-flex items-center justify-center px-4 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500">
-                                                <i class="fa-regular fa-trash-can"></i>
+                                                <i data-lucide="trash-2"></i>
                                                 <span></span>
                                             </button>
                                         </form>
@@ -382,7 +382,7 @@
                                     <div class="col-span-1 flex items-end">
                                         <button type="submit"
                                             class="w-full flex items-center justify-center gap-2 px-3 py-2 btn-mmcriativos rounded-md">
-                                            <i class="fa-solid fa-plus"></i>
+                                            <i data-lucide="plus"></i>
                                             <span>Adicionar</span>
                                         </button>
                                     </div>
@@ -417,7 +417,7 @@
                                                 @else
                                                     <div id="preview-{{ $process->id }}"
                                                         class="flex items-center justify-center w-[188px] h-[186px] border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-sm group-hover:bg-orange-50">
-                                                        <i class="fa-regular fa-image text-lg mr-2"></i> Selecionar
+                                                        <i data-lucide="image" class="text-lg mr-2"></i> Selecionar
                                                     </div>
                                                 @endif
                                             </div>
@@ -461,7 +461,7 @@
                                                 formnovalidate
                                                 class="inline-flex items-center justify-center px-3 py-2 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500 rounded"
                                                 title="Apagar" onclick="return confirm('Remover processo?');">
-                                                <i class="fa-regular fa-trash-can"></i>
+                                                <i data-lucide="trash-2"></i>
                                             </button>
                                         </div>
                                     </div>
@@ -480,7 +480,7 @@
                             <button type="button" id="bulkUpdateProcessesBtn"
                                 class="inline-flex items-center gap-2 px-4 py-2 btn-mmcriativos rounded-md"
                                 onclick="bulkUpdateProcesses('{{ route('admin.services.processes.bulk', $service) }}')">
-                                <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
+                                <i data-lucide="rotate-cw" class="icon-project"></i>
                                 <span>Atualizar todos</span>
                             </button>
                         </div>
@@ -503,7 +503,7 @@
 
                                         <div id="preview-new"
                                             class="flex items-center justify-center w-[188px] h-[186px] border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-sm group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-lg mr-2"></i> Selecionar
+                                            <i data-lucide="image" class="text-lg mr-2"></i> Selecionar
                                         </div>
                                     </div>
                                 </div>
@@ -538,7 +538,7 @@
                                     <button type="submit"
                                         class="inline-flex items-center justify-center px-3 py-2 btn-mmcriativos rounded-md"
                                         title="Adicionar">
-                                        <i class="fa-duotone fa-solid fa-plus-circle icon-project"></i>
+                                        <i data-lucide="circle-plus" class="icon-project"></i>
                                     </button>
                                 </div>
                             </div>
@@ -587,7 +587,7 @@
                                                 @else
                                                     <div id="preview-cta-{{ $cta->id }}"
                                                         class="flex items-center justify-center w-[188px] h-[186px] border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-sm group-hover:bg-orange-50">
-                                                        <i class="fa-regular fa-image text-lg mr-2"></i> Selecionar
+                                                        <i data-lucide="image" class="text-lg mr-2"></i> Selecionar
                                                     </div>
                                                 @endif
                                             </div>
@@ -619,7 +619,7 @@
                                             <button type="submit"
                                                 class="inline-flex items-center justify-center px-3 py-2 btn-mmcriativos rounded-md"
                                                 title="Atualizar">
-                                                <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
+                                                <i data-lucide="rotate-cw" class="icon-project"></i>
                                             </button>
 
                                             <form method="POST" action="{{ route('admin.ctas.destroy', $cta) }}"
@@ -628,7 +628,7 @@
                                                 <button
                                                     class="inline-flex items-center justify-center px-3.5 py-2 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500 rounded"
                                                     title="Apagar">
-                                                    <i class="fa-regular fa-trash-can"></i>
+                                                    <i data-lucide="trash-2"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -655,7 +655,7 @@
 
                                         <div id="preview-cta-new"
                                             class="flex items-center justify-center w-[188px] h-[186px] border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-sm group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-lg mr-2"></i> Selecionar
+                                            <i data-lucide="image" class="text-lg mr-2"></i> Selecionar
                                         </div>
                                     </div>
                                 </div>
@@ -682,7 +682,7 @@
                                     <button type="submit"
                                         class="inline-flex items-center justify-center px-3 py-2 btn-mmcriativos rounded-md"
                                         title="Adicionar">
-                                        <i class="fa-duotone fa-solid fa-plus-circle icon-project"></i>
+                                        <i data-lucide="circle-plus" class="icon-project"></i>
                                     </button>
                                 </div>
                             </div>

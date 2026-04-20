@@ -101,7 +101,7 @@
             }'>
             @php $skills = \App\Models\Skill::query()->orderBy('id')->get(); @endphp
             @foreach ($skills as $skill)
-                @php $iconClasses = trim($skill->icon_class ?: ($skill->icon ?: 'fa-light fa-code')); @endphp
+                @php $iconClasses = trim($skill->icon_class ?: ($skill->icon ?: 'code')); @endphp
                 <div class="item">
                     <div class="service-one__item">
                         <div class="service-one__item__icon">
@@ -144,7 +144,7 @@
                 "smartSpeed": 700
             }'>
             @foreach ($skills as $skill)
-                @php $iconClasses = trim($skill->icon_class ?: ($skill->icon ?: 'fa-light fa-code')); @endphp
+                @php $iconClasses = trim($skill->icon_class ?: ($skill->icon ?: 'code')); @endphp
                 <div class="item">
                     <div class="service-one-mobile__item">
                         <div class="service-one-mobile__icon mb-3">

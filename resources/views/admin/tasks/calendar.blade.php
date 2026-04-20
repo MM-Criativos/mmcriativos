@@ -2,13 +2,13 @@
 
 <style>
     /* Modo claro */
-    .icon-project.fa-duotone::before,
+    .icon-project.fa-solid::before,
     .icon-project.fad::before {
         color: rgb(255 136 0) !important;
         /* Camada primária */
     }
 
-    .icon-project.fa-duotone::after,
+    .icon-project.fa-solid::after,
     .icon-project.fad::after {
         color: rgb(0 0 0) !important;
         /* Camada secundária */
@@ -16,13 +16,13 @@
     }
 
     /* Modo escuro */
-    .dark .icon-project.fa-duotone::before,
+    .dark .icon-project.fa-solid::before,
     .dark .icon-project.fad::before {
         color: rgb(255 136 0) !important;
         /* Mantém o laranja */
     }
 
-    .dark .icon-project.fa-duotone::after,
+    .dark .icon-project.fa-solid::after,
     .dark .icon-project.fad::after {
         color: rgb(255 255 255) !important;
         /* Cinza escuro no dark mode */
@@ -65,25 +65,25 @@
     $navbarTabs = [
         [
             'label' => 'Dashboard',
-            'icon' => 'fa-duotone fa-list-check',
+            'icon' => 'list-checks',
             'route' => route('admin.tasks.index'),
             'active' => request()->routeIs('admin.tasks.index'),
         ],
         [
             'label' => 'Calendário',
-            'icon' => 'fa-duotone fa-calendar-days',
+            'icon' => 'calendar-days',
             'route' => route('admin.tasks.calendar'),
             'active' => request()->routeIs('admin.tasks.calendar'),
         ],
         [
             'label' => 'Kanban',
-            'icon' => 'fa-duotone fa-chart-kanban',
+            'icon' => 'bar-chart-2',
             'route' => route('admin.tasks.kanban'),
             'active' => request()->routeIs('admin.tasks.kanban'),
         ],
         [
             'label' => 'Finalizadas',
-            'icon' => 'fa-duotone fa-circle-check',
+            'icon' => 'circle-check',
             'route' => route('admin.tasks.completed'),
             'active' => request()->routeIs('admin.tasks.completed'),
         ],
@@ -129,7 +129,7 @@
                     <div class="card-body p-6">
                         <button type="button" @click="createTaskModal = true"
                             class="btn btn-mmcriativos text-sm btn-sm px-3 py-3 w-full rounded-lg flex items-center  gap-2 mb-8">
-                            <i class="fa-duotone fa-regular fa-circle-plus fa-2x icon-project"></i>
+                            <i data-lucide="circle-plus" class="fa-2x icon-project"></i>
                             Nova tarefa
                         </button>
                         <div class="mt-8 space-y-4">

@@ -110,7 +110,11 @@
                         <div class="pt-2">
                             <button type="submit"
                                 class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 bg-neutral-900 text-white dark:bg-[#ff8800] dark:text-black font-semibold">
-                                <i class="fa-solid {{ $isUpdatingInstance ? 'fa-pen-to-square' : 'fa-plus' }}"></i>
+                                @if ($isUpdatingInstance)
+                                    <i data-lucide="square-pen" style="width:14px;height:14px;stroke:currentColor;"></i>
+                                @else
+                                    <i data-lucide="plus" style="width:14px;height:14px;stroke:currentColor;"></i>
+                                @endif
                                 {{ $isUpdatingInstance ? 'Atualizar instancia' : 'Criar instancia' }}
                             </button>
                         </div>

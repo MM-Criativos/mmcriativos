@@ -6,13 +6,13 @@
     $navbarTabs = [
         [
             'label' => 'Dashboard',
-            'icon' => 'fa-duotone fa-gears',
+            'icon' => 'settings-2',
             'route' => route('admin.processes.index'),
             'active' => request()->routeIs('admin.processes.index'),
         ],
         [
             'label' => 'Criar Processo',
-            'icon' => 'fa-duotone fa-wrench',
+            'icon' => 'wrench',
             'route' => route('admin.processes.create'),
             'active' => request()->routeIs('admin.processes.create'),
         ],
@@ -47,7 +47,7 @@
                                                 </div>
                                                 @php
                                                     $iconClasses = $process->icon_class ?? '';
-                                                    $iconClasses = $iconClasses ?: 'fa-solid fa-diagram-project';
+                                                    $iconClasses = $iconClasses ?: 'git-branch';
                                                 @endphp
                                                 <div class="text-orange-600 text-xl">
                                                     <i class="{{ $iconClasses }} icon-project fa-2x"></i>
@@ -62,7 +62,7 @@
                                             <div class="flex items-center justify-between mt-auto">
                                                 <a href="{{ route('admin.processes.edit', $process) }}"
                                                     class="inline-flex items-center gap-1 px-4 py-2 rounded-md btn-mmcriativos">
-                                                    <i class="fa-duotone fa-solid fa-pen-to-square mr-2 icon-project"></i>
+                                                    <i data-lucide="square-pen" class="mr-2 icon-project"></i>
                                                     <span>Editar</span>
                                                 </a>
                                                 <form method="POST"
@@ -72,7 +72,7 @@
                                                     @method('DELETE')
                                                     <button type="submit"
                                                         class="inline-flex items-center gap-1 px-4 py-3 rounded-md text-sm bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500">
-                                                        <i class="fa-regular fa-trash-can"></i>
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </div>

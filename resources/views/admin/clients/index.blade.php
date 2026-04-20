@@ -23,7 +23,7 @@
                                     @else
                                         <div
                                             class="w-20 h-20 flex items-center justify-center bg-gray-100 text-gray-400 text-xs rounded border border-gray-200">
-                                            <i class="fa-regular fa-image text-base"></i>
+                                            <i data-lucide="image" class="text-base"></i>
                                         </div>
                                     @endif
 
@@ -36,7 +36,7 @@
                                     <div class="flex items-center justify-between mt-auto">
                                         <a href="{{ route('admin.clients.edit', $client) }}"
                                             class="btn-mmcriativos rounded inline-flex items-center gap-1 px-5 py-3">
-                                            <i class="fa-regular fa-pen-to-square"></i>
+                                            <i data-lucide="square-pen"></i>
                                             <span>Editar</span>
                                         </a>
 
@@ -46,7 +46,7 @@
                                             @method('DELETE')
                                             <button type="submit"
                                                 class="inline-flex items-center gap-1 rounded px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500">
-                                                <i class="fa-regular fa-trash"></i>
+                                                <i data-lucide="trash-2"></i>
                                             </button>
                                         </form>
                                     </div>

@@ -27,7 +27,7 @@
 
                         <div class="flex justify-center gap-3">
                             <button class="inline-flex items-center gap-2 px-5 py-3 rounded-md btn-mmcriativos">
-                                <i class="fa-duotone fa-solid fa-arrow-rotate-right icon-project"></i>
+                                <i data-lucide="rotate-cw" class="icon-project"></i>
                                 <span>Salvar alterações</span>
                             </button>
                         </div>

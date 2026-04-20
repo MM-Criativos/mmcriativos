@@ -17,12 +17,13 @@
                 <p class="font-semibold text-gray-900">{{ $task->title }}</p>
                 <button type="button" @click="modalOpen = true"
                     class="btn-mmcriativos text-xs inline-flex items-center px-3 py-3 rounded-md gap-1">
-                    <i class="fa-duotone fa-solid fa-pen-to-square icon-project"></i>
+                    <i data-lucide="square-pen" class="icon-project"></i>
                 </button>
                 <button type="button"
                     class="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3.5 py-3.5 text-xs text-gray-600 hover:border-orange-500 hover:text-orange-600"
                     @click.stop="expanded = !expanded">
-                    <i class="fa-solid" :class="expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    <i x-show="!expanded" data-lucide="chevron-down" style="width:14px;height:14px;stroke:currentColor;"></i>
+                    <i x-show="expanded" data-lucide="chevron-up" style="width:14px;height:14px;stroke:currentColor;"></i>
                 </button>
             </div>
             <p class="text-sm text-gray-600">{{ $task->description ?? 'Sem descrição' }}</p>
@@ -73,14 +74,14 @@
                     <button type="submit"
                         class="btn-mmcriativos inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium"
                         data-task-complete-button>
-                        <i class="fa-duotone fa-solid fa-circle-check icon-project"></i>
+                        <i data-lucide="circle-check" class="icon-project"></i>
                         Finalizar tarefa
                     </button>
                 </form>
             @else
                 <span
                     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-green-700 text-white border-green-200">
-                    <i class="fa-solid fa-flag-checkered"></i>
+                    <i data-lucide="flag"></i>
                     Concluída em {{ optional($task->completed_at)->format('d/m/Y H:i') ?? 'data não registrada' }}
                 </span>
             @endif
@@ -92,7 +93,7 @@
             @method('DELETE')
             <button type="submit"
                 class="inline-flex items-center gap-2 rounded-md text-sm font-medium w-full px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500">
-                <i class="fa-solid fa-trash"></i>
+                <i data-lucide="trash-2"></i>
                 Excluir tarefa
             </button>
         </form>
@@ -146,7 +147,11 @@
                                     <button type="submit"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors {{ $item->is_done ? 'border-[#ff8800] text-[#ff8800] bg-white hover:bg-[#ff8800] hover:text-white' : 'border-green-800 text-green-800 bg-green-50 hover:bg-green-800 hover:text-white' }}"
                                         data-item-toggle-btn>
-                                        <i class="fa-solid {{ $item->is_done ? 'fa-rotate-left' : 'fa-check' }}"></i>
+                                        @if ($item->is_done)
+                                            <i data-lucide="rotate-ccw" style="width:12px;height:12px;stroke:currentColor;"></i>
+                                        @else
+                                            <i data-lucide="check" style="width:12px;height:12px;stroke:currentColor;"></i>
+                                        @endif
                                         {{ $item->is_done ? 'Reabrir' : 'Finalizar' }}
                                     </button>
                                 </form>

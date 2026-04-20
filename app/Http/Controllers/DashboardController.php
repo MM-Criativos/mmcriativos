@@ -89,25 +89,25 @@ class DashboardController extends Controller
         $highlightCards = [
             [
                 'title' => 'Orçamentos',
-                'icon' => 'fa-duotone fa-message-dollar',
+                'icon' => 'banknote',
                 'value' => $budgetsLast30,
                 'meta' => $budgetApprovedTotal . ' aprovados',
             ],
             [
                 'title' => 'Projetos',
-                'icon' => 'fa-duotone fa-grid-2',
+                'icon' => 'layout-grid',
                 'value' => $projectsLast30,
                 'meta' => $projectsCompletedTotal . ' concluídos',
             ],
             [
                 'title' => 'Tarefas',
-                'icon' => 'fa-duotone fa-list-check',
+                'icon' => 'list-checks',
                 'value' => $tasksLast30,
                 'meta' => $tasksCompletedTotal . ' concluídas',
             ],
             [
                 'title' => 'Clientes',
-                'icon' => 'fa-duotone fa-user-tie-hair',
+                'icon' => 'user-check',
                 'value' => $clientsLast30,
                 'meta' => $clientsTotal . ' no total',
             ],
@@ -482,13 +482,13 @@ class DashboardController extends Controller
                 'title' => 'Tarefas Atribuídas',
                 'value' => $assignedTasksCount,
                 'meta' => $assignedItemsCount . ' Concluídas',
-                'icon' => 'fa-duotone fa-check-to-slot',
+                'icon' => 'clipboard-check',
             ],
             [
                 'title' => 'Projetos Envolvidos',
                 'value' => $involvedProjectsCount,
                 'meta' => $completedProjectsCount . ' Concluídos',
-                'icon' => 'fa-duotone fa-diagram-project',
+                'icon' => 'workflow',
             ],
         ];
 

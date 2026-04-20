@@ -26,7 +26,7 @@
                                 Cancelar
                             </a>
                             <button class="inline-flex items-center gap-2 px-5 py-3 rounded-md btn-mmcriativos">
-                                <i class="fa-solid fa-plus"></i>
+                                <i data-lucide="plus"></i>
                                 <span>Criar Processo</span>
                             </button>
                         </div>

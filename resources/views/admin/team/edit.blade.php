@@ -63,7 +63,7 @@
                                     @else
                                         <div id="preview-user-photo"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Foto
+                                            <i data-lucide="image" class="text-base mr-1"></i> Foto
                                         </div>
                                     @endif
                                 </div>

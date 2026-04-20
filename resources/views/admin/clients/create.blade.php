@@ -38,7 +38,7 @@
 
                             <div id="preview-client-logo-new"
                                 class="flex items-center justify-center w-40 h-40 border border-dashed  border-gray-300 rounded bg-[#f5f5f5] dark:!bg-[#262626] text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                <i class="fa-regular fa-image text-base mr-1"></i> Logo
+                                <i data-lucide="image" class="text-base mr-1"></i> Logo
                             </div>
                         </div>
                     </div>

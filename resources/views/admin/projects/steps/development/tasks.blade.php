@@ -54,12 +54,12 @@
                 'opacity-60 cursor-not-allowed' => !$canCreateTasks,
             ]) @click="createTaskModal = true"
                 @if (!$canCreateTasks) disabled title="Cadastre skills e competências primeiro." @endif>
-                <i class="fa-duotone fa-solid fa-circle-plus icon-project"></i>
+                <i data-lucide="circle-plus" class="icon-project"></i>
                 Criar tarefa
             </button>
             <a href="{{ route('admin.project-tasks.completed', ['project_id' => $project->id]) }}"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-md border btn-mmcriativos">
-                <i class="fa-duotone fa-solid fa-list-check icon-project"></i>
+                <i data-lucide="list-checks" class="icon-project"></i>
                 Tarefas concluídas
             </a>
         </div>
@@ -174,7 +174,7 @@
                     summary.className =
                         'inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-green-700 text-white border-green-200';
                     const completedAt = payload.completedAt || 'data não registrada';
-                    summary.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> Concluída em ${completedAt}`;
+                    summary.innerHTML = `<i data-lucide="flag"></i> Concluída em ${completedAt}`;
                     completionSection.innerHTML = '';
                     completionSection.appendChild(summary);
                 }
@@ -211,7 +211,8 @@
                 if (toggleButton) {
                     toggleButton.className = payload.buttonClasses ?? toggleButton.className;
                     toggleButton.innerHTML =
-                        `<i class="fa-solid ${payload.buttonIcon ?? 'fa-check'}"></i> ${payload.buttonText ?? 'Finalizar'}`;
+                        `<i data-lucide="${payload.buttonIcon ?? 'check'}" style="width:12px;height:12px;display:inline-block;vertical-align:middle;"></i> ${payload.buttonText ?? 'Finalizar'}`;
+                    if (window.lucide) lucide.createIcons({ nodes: [toggleButton] });
                 }
             }
 

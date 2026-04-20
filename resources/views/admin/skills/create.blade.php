@@ -48,7 +48,7 @@
                                 <label class="block text-sm font-medium text-gray-700">Ícone (classe FA)</label>
                                 <input type="text" name="icon" value="{{ old('icon') }}"
                                     class="mt-1 block w-full bg-[#f5f5f5] dark:!bg-dark-800 border-gray-300 rounded-md"
-                                    placeholder="ex: fa-light fa-code">
+                                    placeholder="ex: fa-regular fa-code">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Descrição</label>
@@ -69,7 +69,7 @@
 
                                     <div id="preview-thumb"
                                         class="flex bg-[#f5f5f5] dark:!bg-dark-800 items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                        <i class="fa-regular fa-image text-base mr-1"></i> Thumb
+                                        <i data-lucide="image" class="text-base mr-1"></i> Thumb
                                     </div>
                                 </div>
                             </div>
@@ -85,7 +85,7 @@
 
                                     <div id="preview-cover"
                                         class="flex bg-[#f5f5f5] dark:!bg-dark-800 items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                        <i class="fa-regular fa-file-video text-base mr-1"></i> Cover
+                                        <i data-lucide="file-video" class="text-base mr-1"></i> Cover
                                     </div>
                                 </div>
                             </div>

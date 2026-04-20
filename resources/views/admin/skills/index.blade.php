@@ -25,7 +25,7 @@
                     </div>
                     <a href="{{ route('admin.skills.create') }}"
                         class="btn btn-mmcriativos text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
-                        <i class="fa-duotone fa-solid fa-circle-plus icon-project mr-2"></i>
+                        <i data-lucide="circle-plus" class="icon-project mr-2"></i>
                         Adicionar Habilidade
                     </a>
                 </div>
@@ -68,7 +68,7 @@
                                            bg-gray-200 dark:bg-[#181818]
                                            text-gray-400 rounded-full border border-gray-300 mb-5
                                            relative z-[5]">
-                                                    <i class="fa-regular fa-image text-2xl"></i>
+                                                    <i data-lucide="image" class="text-2xl"></i>
                                                 </div>
                                             @endif
 
@@ -82,7 +82,7 @@
                                                 <div class="mt-6 flex justify-center">
                                                     <a href="{{ route('admin.skills.edit', $skill) }}"
                                                         class="btn-mmcriativos inline-flex items-center gap-2 px-6 py-3 rounded-md">
-                                                        <i class="fa-duotone fa-solid fa-pen-to-square icon-project"></i>
+                                                        <i data-lucide="square-pen" class="icon-project"></i>
                                                         Editar Skill
                                                     </a>
                                                 </div>

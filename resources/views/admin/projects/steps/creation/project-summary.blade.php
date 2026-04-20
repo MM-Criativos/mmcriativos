@@ -13,7 +13,7 @@
 
         <div class="flex justify-center mt-4">
             <button class="btn-mmcriativos inline-flex items-center gap-2 px-4 py-2 rounded-xl">
-                <i class="fa-duotone fa-solid fa-arrow-down-to-arc icon-project"></i>
+                <i data-lucide="arrow-down" class="icon-project"></i>
                 <span>Salvar resumo</span>
             </button>
         </div>

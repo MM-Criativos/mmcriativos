@@ -32,7 +32,7 @@
 
                     <a href="{{ route('mmcloud.tenants.create') }}"
                         class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 bg-gradient-to-r from-[#feb365] to-[#ff8800] text-white font-semibold">
-                        <i class="fa-solid fa-cloud-arrow-up icon-project"></i>
+                        <i data-lucide="cloud-upload" class="icon-project"></i>
                         Criar empresa
                     </a>
                 </div>
@@ -120,7 +120,7 @@
                                             <code class="text-xs break-all">{{ $tenant['api_token'] ?? '-' }}</code>
                                             @if (!empty($tenant['api_token']))
                                                 <button type="button" data-copy="{{ $tenant['api_token'] }}" class="text-[#ff8800]" title="Copiar token">
-                                                    <i class="fa-regular fa-copy"></i>
+                                                    <i data-lucide="copy"></i>
                                                 </button>
                                             @endif
                                         </div>
@@ -128,7 +128,7 @@
                                     <td class="py-3 px-4 border-t border-neutral-200 dark:border-neutral-800 text-right">
                                         <a href="{{ route('mmcloud.tenants.edit', ['tenant' => $tenant['id'] ?? $tenant['slug'] ?? '']) }}"
                                             class="inline-flex items-center gap-2 rounded-lg px-3 py-2 border border-[#ff8800] text-[#ff8800] font-semibold">
-                                            <i class="fa-regular fa-pen-to-square"></i>
+                                            <i data-lucide="square-pen"></i>
                                             Editar
                                         </a>
                                     </td>

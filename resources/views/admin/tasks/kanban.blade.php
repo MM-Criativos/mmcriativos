@@ -20,9 +20,10 @@
         /* garante que não é clicável */
     }
 
-    /* Ícone duotone dentro da badge */
-    .skill-badge .fa-duotone {
-        font-size: 12px;
+    /* Ícone dentro da badge */
+    .skill-badge svg {
+        width: 12px;
+        height: 12px;
     }
 
     /* Competência mais suave visualmente */
@@ -75,25 +76,25 @@
     $navbarTabs = [
         [
             'label' => 'Dashboard',
-            'icon' => 'fa-duotone fa-list-check',
+            'icon' => 'list-checks',
             'route' => route('admin.tasks.index'),
             'active' => request()->routeIs('admin.tasks.index'),
         ],
         [
             'label' => 'Calendário',
-            'icon' => 'fa-duotone fa-calendar-days',
+            'icon' => 'calendar-days',
             'route' => route('admin.tasks.calendar'),
             'active' => request()->routeIs('admin.tasks.calendar'),
         ],
         [
             'label' => 'Kanban',
-            'icon' => 'fa-duotone fa-chart-kanban',
+            'icon' => 'bar-chart-2',
             'route' => route('admin.tasks.kanban'),
             'active' => request()->routeIs('admin.tasks.kanban'),
         ],
         [
             'label' => 'Finalizadas',
-            'icon' => 'fa-duotone fa-circle-check',
+            'icon' => 'circle-check',
             'route' => route('admin.tasks.completed'),
             'active' => request()->routeIs('admin.tasks.completed'),
         ],
@@ -142,7 +143,7 @@
                                                         </p>
                                                         @if ($task->skill || $task->competency)
                                                             <span class="skill-badge mt-2">
-                                                                <i class="fa-duotone fa-tags icon-project"></i>
+                                                                <i data-lucide="tags" class="icon-project"></i>
                                                                 @if ($task->skill)
                                                                     <span class="skill-name">
                                                                         {{ $task->skill->name }}
@@ -174,7 +175,7 @@
                                                                     @endif
                                                                     @if ($item->competency)
                                                                         <span class="skill-badge mt-2">
-                                                                            <i class="fa-duotone fa-tags icon-project"></i>
+                                                                            <i data-lucide="tags" class="icon-project"></i>
                                                                             <span class="skill-comp">
                                                                                 {{ $item->competency->competency }}
                                                                             </span>
@@ -185,7 +186,7 @@
                                                         @endforeach
                                                         <div class="mt-3 flex items-center justify-between gap-2.5">
                                                             <div class="flex items-center justify-between gap-2.5">
-                                                                <i class="fa-duotone fa-solid fa-calendar icon-project"></i>
+                                                                <i data-lucide="calendar" class="icon-project"></i>
                                                                 <span class="start-date text-secondary-light">
                                                                     {{ optional($task->planned_at)->format('d M Y') ?? '--' }}
                                                                 </span>
@@ -196,13 +197,13 @@
                                                                     data-modal-target="edit-task-modal-{{ $task->id }}"
                                                                     data-modal-toggle="edit-task-modal-{{ $task->id }}">
                                                                     <i
-                                                                        class="fa-duotone fa-solid fa-pen-to-square icon-project"></i>
+                                                                        data-lucide="square-pen" class="icon-project"></i>
                                                                 </button>
                                                                 <button type="button"
                                                                     class="card-delete-button text-danger-600"
                                                                     data-delete-url="{{ route('admin.project-tasks.destroy', $task) }}">
                                                                     <i
-                                                                        class="fa-duotone fa-solid fa-trash icon-project"></i>
+                                                                        data-lucide="trash-2" class="icon-project"></i>
                                                                 </button>
                                                             </div>
                                                         </div>

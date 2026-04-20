@@ -17,13 +17,13 @@
                 {{-- ✅ Atualizar todas as páginas --}}
                 <button type="submit" form="form-update-pages"
                     class="btn-mmcriativos inline-flex items-center gap-2 px-4 py-2 rounded-md">
-                    <i class="fa-duotone fa-solid fa-arrow-rotate-right icon-project mr-2"></i> Atualizar todas
+                    <i data-lucide="rotate-cw" class="icon-project mr-2"></i> Atualizar todas
                 </button>
 
                 {{-- ✅ Adicionar páginas --}}
                 <button type="button" @click="pageModal = true"
                     class="btn-mmcriativos inline-flex items-center gap-2 px-4 py-2 rounded-md">
-                    <i class="fa-duotone fa-solid fa-circle-plus icon-project mr-2"></i> Adicionar Páginas
+                    <i data-lucide="circle-plus" class="icon-project mr-2"></i> Adicionar Páginas
                 </button>
             </div>
         </div>
@@ -67,7 +67,7 @@
                                 <button type="button"
                                     class="inline-flex items-center justify-center w-full px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-[#000] hover:text-red-500 rounded-md"
                                     onclick="deletePage('{{ route('admin.project-pages.destroy', $page) }}')">
-                                    <i class="fa-regular fa-trash-can"></i>
+                                    <i data-lucide="trash-2"></i>
                                 </button>
                             </div>
 
@@ -97,7 +97,7 @@
                     <div class="flex items-center gap-2">
                         <span class="font-medium  text-gray-800">{{ $page->name }}</span>
                     </div>
-                    <i class="fa-solid" :class="{ 'fa-chevron-down': !open, 'fa-chevron-up': open }"></i>
+                    <i x-show="!open" data-lucide="chevron-down" style="width:14px;height:14px;stroke:currentColor;"></i><i x-show="open" data-lucide="chevron-up" style="width:14px;height:14px;stroke:currentColor;"></i>
                 </div>
 
                 {{-- Conteúdo do accordion --}}
@@ -109,14 +109,14 @@
                             {{-- ✅ Botão de atualizar componentes --}}
                             <button type="submit" form="form-update-components-{{ $page->id }}"
                                 class="btn-mmcriativos inline-flex items-center gap-2 px-3 py-2 rounded">
-                                <i class="fa-duotone fa-solid fa-arrow-rotate-right icon-project mr-2"></i>
+                                <i data-lucide="rotate-cw" class="icon-project mr-2"></i>
                                 Atualizar todos
                             </button>
 
                             {{-- ✅ Botão de adicionar componentes --}}
                             <button type="button" @click="componentModal = {{ $page->id }}"
                                 class="btn-mmcriativos inline-flex items-center gap-2 px-3 py-2 rounded">
-                                <i class="fa-duotone fa-solid fa-circle-plus icon-project mr-2"></i>
+                                <i data-lucide="circle-plus" class="icon-project mr-2"></i>
                                 Adicionar
                             </button>
                         </div>
@@ -151,7 +151,7 @@
                                     <button type="button"
                                         class="inline-flex items-center justify-center w-full px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-[#262626] hover:text-red-500 rounded-md mt-4"
                                         onclick="deleteComponent('{{ route('admin.project-page-components.destroy', $component->pivot->id) }}')">
-                                        <i class="fa-regular fa-trash-can"></i>
+                                        <i data-lucide="trash-2"></i>
                                     </button>
                                 </div>
                             </div>
@@ -180,7 +180,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="text-lg font-semibold text-gray-800">Adicionar componentes · {{ $page->name }}</h4>
                     <button type="button" @click="componentModal = null" class="text-gray-500 hover:text-gray-700">
-                        <i class="fa-solid fa-xmark text-xl"></i>
+                        <i data-lucide="x" class="text-xl"></i>
                     </button>
                 </div>
 
@@ -235,7 +235,7 @@
             <div class="flex items-center justify-between mb-4">
                 <h4 class="text-lg font-semibold text-gray-800">Adicionar Páginas ao Projeto</h4>
                 <button type="button" @click="pageModal = false" class="text-gray-500 hover:text-gray-700">
-                    <i class="fa-solid fa-xmark text-xl"></i>
+                    <i data-lucide="x" class="text-xl"></i>
                 </button>
             </div>
 

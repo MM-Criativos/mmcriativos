@@ -1,70 +1,23 @@
 <style>
-    /* --------------------------------------
-   DUOTONE – ESTADO NORMAL
---------------------------------------- */
-
-    /* Layer superior (foreground) */
-    .icon-project.fa-duotone::before,
-    .icon-project.fad::before {
-        color: rgb(255 136 0);
-        /* laranja */
+    /* icon-project — Lucide SVG stroke states for navbar */
+    svg.icon-project {
+        stroke: rgb(255 136 0);
+        width: 1em; height: 1em;
+        stroke-width: 2;
+        flex-shrink: 0;
+        transition: stroke 0.15s ease;
     }
 
-    /* Layer inferior (background) */
-    .icon-project.fa-duotone::after,
-    .icon-project.fad::after {
-        color: rgb(0 0 0);
-        /* preto no modo claro */
-        opacity: 1;
+    /* Hover/Active: icon white */
+    .navbar-tab-btn:hover svg.icon-project,
+    .dark .navbar-tab-btn:hover svg.icon-project,
+    .navbar-tab-active svg.icon-project,
+    .dark .navbar-tab-active svg.icon-project {
+        stroke: #ffffff !important;
     }
-
-    .dark .icon-project.fa-duotone::after,
-    .dark .icon-project.fad::after {
-        color: rgb(255 255 255);
-        /* branco no modo escuro */
-    }
-
-
-
-    /* --------------------------------------
-   DUOTONE – HOVER
---------------------------------------- */
-
-    /* Modo claro: foreground vira branco */
-    .navbar-tab-btn:hover .icon-project.fa-duotone::before,
-    .navbar-tab-btn:hover .icon-project.fad::before {
-        color: #ffffff !important;
-    }
-
-    /* Modo escuro: foreground vira preto */
-    .dark .navbar-tab-btn:hover .icon-project.fa-duotone::before,
-    .dark .navbar-tab-btn:hover .icon-project.fad::before {
-        color: #000000 !important;
-    }
-
-
-
-    /* --------------------------------------
-   DUOTONE – ACTIVE
---------------------------------------- */
-
-    /* Modo claro: foreground branco */
-    .navbar-tab-active .icon-project.fa-duotone::before,
-    .navbar-tab-active .icon-project.fad::before {
-        color: #ffffff !important;
-    }
-
-    /* Modo escuro: foreground preto */
-    .dark .navbar-tab-active .icon-project.fa-duotone::before,
-    .dark .navbar-tab-active .icon-project.fad::before {
-        color: #000000 !important;
-    }
-
-
 
     /* --------------------------------------
    NAVBAR TAB BUTTON (botões)
-   — sem redundância
 --------------------------------------- */
 
     .navbar-tab-btn {
@@ -120,11 +73,11 @@
 
                 <!-- Ícone menu aberto -->
                 <i id="iconOpen"
-                    class="fa-duotone fa-solid fa-bars icon-project text-2xl absolute transition-all duration-300 ease-in-out"></i>
+                    data-lucide="menu" class="icon-project text-2xl absolute transition-all duration-300 ease-in-out"></i>
 
                 <!-- Ícone menu fechado -->
                 <i id="iconClosed"
-                    class="fa-duotone fa-solid fa-bars-sort icon-project text-2xl absolute opacity-0 scale-[0.6] transition-all duration-300 ease-in-out"></i>
+                    data-lucide="menu" class="icon-project text-2xl absolute opacity-0 scale-[0.6] transition-all duration-300 ease-in-out"></i>
             </button>
 
 
@@ -158,7 +111,7 @@
                 {{ $tab['active'] ? 'navbar-tab-active' : '' }}"
                             title="{{ $tab['label'] }}"> {{-- Tooltip natural --}}
 
-                            <i class="{{ $tab['icon'] }} icon-project text-lg"></i>
+                            <i data-lucide="{{ $tab['icon'] }}" class="icon-project" style="width:1.125rem;height:1.125rem;"></i>
                         </a>
                     @endforeach
 
@@ -174,17 +127,17 @@
             <button @click="$dispatch('open-vee')"
                 class="w-10 h-10 rounded-xl bg-[#ff8800] text-white flex items-center justify-center
                        shadow-sm hover:bg-orange-600 transition" title="Abrir Vee">
-                <i class="fa-duotone fa-solid fa-robot text-lg"></i>
+                <i data-lucide="bot" style="stroke:#fff;width:1.125rem;height:1.125rem;"></i>
             </button>
 
             <!-- Theme Toggle -->
             <button id="theme-toggle"
                 class="w-10 h-10 rounded-xl bg-neutral-200 dark:bg-neutral-700 dark:text-white flex items-center justify-center shadow-sm">
                 <span id="theme-toggle-dark-icon" class="hidden">
-                    <i class="fa-duotone fa-solid fa-sun icon-project"></i>
+                    <i data-lucide="sun" class="icon-project"></i>
                 </span>
                 <span id="theme-toggle-light-icon" class="hidden">
-                    <i class="fa-duotone fa-solid fa-moon-stars icon-project"></i>
+                    <i data-lucide="moon" class="icon-project"></i>
                 </span>
             </button>
 
@@ -206,7 +159,7 @@
                         </span>
                     </div>
 
-                    <i class="fa-solid fa-chevron-down text-sm text-neutral-500 dark:text-neutral-300"></i>
+                    <i data-lucide="chevron-down" class="text-sm text-neutral-500 dark:text-neutral-300"></i>
                 </button>
 
                 <!-- Dropdown -->
@@ -225,19 +178,19 @@
                         <li>
                             <a href="{{ route('profile.edit') }}"
                                 class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
-                                <i class="fa-duotone fa-solid fa-user icon-project"></i> Meu perfil
+                                <i data-lucide="user" class="icon-project"></i> Meu perfil
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('admin.settings.index') }}"
                                 class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
-                                <i class="fa-duotone fa-solid fa-gears icon-project"></i> Configurações
+                                <i data-lucide="settings-2" class="icon-project"></i> Configurações
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('admin.team.index') }}"
                                 class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
-                                <i class="fa-duotone fa-solid fa-user-group-simple icon-project"></i> Equipe
+                                <i data-lucide="users" class="icon-project"></i> Equipe
                             </a>
                         </li>
                         <li>
@@ -245,7 +198,7 @@
                                 @csrf
                                 <button type="submit"
                                     class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition w-full text-left">
-                                    <i class="fa-duotone fa-solid fa-arrow-left-from-arc icon-project"></i>
+                                    <i data-lucide="arrow-left" class="icon-project"></i>
                                     Log Out
                                 </button>
                             </form>

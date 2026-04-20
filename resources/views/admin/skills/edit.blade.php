@@ -74,7 +74,7 @@
                                     @else
                                         <div id="preview-thumb"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Thumb
+                                            <i data-lucide="image" class="text-base mr-1"></i> Thumb
                                         </div>
                                     @endif
                                 </div>
@@ -112,7 +112,7 @@
                                     @else
                                         <div id="preview-cover"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-file-video text-base mr-1"></i> Cover
+                                            <i data-lucide="file-video" class="text-base mr-1"></i> Cover
                                         </div>
                                     @endif
                                 </div>
@@ -184,7 +184,7 @@
                                     @else
                                         <div id="preview-skillinfo-image"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Imagem
+                                            <i data-lucide="image" class="text-base mr-1"></i> Imagem
                                         </div>
                                     @endif
                                 </div>
@@ -252,7 +252,7 @@
                                     <div class="col-span-2 flex gap-2 justify-end">
                                         <button
                                             class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
-                                            <i class="fa-duotone fa-solid fa-rotate-right icon-project"></i>
+                                            <i data-lucide="rotate-cw" class="icon-project"></i>
                                         </button>
 
                                         <form method="POST" action="{{ route('admin.competencies.destroy', $comp) }}"
@@ -260,7 +260,7 @@
                                             @csrf @method('DELETE')
                                             <button
                                                 class="flex-1 inline-flex items-center justify-center px-4 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500">
-                                                <i class="fa-regular fa-trash-can"></i>
+                                                <i data-lucide="trash-2"></i>
                                             </button>
                                         </form>
                                     </div>
@@ -287,7 +287,7 @@
                                 <div class="col-span-2 flex items-end">
                                     <button type="submit"
                                         class="flex-1 inline-flex items-center justify-center px-4 py-4 btn-mmcriativos rounded-md">
-                                        <i class="fa-solid fa-plus"></i>
+                                        <i data-lucide="plus"></i>
                                     </button>
                                 </div>
                             </div>

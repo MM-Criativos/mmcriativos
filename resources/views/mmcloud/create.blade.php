@@ -53,7 +53,7 @@
 
                     <button type="submit"
                         class="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 bg-gradient-to-r from-[#feb365] to-[#ff8800] text-white font-semibold">
-                        <i class="fa-solid fa-cloud-arrow-up icon-project"></i>
+                        <i data-lucide="cloud-upload" class="icon-project"></i>
                         Solicitar tenant
                     </button>
                 </form>

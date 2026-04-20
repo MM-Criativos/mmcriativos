@@ -20,7 +20,7 @@
                     </div>
                     <a href="{{ route('admin.services.create') }}"
                         class="btn btn-mmcriativos text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
-                        <i class="fa-duotone fa-solid fa-circle-plus icon-project mr-2"></i>
+                        <i data-lucide="circle-plus" class="icon-project mr-2"></i>
                         Adicionar Serviço
                     </a>
                 </div>
@@ -64,7 +64,7 @@
                                                     bg-[#f5f5f5] dark:bg-dark-800 text-gray-400
                                                     rounded-full border border-gray-300 mb-5
                                                     relative z-[5]">
-                                                    <i class="fa-regular fa-image text-2xl"></i>
+                                                    <i data-lucide="image" class="text-2xl"></i>
                                                 </div>
                                             @endif
 
@@ -85,7 +85,7 @@
                                             <div class="mt-5 mb-3 flex justify-center gap-2">
                                                 <a href="{{ route('admin.services.edit', $service) }}"
                                                     class="btn-mmcriativos inline-flex items-center gap-2 px-6 py-2.5 rounded-md">
-                                                    <i class="fa-duotone fa-solid fa-pen-to-square icon-project"></i>
+                                                    <i data-lucide="square-pen" class="icon-project"></i>
                                                     Editar
                                                 </a>
                                                 <form method="POST"
@@ -96,7 +96,7 @@
 
                                                     <button type="submit"
                                                         class="delete-btn w-full text-start px-5 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5] dark:hover:bg-[#262626] hover:text-red-500 hover:border-red-500 gap-2">
-                                                        <i class="fa-regular fa-trash"></i>
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </div>

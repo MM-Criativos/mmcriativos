@@ -1,54 +1,23 @@
 <style>
-    /* Modo claro */
-    .icon-project.fa-duotone::before,
-    .icon-project.fad::before {
-        color: rgb(255 136 0) !important;
-        /* Camada primária */
+    /* icon-project — Lucide SVG stroke states */
+    svg.icon-project {
+        stroke: rgb(255 136 0);
+        width: 1em; height: 1em;
+        stroke-width: 2;
+        flex-shrink: 0;
+        transition: stroke 0.2s ease;
     }
 
-    .icon-project.fa-duotone::after,
-    .icon-project.fad::after {
-        color: rgb(0 0 0) !important;
-        /* Camada secundária */
-        opacity: 1 !important;
+    /* btn-mmcriativos hover → icon white */
+    .btn-mmcriativos:hover svg.icon-project,
+    .dark .btn-mmcriativos:hover svg.icon-project {
+        stroke: #ffffff !important;
     }
 
-    /* Modo escuro */
-    .dark .icon-project.fa-duotone::before,
-    .dark .icon-project.fad::before {
-        color: rgb(255 136 0) !important;
-        /* Mantém o laranja */
-    }
-
-    .dark .icon-project.fa-duotone::after,
-    .dark .icon-project.fad::after {
-        color: rgb(255 255 255) !important;
-        /* Cinza escuro no dark mode */
-        opacity: 1 !important;
-    }
-
-    /* HOVER — LIGHT MODE → foreground branco */
-    .btn-mmcriativos:hover .icon-project.fa-duotone::before,
-    .btn-mmcriativos:hover .icon-project.fad::before {
-        color: #ffffff !important;
-    }
-
-    /* HOVER — DARK MODE → foreground preto */
-    .dark .btn-mmcriativos:hover .icon-project.fa-duotone::before,
-    .dark .btn-mmcriativos:hover .icon-project.fad::before {
-        color: #000000 !important;
-    }
-
-    /* ACTIVE — LIGHT MODE → foreground branco */
-    .btn-mmcriativos-active .icon-project.fa-duotone::before,
-    .btn-mmcriativos-active .icon-project.fad::before {
-        color: #ffffff !important;
-    }
-
-    /* ACTIVE — DARK MODE → foreground preto */
-    .dark .btn-mmcriativos-active .icon-project.fa-duotone::before,
-    .dark .btn-mmcriativos-active .icon-project.fad::before {
-        color: #000000 !important;
+    /* btn-mmcriativos-active → icon white */
+    .btn-mmcriativos-active svg.icon-project,
+    .dark .btn-mmcriativos-active svg.icon-project {
+        stroke: #ffffff !important;
     }
 
     /* NORMAL */

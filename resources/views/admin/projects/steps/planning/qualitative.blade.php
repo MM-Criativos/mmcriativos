@@ -15,7 +15,7 @@
             @if (!$hasQualitatives)
                 <a href="{{ route('admin.projects.planning.qualitative.create', $project) }}"
                     class="btn btn-mmcriativos inline-flex items-center gap-2 px-4 py-2">
-                    <i class="fa-duotone fa-circle-plus fa-2x icon-project"></i>
+                    <i data-lucide="circle-plus" class="fa-2x icon-project"></i>
                     <span>Criar Questionário</span>
                 </a>
 
@@ -28,14 +28,14 @@
                         placeholder="E-mail do cliente"
                         class="dark:!bg-[#262626] border-gray-300 rounded-md text-sm py-2 px-3 w-56" />
                     <button type="submit" class="btn btn-mmcriativos inline-flex items-center gap-2 px-3 py-2">
-                        <i class="fa-duotone fa-solid fa-paper-plane icon-project"></i>
+                        <i data-lucide="send" class="icon-project"></i>
                         <span>Enviar por e-mail</span>
                     </button>
                 </form>
 
                 <a href="{{ route('admin.projects.planning.qualitative.edit', $project) }}" title="Editar questionário"
                     class="btn btn-mmcriativos inline-flex items-center justify-center h-11 w-11">
-                    <i class="fa-duotone fa-solid fa-pen-to-square icon-project"></i>
+                    <i data-lucide="square-pen" class="icon-project"></i>
                     <span class="sr-only">Editar questionário qualitativo</span>
                 </a>
 
@@ -43,7 +43,7 @@
                     rel="noopener" class="btn btn-mmcriativos inline-flex items-center justify-center h-11 w-11"
                     title="Visualizar
                     questionário">
-                    <i class="fa-duotone fa-solid fa-eye icon-project"></i>
+                    <i data-lucide="eye" class="icon-project"></i>
                     <span class="sr-only">Visualizar questionário qualitativo</span>
                 </a>
             @endif
@@ -62,7 +62,7 @@
         <div class="bg-[#f5f5f5] dark:bg-[#262626] rounded-lg shadow-sm p-6 mt-4">
             <div class="text-center">
                 <div class="text-gray-500 mb-2">
-                    <i class="fa-regular fa-clock text-2xl"></i>
+                    <i data-lucide="clock" class="text-2xl"></i>
                 </div>
                 <h4 class="text-lg font-medium text-gray-900 mb-2">Aguardando respostas do cliente</h4>
                 <p class="text-sm text-gray-600">
@@ -84,7 +84,7 @@
                         <button type="button" @click="open = !open"
                             class="w-full px-4 py-3 flex items-center justify-between bg-[#f5f5f5] dark:bg-[#262626]">
                             <h4 class="text-base font-medium text-gray-700">{{ $category }}</h4>
-                            <i class="fa-solid" :class="{ 'fa-chevron-down': !open, 'fa-chevron-up': open }"></i>
+                            <i x-show="!open" data-lucide="chevron-down" style="width:14px;height:14px;stroke:currentColor;"></i><i x-show="open" data-lucide="chevron-up" style="width:14px;height:14px;stroke:currentColor;"></i>
                         </button>
 
                         <div x-show="open" x-collapse x-transition>
@@ -111,7 +111,7 @@
                                             <div class="mt-2">
                                                 <a href="{{ asset($response->file_path) }}" target="_blank"
                                                     class="btn btn-mmcriativos inline-flex items-center text-sm">
-                                                    <i class="fa-regular fa-file mr-2"></i>
+                                                    <i data-lucide="file" class="mr-2"></i>
                                                     {{ $answer ?: 'Baixar arquivo enviado' }}
                                                 </a>
                                             </div>

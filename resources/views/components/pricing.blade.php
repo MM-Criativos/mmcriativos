@@ -13,7 +13,7 @@
 
         function label_for_service($name) {
             return (stripos($name,'Sistema') !== false || stripos($name,'SaaS') !== false)
-                ? 'Tudo do anterior <i class="fa-solid fa-circle-plus"></i>'
+                ? 'Tudo do anterior <i data-lucide="circle-plus"></i>'
                 : 'Inclui:';
         }
     @endphp

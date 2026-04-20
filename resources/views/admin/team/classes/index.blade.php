@@ -40,7 +40,7 @@
                                         <td class="px-4 py-3">
                                             <a href="{{ route('admin.classes.edit', $c) }}"
                                                 class="inline-flex items-center gap-1 px-3 py-2 btn-mmcriativos rounded-md">
-                                                <i class="fa-duotone fa-pen-to-square icon-project mr-2"></i> Editar
+                                                <i data-lucide="square-pen" class="icon-project mr-2"></i> Editar
                                             </a>
                                         </td>
                                     </tr>

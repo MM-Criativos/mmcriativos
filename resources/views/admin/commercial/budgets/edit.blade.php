@@ -215,7 +215,7 @@
                                                     <button
                                                         class="px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5]
                                                         dark:hover:bg-[#262626] hover:text-red-500 hover:border-red-500 rounded-md"><i
-                                                            class="fa-solid fa-trash"></i></button>
+                                                            data-lucide="trash-2"></i></button>
                                                 </form>
                                             </td>
                                         </tr>

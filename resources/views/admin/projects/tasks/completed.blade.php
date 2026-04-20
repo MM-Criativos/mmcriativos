@@ -18,7 +18,7 @@
             </div>
             <a href="{{ $backUrl }}"
                class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                <i class="fa-solid fa-arrow-left"></i>
+                <i data-lucide="arrow-left"></i>
                 Voltar
             </a>
         </div>
@@ -58,7 +58,7 @@
                             </a>
                             <button type="submit"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700">
-                                <i class="fa-solid fa-filter"></i>
+                                <i data-lucide="filter"></i>
                                 Filtrar
                             </button>
                         </div>
@@ -86,7 +86,7 @@
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $statusBadge[$task->status] ?? 'bg-gray-100 text-gray-700 border border-gray-200' }}">
                                     {{ \App\Models\ProjectTask::STATUSES[$task->status] ?? ucfirst($task->status) }}
                                 </span>
-                                <i class="fa-solid text-gray-500" :class="{ 'fa-chevron-up': open, 'fa-chevron-down': !open }"></i>
+                                <i x-show="!open" data-lucide="chevron-down" style="width:14px;height:14px;stroke:currentColor;"></i><i x-show="open" data-lucide="chevron-up" style="width:14px;height:14px;stroke:currentColor;"></i>
                             </div>
                         </button>
 

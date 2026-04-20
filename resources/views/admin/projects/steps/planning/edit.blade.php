@@ -8,7 +8,7 @@
                 <div class="bg-green-50 border border-green-200 rounded-md p-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <i class="fa-solid fa-check-circle text-green-400"></i>
+                            <i data-lucide="circle-check" class="text-green-400"></i>
                         </div>
                         <div class="ml-3">
                             <p class="text-sm text-green-700">
@@ -84,7 +84,7 @@
                             Cancelar
                         </a>
                         <button type="submit" class="btn btn-mmcriativos inline-flex items-center gap-2 px-4 py-2">
-                            <i class="fa-duotone fa-solid fa-arrow-down-to-arc icon-project"></i>
+                            <i data-lucide="arrow-down" class="icon-project"></i>
                             <span>Salvar alterações</span>
                         </button>
                     </div>

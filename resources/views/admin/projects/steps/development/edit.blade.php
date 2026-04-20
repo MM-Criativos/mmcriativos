@@ -55,7 +55,7 @@
                 <p class="text-sm text-gray-500">{{ $task->title }}</p>
             </div>
             <button type="button" @click="modalOpen = false" class="text-gray-500 hover:text-gray-700">
-                <i class="fa-solid fa-xmark text-lg"></i>
+                <i data-lucide="x" class="text-lg"></i>
             </button>
         </div>
 
@@ -229,7 +229,7 @@
                         </div>
                         <button type="button" @click="addItem()"
                             class="btn-mmcriativos inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium">
-                            <i class="fa-duotone fa-solid fa-list-check icon-project"></i>
+                            <i data-lucide="list-checks" class="icon-project"></i>
                             Adicionar Item
                         </button>
                     </div>
@@ -299,7 +299,7 @@
                                 <button type="button"
                                     class="inline-flex items-center gap-1 text-red-600 hover:text-red-700"
                                     @click="removeItem(index)">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i data-lucide="trash-2"></i>
                                     Remover
                                 </button>
                             </div>
@@ -323,14 +323,14 @@
                         @method('DELETE')
                         <button
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500">
-                            <i class="fa-solid fa-trash"></i>
+                            <i data-lucide="trash-2"></i>
                             Excluir
                         </button>
                     </form>
 
                     <button type="submit" form="task-update-{{ $task->id }}"
                         class="btn-mmcriativos inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm">
-                        <i class="fa-duotone fa-solid fa-arrow-down-to-arc icon-project mr-1"></i>
+                        <i data-lucide="arrow-down" class="icon-project mr-1"></i>
                         Salvar alterações
                     </button>
                 </div>

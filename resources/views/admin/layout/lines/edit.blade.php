@@ -33,7 +33,7 @@
 
                         <div class="flex items-center gap-3">
                             <button type="button" onclick="addLineField()" class="px-3 py-2 btn-mmcriativos rounded-md"><i
-                                    class="fa-duotone fa-solid fa-circle-plus icon-project mr-2"></i>
+                                    data-lucide="circle-plus" class="icon-project mr-2"></i>
                                 Adicionar linha</button>
                             <button type="submit" class="px-5 py-2 btn-mmcriativos rounded-md">Salvar</button>
                         </div>

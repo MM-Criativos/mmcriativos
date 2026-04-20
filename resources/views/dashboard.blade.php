@@ -1,66 +1,33 @@
 <style>
-    /* 🌞 Modo Claro */
-    .card {
-        background-color: #ffffff !important;
-        /* fundo branco padrão */
-        color: #000000 !important;
-        /* texto principal */
-        transition: background-color 0.3s ease, color 0.3s ease !important;
+    /* ── Dashboard — ícones Lucide ──────────────────────────────
+       Ajuste as variáveis abaixo para mudar tamanho/stroke
+       de todos os ícones do dashboard de uma vez.
+    ────────────────────────────────────────────────────────── */
+    :root {
+        --dash-icon-size:   28px;
+        --dash-icon-stroke: 1.75;
+        --dash-icon-color:  #ff8800;
+
+        --dash-sm-icon-size:   16px;
+        --dash-sm-icon-stroke: 2;
     }
 
-    .card p {
-        color: #555555 !important;
-        /* texto secundário */
+    .dash-icon [data-lucide],
+    .icon-area  [data-lucide] {
+        width:        var(--dash-icon-size);
+        height:       var(--dash-icon-size);
+        stroke-width: var(--dash-icon-stroke);
+        stroke:       var(--dash-icon-color);
+        flex-shrink:  0;
     }
 
-    .card .icon-area {
-        border-radius: 50px !important;
-        background-color: #f5f5f5 !important;
-    }
-
-    /* 🌙 Modo Escuro */
-    .dark .card {
-        background-color: #000000 !important;
-        /* fundo escuro */
-        color: #ffffff !important;
-    }
-
-    .dark .card p {
-        color: #cccccc !important;
-        /* texto leve */
-    }
-
-    .dark .card .icon-area {
-        border-radius: 50px !important;
-        background-color: #262626 !important;
-    }
-
-    /* Modo claro */
-    .icon-project.fa-duotone::before,
-    .icon-project.fad::before {
-        color: rgb(255 136 0) !important;
-        /* Camada primária */
-    }
-
-    .icon-project.fa-duotone::after,
-    .icon-project.fad::after {
-        color: rgb(0 0 0) !important;
-        /* Camada secundária */
-        opacity: 1 !important;
-    }
-
-    /* Modo escuro */
-    .dark .icon-project.fa-duotone::before,
-    .dark .icon-project.fad::before {
-        color: rgb(255 136 0) !important;
-        /* Mantém o laranja */
-    }
-
-    .dark .icon-project.fa-duotone::after,
-    .dark .icon-project.fad::after {
-        color: rgb(255 255 255) !important;
-        /* Cinza escuro no dark mode */
-        opacity: 1 !important;
+    .dash-icon-sm [data-lucide] {
+        width:        var(--dash-sm-icon-size);
+        height:       var(--dash-sm-icon-size);
+        stroke-width: var(--dash-sm-icon-stroke);
+        flex-shrink:  0;
+        display:      inline-block;
+        vertical-align: middle;
     }
 
     .text-orange-fix {
@@ -251,7 +218,7 @@
                                 Pronto pra mais um dia <span class="text-orange-fix">criando, entregando e
                                     evoluindo</span> projetos? ✨
                             </h4>
-                            <p class="text-neutral-300 text-base leading-relaxed mb-6">
+                            <p class="text-neutral-500 dark:text-neutral-300 text-base leading-relaxed mb-6">
                                 Aqui no painel da MM Criativos você acompanha suas tarefas, avança nos projetos ativos
                                 e mantém tudo em ordem com a equipe. Bora fazer o dia render?
                             </p>
@@ -271,9 +238,9 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach ($personalCards as $card)
                         <div
-                            class="card flex items-center justify-between px-6 py-5 rounded-xl border-0 shadow-none transition bg-neutral-900 text-white">
+                            class="card flex items-center justify-between px-6 py-5 rounded-xl border-0 shadow-none transition bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white border border-neutral-200 dark:border-transparent">
                             <div class="icon-area flex items-center justify-center w-16 h-16">
-                                <i class="{{ $card['icon'] }} fa-2x icon-project"></i>
+                                <i data-lucide="{{ $card['icon'] }}"></i>
                             </div>
                             <div class="flex flex-col text-right flex-1 ml-6">
                                 <h6 class="text-lg font-semibold mb-1">{{ $card['title'] }}</h6>
@@ -285,9 +252,9 @@
                         </div>
                     @endforeach
                     <div
-                        class="card flex items-center justify-between px-6 py-5 rounded-xl border-0 shadow-none transition bg-neutral-900 text-white">
+                        class="card flex items-center justify-between px-6 py-5 rounded-xl shadow-none transition bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white border border-neutral-200 dark:border-transparent">
                         <div class="icon-area flex items-center justify-center w-16 h-16">
-                            <i class="fa-duotone fa-code fa-xl icon-project"></i>
+                            <i data-lucide="code"></i>
                         </div>
                         <div class="flex flex-col text-right flex-1 ml-6">
                             <h6 class="text-lg font-semibold mb-0">Especialidade</h6>
@@ -307,7 +274,7 @@
             </div>
         </div>
         <div class="col-span-12 2xl:col-span-4">
-            <div class="card border-0 rounded-xl h-full bg-neutral-900">
+            <div class="card border-0 rounded-xl h-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-transparent">
                 <!-- 🔸 Cabeçalho -->
                 <div class="card-header border-b rounded-xl bg-[#ff8800] px-6 py-4">
                     <h6 class="font-bold text-lg text-black">Tarefas do dia</h6>
@@ -340,7 +307,7 @@
                             @else
                                 <button type="button" data-day="{{ $day['date'] }}"
                                     class="day-selector flex flex-col items-center justify-center rounded-2xl px-2 py-2 transition
-                       bg-white dark:bg-black
+                       bg-neutral-100 dark:bg-neutral-800
                        text-neutral-900 dark:text-white">
 
                                     {{-- Label sempre laranja --}}
@@ -376,11 +343,11 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-5">
         @foreach ($highlightCards as $h)
             <div
-                class="card flex items-center justify-between px-6 py-5 rounded-xl border-0 shadow-none transition bg-neutral-900">
+                class="card flex items-center justify-between px-6 py-5 rounded-xl shadow-none transition bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white border border-neutral-200 dark:border-transparent">
 
                 <!-- Ícone -->
                 <div class="icon-area flex items-center justify-center w-16 h-16">
-                    <i class="{{ $h['icon'] }} icon-project fa-2x "></i>
+                    <i data-lucide="{{ $h['icon'] }}"></i>
                 </div>
 
                 <!-- Textos -->
@@ -450,9 +417,8 @@
                                focus:border-[#ff8800] focus:ring-0"
                             placeholder="Buscar tarefa, projeto ou responsável...">
 
-                        <span
-                            class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 dark:text-neutral-400">
-                            <i class="fa-solid fa-magnifying-glass"></i>
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500 dark:text-neutral-400">
+                            <i data-lucide="search" class="dash-icon-sm" style="width:16px;height:16px;stroke-width:2;"></i>
                         </span>
                     </div>
                 </form>
@@ -587,7 +553,7 @@
                                     @if ($task->project)
                                         <a href="{{ route('admin.projects.steps.show', [$task->project, 'tab' => 'development']) }}"
                                             class="tasks-viewdt-btn inline-flex items-center justify-center w-12 h-10 rounded-md">
-                                            <i class="fa-duotone fa-arrow-right-to-arc icon-project"></i>
+                                            <i data-lucide="arrow-right" style="width:16px;height:16px;stroke-width:2;"></i>
                                         </a>
                                     @else
                                         <span class="text-xs text-neutral-500">Projeto indisponível</span>
@@ -620,9 +586,9 @@
 
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-8">
-        <div class="card bg-neutral-900 border-0 rounded-3xl overflow-hidden">
-            <div class="card-header flex items-center justify-between px-6 py-4 border-b border-neutral-700">
-                <h6 class="text-lg font-semibold text-black dark:text-white">Projetos por mês</h6>
+        <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-transparent rounded-3xl overflow-hidden">
+            <div class="card-header flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+                <h6 class="text-lg font-semibold text-neutral-900 dark:text-white">Projetos por mês</h6>
                 <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-3">
                     @foreach ($chartFormParams as $param => $value)
                         @if (is_array($value))
@@ -633,9 +599,9 @@
                             <input type="hidden" name="{{ $param }}" value="{{ $value }}">
                         @endif
                     @endforeach
-                    <label class="text-sm text-neutral-300" for="chart_year">Ano</label>
+                    <label class="text-sm text-neutral-500 dark:text-neutral-300" for="chart_year">Ano</label>
                     <select id="chart_year" name="chart_year"
-                        class="form-select form-select-sm bg-neutral-800 border border-neutral-700 text-white rounded-lg px-3 py-2 text-sm"
+                        class="form-select form-select-sm bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-800 dark:text-white rounded-lg px-3 py-2 text-sm"
                         onchange="this.form.submit()">
                         @foreach ($availableYears as $year)
                             <option value="{{ $year }}" @selected($year === $chartYear)>{{ $year }}</option>
@@ -647,26 +613,26 @@
                 <div id="project-month-chart" class="min-h-[320px]"></div>
             </div>
         </div>
-        <div class="card bg-neutral-900 border-0 rounded-3xl overflow-hidden">
-            <div class="card-header flex items-center justify-between px-6 py-4 border-b border-neutral-700">
-                <h6 class="text-lg font-semibold text-black dark:text-white">Tarefas por status</h6>
-                <span class="text-sm text-neutral-400">Reporte Semanal</span>
+        <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-transparent rounded-3xl overflow-hidden">
+            <div class="card-header flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+                <h6 class="text-lg font-semibold text-neutral-900 dark:text-white">Tarefas por status</h6>
+                <span class="text-sm text-neutral-500 dark:text-neutral-400">Reporte Semanal</span>
             </div>
             <div class="card-body p-6">
                 <div id="weekly-status-chart" class="min-h-[320px]"></div>
             </div>
         </div>
-        <div class="card bg-neutral-900 border-0 rounded-3xl overflow-hidden">
-            <div class="card-header px-6 py-4 border-b border-neutral-700">
-                <h6 class="text-lg font-semibold text-black dark:text-white">Tarefas por skill</h6>
+        <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-transparent rounded-3xl overflow-hidden">
+            <div class="card-header px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+                <h6 class="text-lg font-semibold text-neutral-900 dark:text-white">Tarefas por skill</h6>
             </div>
             <div class="card-body p-6 text-center">
                 <div id="tasks-skill-donut" class="mx-auto"></div>
             </div>
         </div>
-        <div class="card bg-neutral-900 border-0 rounded-3xl overflow-hidden">
-            <div class="card-header px-6 py-4 border-b border-neutral-700">
-                <h6 class="text-lg font-semibold text-black dark:text-white">Tarefas realizadas na semana</h6>
+        <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-transparent rounded-3xl overflow-hidden">
+            <div class="card-header px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
+                <h6 class="text-lg font-semibold text-neutral-900 dark:text-white">Tarefas realizadas na semana</h6>
             </div>
             <div class="card-body p-6">
                 <div id="weekly-completed-line" class="min-h-[320px]"></div>
@@ -794,7 +760,9 @@
                     toolbar: {
                         show: false
                     },
+                    background: 'transparent',
                 },
+                theme: { mode: isDark ? 'dark' : 'light' },
                 series: weeklyStatusChartData.series,
                 colors: statusColors,
                 plotOptions: {
@@ -810,19 +778,19 @@
                     categories: weeklyStatusChartData.labels,
                     labels: {
                         style: {
-                            colors: '#f3f4f6'
+                            colors: axisColor
                         }
                     },
                 },
                 yaxis: {
                     labels: {
                         style: {
-                            colors: '#94a3b8'
+                            colors: mutedColor
                         },
                     },
                 },
                 grid: {
-                    borderColor: '#1f2937',
+                    borderColor: gridColor,
                     strokeDashArray: 4,
                 },
                 legend: {
@@ -858,11 +826,14 @@
                     toolbar: {
                         show: false
                     },
+                    background: 'transparent',
                 },
+                theme: { mode: isDark ? 'dark' : 'light' },
                 series: [{
                     name: 'Conclusões',
                     data: weeklyCompletedData.data,
                 }],
+                colors: ['#ff8800'],
                 stroke: {
                     curve: 'smooth',
                     width: 3,
@@ -873,7 +844,7 @@
                 dataLabels: {
                     enabled: true,
                     style: {
-                        colors: ['#0f172a']
+                        colors: [isDark ? '#f9fafb' : '#0f172a']
                     },
                     background: {
                         enabled: true,
@@ -886,19 +857,19 @@
                     categories: weeklyCompletedData.labels,
                     labels: {
                         style: {
-                            colors: '#f3f4f6'
+                            colors: axisColor
                         }
                     },
                 },
                 yaxis: {
                     labels: {
                         style: {
-                            colors: '#94a3b8'
+                            colors: mutedColor
                         }
                     },
                 },
                 grid: {
-                    borderColor: '#1f2937',
+                    borderColor: gridColor,
                     strokeDashArray: 4,
                 },
                 legend: {
@@ -914,11 +885,13 @@
             let activeDay = '$activeDayString';
 
             const setActiveDay = (day) => {
+                const isDarkMode = document.documentElement.classList.contains('dark');
                 dayButtons.forEach((button) => {
                     const isActive = button.dataset.day === day;
                     button.classList.toggle('bg-[#ff8800]', isActive);
                     button.classList.toggle('text-white', isActive);
-                    button.classList.toggle('bg-neutral-900', !isActive);
+                    button.classList.toggle('bg-neutral-800', !isActive && isDarkMode);
+                    button.classList.toggle('bg-neutral-100', !isActive && !isDarkMode);
                     button.classList.toggle('text-[#ff8800]', !isActive);
                 });
             };

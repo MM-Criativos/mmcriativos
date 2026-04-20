@@ -36,11 +36,11 @@
                                             <td class="py-3 pr-4 text-sm flex gap-3">
                                                 <a href="{{ route('admin.commercial.email-templates.edit', $t) }}"
                                                     class="inline-flex items-center px-3 py-2 btn-mmcriativos rounded-md"><i
-                                                        class="fa-duotone fa-solid fa-pen-to-square icon-project"></i></a>
+                                                        data-lucide="square-pen" class="icon-project"></i></a>
                                                 <a href="{{ route('admin.commercial.email-templates.preview', $t) }}"
                                                     target="_blank"
                                                     class="inline-flex items-center px-3 py-2 btn-mmcriativos rounded-md"><i
-                                                        class="fa-duotone fa-solid fa-eye icon-project"></i></a>
+                                                        data-lucide="eye" class="icon-project"></i></a>
                                                 <form method="POST"
                                                     action="{{ route('admin.commercial.email-templates.destroy', $t) }}"
                                                     onsubmit="return confirm('Remover template?');">
@@ -48,7 +48,7 @@
                                                     @method('DELETE')
                                                     <button
                                                         class="inline-flex items-center px-4 py-3 rounded-md bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5] dark:hover:bg-[#262626] hover:text-red-500"><i
-                                                            class="fa-solid fa-trash"></i></button>
+                                                            data-lucide="trash-2"></i></button>
                                                 </form>
                                             </td>
                                         </tr>

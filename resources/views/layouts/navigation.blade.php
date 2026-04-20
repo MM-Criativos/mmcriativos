@@ -54,11 +54,11 @@
                     title="Alternar modo escuro">
                     <!-- ☀️ Ícone do modo claro -->
                     <i
-                        class="fa-solid fa-sun text-yellow-400 text-lg transition transform scale-100 dark:scale-0 dark:opacity-0"></i>
+                        data-lucide="sun" class="text-yellow-400 text-lg transition transform scale-100 dark:scale-0 dark:opacity-0"></i>
 
                     <!-- 🌙 Ícone do modo escuro -->
                     <i
-                        class="fa-solid fa-moon text-gray-600 dark:text-gray-300 text-lg absolute transition transform scale-0 opacity-0 dark:scale-100 dark:opacity-100"></i>
+                        data-lucide="moon" class="text-gray-600 dark:text-gray-300 text-lg absolute transition transform scale-0 opacity-0 dark:scale-100 dark:opacity-100"></i>
                 </button>
 
                 <!-- Settings Dropdown -->
@@ -82,7 +82,7 @@
                         @if (Route::has('admin.settings.index'))
                             {{-- Novo item: Configurações --}}
                             <x-dropdown-link :href="route('admin.settings.index')">
-                                <i class="fa-solid fa-gear mr-2 text-gray-400"></i> {{ __('Configurações') }}
+                                <i data-lucide="settings" class="mr-2 text-gray-400"></i> {{ __('Configurações') }}
                             </x-dropdown-link>
                         @endif
 
@@ -90,7 +90,7 @@
 
                         {{-- Perfil --}}
                         <x-dropdown-link :href="route('profile.edit')">
-                            <i class="fa-regular fa-user mr-2 text-gray-400"></i> {{ __('Perfil') }}
+                            <i data-lucide="user" class="mr-2 text-gray-400"></i> {{ __('Perfil') }}
                         </x-dropdown-link>
 
                         {{-- Logout --}}
@@ -98,7 +98,7 @@
                             @csrf
                             <x-dropdown-link :href="route('logout')"
                                 onclick="event.preventDefault(); this.closest('form').submit();">
-                                <i class="fa-solid fa-arrow-right-from-bracket mr-2 text-gray-400"></i>
+                                <i data-lucide="log-out" class="mr-2 text-gray-400"></i>
                                 {{ __('Sair') }}
                             </x-dropdown-link>
                         </form>

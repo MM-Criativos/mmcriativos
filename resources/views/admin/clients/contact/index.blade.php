@@ -45,14 +45,14 @@
                                         @if ($contact->is_primary)
                                             <span
                                                 class="inline-flex border-2 items-center gap-2 px-3 py-3 rounded-md bg-white dark:bg-black border-[#ff8800]">
-                                                <i class="fa-duotone fa-solid fa-crown icon-project"></i></span>
+                                                <i data-lucide="crown" class="icon-project"></i></span>
                                         @endif
                                     </div>
 
                                     <div class="dropdown absolute top-0 end-0 me-4 mt-4">
                                         <button data-dropdown-toggle="dropdown-{{ $contact->id }}"
                                             class="flex px-4 py-2.5 btn-mmcriativos rounded-md" type="button">
-                                            <i class="fa-duotone fa-solid fa-colon icon-project"></i>
+                                            <i data-lucide="code" class="icon-project"></i>
                                         </button>
 
                                         <div id="dropdown-{{ $contact->id }}"
@@ -61,7 +61,7 @@
                                                 <li>
                                                     <a href="{{ route('admin.contacts.edit', $contact) }}"
                                                         class="w-full text-start px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#262626] rounded dark:hover:text-white flex items-center gap-2">
-                                                        <i class="fa-duotone fa-solid fa-pen-to-square icon-project"></i>
+                                                        <i data-lucide="square-pen" class="icon-project"></i>
                                                         Editar
                                                     </a>
                                                 </li>
@@ -73,7 +73,7 @@
                                                         @method('DELETE')
                                                         <button type="submit"
                                                             class="delete-btn w-full text-start px-4 py-2.5 bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5] dark:hover:bg-[#262626] hover:text-red-500 hover:border-red-500 gap-2">
-                                                            <i class="fa-regular fa-trash"></i>
+                                                            <i data-lucide="trash-2"></i>
                                                             Apagar
                                                         </button>
                                                     </form>

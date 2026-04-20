@@ -47,13 +47,13 @@
                                     @else
                                         <div id="preview-video"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-file-video text-base mr-1"></i> Arquivo inválido
+                                            <i data-lucide="file-video" class="text-base mr-1"></i> Arquivo inválido
                                         </div>
                                     @endif
                                 @else
                                     <div id="preview-video"
                                         class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                        <i class="fa-regular fa-file-video text-base mr-1"></i> Vídeo
+                                        <i data-lucide="file-video" class="text-base mr-1"></i> Vídeo
                                     </div>
                                 @endif
                             </div>

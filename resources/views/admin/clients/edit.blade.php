@@ -30,7 +30,7 @@
 
                         <a href="{{ route('admin.clients.contacts.index', $client) }}"
                             class="inline-flex items-center gap-2 px-6 py-4 rounded-md btn-mmcriativos">
-                            <i class="fa-duotone fa-solid fa-address-book icon-project"></i>
+                            <i data-lucide="book-user" class="icon-project"></i>
                             Contatos
                         </a>
                     </div>
@@ -54,7 +54,7 @@
                                 @else
                                     <div id="preview-client-logo"
                                         class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                        <i class="fa-regular fa-image text-base mr-1"></i> Selecionar
+                                        <i data-lucide="image" class="text-base mr-1"></i> Selecionar
                                     </div>
                                 @endif
 
@@ -257,7 +257,7 @@
                                         <button type="submit"
                                             class="inline-flex items-center px-6 py-4 rounded-md btn-mmcriativos text-sm">
                                             <i
-                                                class="fa-duotone fa-solid fa-arrow-rotate-right icon-project mr-2"></i>Salvar
+                                                data-lucide="rotate-cw" class="icon-project mr-2"></i>Salvar
                                         </button>
                                         @if ($existing)
                                             <span class="text-xs text-gray-500">Deixe em branco e salve para

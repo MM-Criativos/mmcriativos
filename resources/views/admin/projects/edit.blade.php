@@ -93,7 +93,7 @@
                                     @else
                                         <div id="preview-cover"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-file-video text-base mr-1"></i> Cover
+                                            <i data-lucide="file-video" class="text-base mr-1"></i> Cover
                                         </div>
                                     @endif
                             </div>
@@ -112,7 +112,7 @@
                                     @else
                                         <div id="preview-thumb"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Thumb
+                                            <i data-lucide="image" class="text-base mr-1"></i> Thumb
                                         </div>
                                     @endif
                             </div>
@@ -132,7 +132,7 @@
                                     @else
                                         <div id="preview-skill_cover"
                                             class="flex items-center justify-center w-40 h-40 border border-dashed border-gray-300 rounded bg-gray-50 text-gray-400 text-xs text-center group-hover:bg-orange-50">
-                                            <i class="fa-regular fa-image text-base mr-1"></i> Skill Cover
+                                            <i data-lucide="image" class="text-base mr-1"></i> Skill Cover
                                         </div>
                                     @endif
                             </div>
@@ -198,7 +198,7 @@
                         <div class="col-span-1 flex items-end justify-end">
                             <button
                                 class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm">
-                                <i class="fa-solid fa-plus"></i>
+                                <i data-lucide="plus"></i>
                             </button>
                         </div>
                     </div>
@@ -296,7 +296,7 @@
                                                 <div class="bg-white rounded shadow-lg w-full max-w-lg p-6">
                                                     <div class="flex items-center justify-between mb-4">
                                                         <h4 class="font-semibold">Editar Imagem</h4>
-                                                        <button type="button" onclick=\"closeUploadModal('edit-img-${img.id}')\"><i class=\"fa-solid fa-xmark\"></i></button>
+                                                        <button type="button" onclick=\"closeUploadModal('edit-img-${img.id}')\"><svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/></svg></button>
                                                     </div>
                                                     <form id="img-form-${img.id}" method="POST" action="${updateAction}" class="space-y-3 js-image-update" data-img-id="${img.id}">
                                                         <input type="hidden" name="_token" value="${csrf || ''}">
@@ -427,14 +427,14 @@
                                             </div>
                                             <div class="col-span-1 flex items-end gap-2 justify-end">
                                                 <button class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm" title="Atualizar">
-                                                    <i class="fa-solid fa-rotate-right"></i>
+                                                    <i data-lucide="rotate-cw"></i>
                                                 </button>
                                         </form>
                                                 <form method="POST" action="/admin/challenges/${c.id}" class="js-challenge-destroy" data-id="${c.id}" onsubmit="return confirm('Remover desafio?');">
                                                     <input type="hidden" name="_token" value="${csrf || ''}">
                                                     <input type="hidden" name="_method" value="DELETE">
                                                     <button class="inline-flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm" title="Apagar">
-                                                        <i class="fa-regular fa-trash-can"></i>
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </div>
@@ -501,14 +501,14 @@
                                             </div>
                                             <div class="col-span-1 flex items-end gap-2 justify-end">
                                                 <button class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm" title="Atualizar">
-                                                    <i class="fa-solid fa-rotate-right"></i>
+                                                    <i data-lucide="rotate-cw"></i>
                                                 </button>
                                         </form>
                                                 <form method="POST" action="/admin/solutions/${s.id}" class="js-solution-destroy" data-id="${s.id}" onsubmit="return confirm('Remover solução?');">
                                                     <input type="hidden" name="_token" value="${csrf || ''}">
                                                     <input type="hidden" name="_method" value="DELETE">
                                                     <button class="inline-flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm" title="Apagar">
-                                                        <i class="fa-regular fa-trash-can"></i>
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </div>
@@ -543,11 +543,11 @@
                                     <div class="flex items-center justify-between mb-3">
                                         <div class="font-semibold text-gray-800">${pp.process.name}</div>
                                         <div class="flex items-center gap-2">
-                                            <button type="button" onclick="openUploadModal('upload-pp-${pp.id}')" class="inline-flex items-center gap-1 px-4 py-2 bg-orange-600 text-white rounded text-sm hover:bg-orange-700"><i class="fa-regular fa-image"></i> Adicionar Imagens</button>
+                                            <button type="button" onclick="openUploadModal('upload-pp-${pp.id}')" class="inline-flex items-center gap-1 px-4 py-2 bg-orange-600 text-white rounded text-sm hover:bg-orange-700"><i data-lucide="image"></i> Adicionar Imagens</button>
                                             <form method="POST" action="${destroyUrl}" class="js-process-destroy" data-id="${pp.id}" onsubmit="return confirm('Remover processo deste projeto?');">
                                                 <input type="hidden" name="_token" value="${csrf || ''}">
                                                 <input type="hidden" name="_method" value="DELETE">
-                                                <button class="inline-flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700"><i class="fa-regular fa-trash"></i> Remover</button>
+                                                <button class="inline-flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700"><i data-lucide="trash-2"></i> Remover</button>
                                             </form>
                                         </div>
                                     </div>
@@ -563,14 +563,14 @@
                                             <input type="number" name="order" value="${pp.order || 0}" class="w-full border-gray-300 rounded-md text-sm">
                                         </div>
                                         <div class="col-span-1 flex items-end">
-                                            <button class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm" title="Salvar"><i class="fa-solid fa-rotate-right"></i></button>
+                                            <button class="inline-flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded border border-transparent hover:bg-white hover:text-orange-600 hover:border-orange-600 text-sm" title="Salvar"><i data-lucide="rotate-cw"></i></button>
                                         </div>
                                     </form>
                                     <div id="pp-${pp.id}-images" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
                                     <div id="upload-pp-${pp.id}" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
                                         <div class="bg-white rounded shadow-lg w-full max-w-lg p-6">
                                             <div class="flex items-center justify-between mb-4"><h4 class="font-semibold">Adicionar Imagens</h4>
-                                                <button type="button" onclick="closeUploadModal('upload-pp-${pp.id}')"><i class="fa-solid fa-xmark"></i></button>
+                                                <button type="button" onclick="closeUploadModal('upload-pp-${pp.id}')"><i data-lucide="x"></i></button>
                                             </div>
                                             <form method="POST" action="${imagesStoreUrl}" enctype="multipart/form-data" class="space-y-4 js-images-store" data-pp-id="${pp.id}">
                                                 <input type="hidden" name="_token" value="${csrf || ''}">

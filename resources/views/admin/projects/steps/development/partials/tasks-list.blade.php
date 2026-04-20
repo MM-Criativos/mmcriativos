@@ -22,7 +22,7 @@
                     </p>
 
                 </div>
-                <i class="fa-solid" :class="{ 'fa-chevron-down': !open, 'fa-chevron-up': open }"></i>
+                <i x-show="!open" data-lucide="chevron-down" style="width:14px;height:14px;stroke:currentColor;"></i><i x-show="open" data-lucide="chevron-up" style="width:14px;height:14px;stroke:currentColor;"></i>
             </button>
 
             <div x-show="open" x-collapse>

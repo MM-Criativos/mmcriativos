@@ -4,7 +4,7 @@
     <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-semibold text-gray-800">Desafios do Projeto</h3>
         <button form="form-update-all" class="btn-mmcriativos inline-flex items-center px-4 py-2 rounded-xl">
-            <i class="fa-duotone fa-solid fa-arrow-rotate-right icon-project mr-2"></i>
+            <i data-lucide="rotate-cw" class="icon-project mr-2"></i>
             Atualizar todos
         </button>
     </div>
@@ -42,7 +42,7 @@
                             <button type="button"
                                 class="js-delete inline-flex items-center justify-center w-full px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 rounded-md"
                                 data-url="{{ route('admin.challenges.destroy', $challenge) }}" title="Excluir desafio">
-                                <i class="fa-regular fa-trash-can"></i>
+                                <i data-lucide="trash-2"></i>
                             </button>
                         </div>
                     </div>
@@ -76,7 +76,7 @@
             </div>
             <div class="col-span-1 flex items-end justify-end">
                 <button class="btn-mmcriativos inline-flex items-center justify-center w-full px-4 py-3 rounded-md">
-                    <i class="fa-duotone fa-solid fa-circle-plus icon-project"></i>
+                    <i data-lucide="circle-plus" class="icon-project"></i>
                 </button>
             </div>
         </div>

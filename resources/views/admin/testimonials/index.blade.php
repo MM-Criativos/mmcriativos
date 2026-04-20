@@ -20,7 +20,7 @@
                     </div>
                     <a href="{{ route('admin.testimonials.create') }}"
                         class="btn btn-mmcriativos text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
-                        <i class="fa-duotone fa-solid fa-circle-plus icon-project mr-2"></i>
+                        <i data-lucide="circle-plus" class="icon-project mr-2"></i>
                         Adicionar Depoimento
                     </a>
                 </div>
@@ -54,7 +54,7 @@
                                             <div class="mt-3 flex items-center gap-2">
                                                 <a href="{{ route('admin.testimonials.edit', $testimonial) }}"
                                                     class="inline-flex items-center gap-1 px-5 py-3 btn-mmcriativos rounded-md">
-                                                    <i class="fa-duotone fa-pen-to-square icon-project mr-2"></i> Editar
+                                                    <i data-lucide="square-pen" class="icon-project mr-2"></i> Editar
                                                 </a>
                                                 <form method="POST"
                                                     action="{{ route('admin.testimonials.destroy', $testimonial) }}"
@@ -63,7 +63,7 @@
                                                     @method('DELETE')
                                                     <button type="submit"
                                                         class="inline-flex items-center gap-1 px-5 py-4 rounded bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500 hover:border-red-500">
-                                                        <i class="fa-regular fa-trash-can"></i>
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </div>

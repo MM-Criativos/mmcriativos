@@ -31,7 +31,7 @@
                     <a href="{{ route('admin.commercial.budgets.create') }}"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-md btn-mmcriativos">
 
-                        <i class="fa-duotone fa-solid fa-circle-plus icon-project"></i>
+                        <i data-lucide="circle-plus" class="icon-project"></i>
                         Novo Orçamento
                     </a>
                 </div>
@@ -155,13 +155,13 @@
                                             <td class="py-3 pr-4 text-sm flex gap-3">
                                                 <a href="{{ route('admin.commercial.budgets.edit', $b) }}"
                                                     class="inline-flex items-center px-4 py-3 rounded-lg btn-mmcriativos">
-                                                    <i class="fa-duotone fa-solid fa-pen-to-square icon-project"></i>
+                                                    <i data-lucide="square-pen" class="icon-project"></i>
                                                 </a>
 
                                                 <a href="{{ route('admin.commercial.budgets.preview', $b) }}"
                                                     target="_blank"
                                                     class="inline-flex items-center px-4 py-3 rounded-lg btn-mmcriativos">
-                                                    <i class="fa-duotone fa-solid fa-eye icon-project"></i>
+                                                    <i data-lucide="eye" class="icon-project"></i>
                                                 </a>
 
                                                 <form method="POST"
@@ -172,7 +172,7 @@
 
                                                     <button
                                                         class="inline-flex items-center px-5 py-4 bg-red-500 text-white border-red-500 hover:bg-[#f5f5f5] dark:hover:bg-[#262626] hover:text-red-500 hover:border-red-500 rounded-lg">
-                                                        <i class="fa-solid fa-trash"></i>
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </td>

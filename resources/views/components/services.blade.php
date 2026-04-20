@@ -113,7 +113,7 @@
                                 @if ($service->icon)
                                     <i class="{{ $service->icon }}"></i>
                                 @else
-                                    <i class="fa-light fa-cubes"></i>
+                                    <i data-lucide="package"></i>
                                 @endif
                             </div>
 
@@ -164,7 +164,7 @@
                             @if ($service->icon)
                                 <i class="{{ $service->icon }}"></i>
                             @else
-                                <i class="fa-light fa-cubes"></i>
+                                <i data-lucide="package"></i>
                             @endif
                         </div>
                         <h3 class="service-two-mobile__title">{{ $service->name }}</h3>

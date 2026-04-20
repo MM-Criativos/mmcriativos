@@ -88,7 +88,7 @@
                         <div class="pt-2">
                             <button type="submit"
                                 class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 bg-neutral-900 text-white dark:bg-[#ff8800] dark:text-black font-semibold">
-                                <i class="fa-regular fa-floppy-disk"></i>
+                                <i data-lucide="save"></i>
                                 Salvar alteracoes
                             </button>
                         </div>
@@ -100,7 +100,7 @@
                         @csrf
                         <button type="submit"
                             class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 border border-[#ff8800] text-[#ff8800] font-semibold">
-                            <i class="fa-regular fa-arrows-rotate"></i>
+                            <i data-lucide="refresh-cw"></i>
                             Regenerar API key
                         </button>
                     </form>

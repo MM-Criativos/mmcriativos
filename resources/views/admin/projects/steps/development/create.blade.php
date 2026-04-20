@@ -35,7 +35,7 @@
                     definido.</p>
             </div>
             <button type="button" class="text-gray-500 hover:text-gray-700" @click="createTaskModal = false">
-                <i class="fa-solid fa-xmark text-lg"></i>
+                <i data-lucide="x" class="text-lg"></i>
             </button>
         </div>
 
@@ -198,7 +198,7 @@
                             </div>
                             <button type="button" @click="addItem()"
                                 class="btn-mmcriativos inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium">
-                                <i class="fa-duotone fa-solid fa-list-check icon-project"></i>
+                                <i data-lucide="list-checks" class="icon-project"></i>
                                 Adicionar item
                             </button>
                         </div>
@@ -273,7 +273,7 @@
                                     <button type="button"
                                         class="inline-flex items-center gap-1 text-red-600 hover:text-red-700"
                                         @click="removeItem(index)">
-                                        <i class="fa-solid fa-trash"></i>
+                                        <i data-lucide="trash-2"></i>
                                         Remover
                                     </button>
                                 </div>
@@ -289,7 +289,7 @@
                         </button>
                         <button type="submit"
                             class="btn-mmcriativos inline-flex items-center gap-2 px-5 py-2.5 rounded-md">
-                            <i class="fa-duotone fa-solid fa-circle-plus icon-project"></i>
+                            <i data-lucide="circle-plus" class="icon-project"></i>
                             Adicionar tarefa
                         </button>
                     </div>

@@ -35,7 +35,7 @@
                     class="dark:!bg-[#262626] border-gray-300 rounded-md text-sm py-2 px-3 w-56" />
 
                 <button type="submit" class="btn btn-mmcriativos inline-flex items-center ml-2 px-3 py-2">
-                    <i class="fa-duotone fa-solid fa-paper-plane icon-project mr-2"></i>
+                    <i data-lucide="send" class="icon-project mr-2"></i>
                     <span>Enviar por e-mail</span>
                 </button>
             </form>
@@ -77,7 +77,7 @@
                                 class="w-full px-4 py-3 flex items-center justify-between bg-[#f5f5f5] dark:bg-[#262626]">
                                 <h4 class="text-base font-medium text-gray-700">{{ $category }}
                                 </h4>
-                                <i class="fa-solid" :class="{ 'fa-chevron-down': !open, 'fa-chevron-up': open }"></i>
+                                <i x-show="!open" data-lucide="chevron-down" style="width:14px;height:14px;stroke:currentColor;"></i><i x-show="open" data-lucide="chevron-up" style="width:14px;height:14px;stroke:currentColor;"></i>
                             </button>
 
                             <div x-show="open" x-collapse>

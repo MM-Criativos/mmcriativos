@@ -42,7 +42,7 @@
                             {{-- 🔸 DIREITA: Botão Novo Extra --}}
                             <a href="{{ route('admin.commercial.extras.create') }}"
                                 class="px-4 py-2 rounded-md btn-mmcriativos inline-flex items-center gap-2">
-                                <i class="fa-duotone fa-solid fa-circle-plus icon-project"></i>
+                                <i data-lucide="circle-plus" class="icon-project"></i>
                                 Novo Extra
                             </a>
 
@@ -86,7 +86,7 @@
                                                     @method('DELETE')
                                                     <button
                                                         class="inline-flex items-center rounded-md px-4 py-3 bg-red-500 text-white border-red-500 hover:bg-white dark:hover:bg-black hover:text-red-500">
-                                                        <i class="fa-regular fa-trash-can"></i>
+                                                        <i data-lucide="trash-2"></i>
                                                     </button>
                                                 </form>
                                             </td>
