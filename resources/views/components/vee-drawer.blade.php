@@ -201,25 +201,47 @@
                                 <p class="vee-sessions__empty">Nenhuma conversa ainda</p>
                             </template>
                             <template x-for="sess in sessions" :key="sess.id">
-                                <div @click="loadSession(sess.id)"
+                                <div @click="editingSessionId !== sess.id && loadSession(sess.id)"
                                     :style="currentSession && currentSession.id === sess.id
                                         ? 'background:rgba(255,136,0,.1);border-left-color:#ff8800;'
                                         : 'background:#222;border-left-color:#444;'"
                                     class="vee-sidebar-card">
                                     <div class="vee-sidebar-card__header">
-                                        <span x-text="sess.title" class="vee-sidebar-card__title"></span>
+                                        {{-- Título normal --}}
+                                        <template x-if="editingSessionId !== sess.id">
+                                            <span x-text="sess.title" class="vee-sidebar-card__title"></span>
+                                        </template>
+                                        {{-- Input de edição --}}
+                                        <template x-if="editingSessionId === sess.id">
+                                            <input
+                                                x-model="editingTitle"
+                                                @click.stop
+                                                @keydown.enter.stop="renameSession(sess.id)"
+                                                @keydown.escape.stop="editingSessionId = null"
+                                                @blur="renameSession(sess.id)"
+                                                x-init="$nextTick(() => $el.focus())"
+                                                style="flex:1;background:#333;border:1px solid #ff8800;border-radius:4px;padding:2px 6px;color:#fff;font-size:13px;font-weight:600;outline:none;min-width:0;font-family:'Inter',sans-serif;"
+                                            >
+                                        </template>
                                         <span x-text="formatDate(sess.updated_at)" class="vee-sidebar-card__date"></span>
                                     </div>
                                     <div class="vee-sidebar-card__preview"
                                          x-text="sess.preview || '...'"></div>
                                     <div class="vee-sidebar-card__actions">
+                                        {{-- Favorito --}}
                                         <button @click.stop="toggleStar(sess.id)"
                                             :style="starredSessions.includes(sess.id) ? 'color:#f59e0b;' : 'color:#555;'"
-                                            class="vee-icon-action-btn">
+                                            class="vee-icon-action-btn" title="Favoritar">
                                             <svg width="12" height="12" viewBox="0 0 24 24" :fill="starredSessions.includes(sess.id) ? '#f59e0b' : 'none'" :stroke="starredSessions.includes(sess.id) ? '#f59e0b' : '#555'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                                         </button>
+                                        {{-- Editar título --}}
+                                        <button @click.stop="editingSessionId = sess.id; editingTitle = sess.title"
+                                            class="vee-icon-action-btn" title="Renomear">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                        {{-- Deletar --}}
                                         <button @click.stop="deleteSession(sess.id)"
-                                            class="vee-icon-action-btn">
+                                            class="vee-icon-action-btn" title="Deletar">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
                                         </button>
                                     </div>
@@ -655,7 +677,9 @@ document.addEventListener('alpine:init', () => {
         isStreaming: false,
         streamController: null,
         sessions: [],
-        starredSessions: [],
+        starredSessions: JSON.parse(localStorage.getItem('vee-starred') || '[]'),
+        editingSessionId: null,
+        editingTitle: '',
         inputText: '',
 
         // ---- log state ----
@@ -809,6 +833,15 @@ document.addEventListener('alpine:init', () => {
             } else {
                 this.starredSessions.push(id);
             }
+            localStorage.setItem('vee-starred', JSON.stringify(this.starredSessions));
+            this._sortSessions();
+        },
+
+        _sortSessions() {
+            this.sessions = [
+                ...this.sessions.filter(s => this.starredSessions.includes(s.id)),
+                ...this.sessions.filter(s => !this.starredSessions.includes(s.id)),
+            ];
         },
 
         // ---- call simulation ----
@@ -870,6 +903,7 @@ document.addEventListener('alpine:init', () => {
                     ...s,
                     preview: memMap[s.id]?.preview || lsPrev[s.id] || '',
                 }));
+                this._sortSessions();
             } catch {}
         },
 
@@ -883,6 +917,23 @@ document.addEventListener('alpine:init', () => {
                 this.messages = this.normalizeMessages(data.messages || []);
                 localStorage.setItem('vee-last-session', id);
                 this.$nextTick(() => this.scrollToBottom());
+            } catch {}
+        },
+
+        async renameSession(id) {
+            const title = this.editingTitle.trim();
+            this.editingSessionId = null;
+            this.editingTitle = '';
+            if (!title || !this.agentUrl) return;
+            try {
+                await fetch(`${this.agentUrl}/sessions/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+                    body: JSON.stringify({ title }),
+                });
+                const s = this.sessions.find(s => s.id === id);
+                if (s) s.title = title;
+                if (this.currentSession?.id === id) this.currentSession.title = title;
             } catch {}
         },
 
