@@ -17,14 +17,24 @@ function buildTransport(): StreamableHTTPClientTransport {
   return new StreamableHTTPClientTransport(new URL(MCP_SERVER_URL), { requestInit: { headers } });
 }
 
-async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`MCP timeout: ${label} (${ms}ms)`)), ms)
+    )
+  ]);
+}
+
+async function withClient<T>(fn: (client: Client) => Promise<T>, timeoutMs = 10000): Promise<T> {
   const client = new Client({ name: "vee-agent", version: "1.0.0" });
   const transport = buildTransport();
-  await client.connect(transport);
+  await withTimeout(client.connect(transport), timeoutMs, "connect");
   try {
-    return await fn(client);
+    return await withTimeout(fn(client), timeoutMs, "operation");
   } finally {
-    await client.close();
+    // close sem await para não bloquear — erros de close são ignorados
+    client.close().catch(() => undefined);
   }
 }
 
