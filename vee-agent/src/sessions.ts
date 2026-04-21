@@ -98,8 +98,10 @@ export async function loadHistory(session_id: string): Promise<ChatCompletionMes
     }
 
     if (row.role === "assistant") {
-      const toolCalls = row.tool_calls
-        ? (JSON.parse(row.tool_calls) as unknown[])
+      const toolCalls: unknown[] | undefined = row.tool_calls
+        ? (typeof row.tool_calls === "string"
+            ? JSON.parse(row.tool_calls)
+            : row.tool_calls)
         : undefined;
       return {
         role: "assistant",
