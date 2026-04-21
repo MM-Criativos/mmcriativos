@@ -1,4 +1,6 @@
 {{-- Vee Drawer v3 --}}
+<link rel="stylesheet" href="/css/vee-drawer.css">
+
 <div
     x-data="veeDrawer()"
     x-on:open-vee.window="openDrawer()"
@@ -28,8 +30,8 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
-        class="fixed inset-0 z-[70] flex overflow-hidden transform"
-        style="display:none; background:#0f0f0f; color:#ffffff; font-family:'Inter',sans-serif;"
+        class="fixed inset-0 z-[70] flex overflow-hidden transform vee-drawer-panel"
+        style="display:none;"
     >
 
         {{-- ===== ICON SIDEBAR (56px) ===== --}}
@@ -96,12 +98,11 @@
         >
             {{-- Header --}}
             <div class="vee-call-header">
-                <div style="display:flex;align-items:center;gap:8px;">
+                <div class="vee-call-header__group">
                     <span class="vee-call-dot-pulse"></span>
-                    <span style="font-size:12px;font-weight:600;color:#ff8800;">Em chamada</span>
+                    <span class="vee-call-header__label">Em chamada</span>
                 </div>
-                <button @click="toggleCall()"
-                    style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.27);border-radius:5px;cursor:pointer;padding:3px 8px;color:#ef4444;font-size:11px;font-weight:600;font-family:'Inter',sans-serif;">
+                <button @click="toggleCall()" class="vee-call-header__end-btn">
                     Encerrar
                 </button>
             </div>
@@ -120,22 +121,21 @@
             </div>
 
             {{-- Status --}}
-            <div style="text-align:center;padding:0 12px 14px;">
-                <div style="font-size:13px;font-weight:600;color:#fff;">Vee</div>
+            <div class="vee-call-status">
+                <div class="vee-call-status__name">Vee</div>
                 <div x-text="callStatusText"
                      :style="`font-size:11px;font-weight:500;margin-top:2px;letter-spacing:.3px;color:${callStatusColor};`"></div>
             </div>
 
             {{-- Transcript --}}
-            <div x-ref="callTranscript"
-                style="flex:1;overflow-y:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2e2e2e;padding-top:10px;">
+            <div x-ref="callTranscript" class="vee-call-transcript">
                 <template x-for="(m, i) in callTranscript" :key="i">
                     <div :style="m.who==='user'
                             ? 'background:rgba(255,136,0,.12);border:1px solid rgba(255,136,0,.35);'
                             : 'background:#222;border:1px solid #2e2e2e;'"
-                         style="padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.45;color:#fff;">
+                         class="vee-call-transcript__msg">
                         <div :style="m.who==='user' ? 'color:#ff8800;' : 'color:#555;'"
-                             style="font-size:10px;margin-bottom:2px;font-weight:600;"
+                             class="vee-call-transcript__who"
                              x-text="m.who==='user'?'Você':'Vee'"></div>
                         <span x-text="m.text"></span>
                     </div>
@@ -143,10 +143,10 @@
             </div>
 
             {{-- Mute --}}
-            <div style="padding:10px 12px;border-top:1px solid #2e2e2e;display:flex;justify-content:center;">
+            <div class="vee-call-mute">
                 <button @click="callMuted=!callMuted"
                     :style="callMuted ? 'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.67);' : 'background:#222;border:1px solid #2e2e2e;'"
-                    style="width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;position:relative;"
+                    class="vee-call-mute__btn"
                     :title="callMuted ? 'Ativar microfone' : 'Mutar microfone'">
                     <i data-lucide="mic"
                        :style="callMuted ? 'color:#ef4444;stroke:#ef4444;' : 'color:#999;stroke:#999;'"></i>
@@ -158,71 +158,68 @@
         </div>
 
         {{-- ===== MAIN AREA ===== --}}
-        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+        <div class="vee-main">
 
             {{-- Top Bar (48px) --}}
-            <div style="height:48px;background:#1a1a1a;border-bottom:1px solid #2e2e2e;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;">
-                <span x-text="tabLabels[tab]" style="font-size:14px;font-weight:600;color:#fff;"></span>
+            <div class="vee-topbar">
+                <span x-text="tabLabels[tab]" class="vee-topbar__title"></span>
 
                 {{-- Orch view toggle --}}
-                <div x-show="tab==='orch'" style="display:flex;align-items:center;gap:6px;">
-                    <span style="font-size:12px;color:#999;">Visualização:</span>
+                <div x-show="tab==='orch'" class="vee-topbar__view-toggle">
+                    <span class="vee-topbar__label">Visualização:</span>
                     <template x-for="[v, l] in [['A','Feed'],['B','Pipeline'],['C','Grafo']]" :key="v">
                         <button @click="orchView=v"
                             :style="orchView===v ? 'background:#ff8800;border-color:#ff8800;color:#fff;' : 'background:transparent;border-color:#2e2e2e;color:#999;'"
-                            style="padding:4px 10px;font-size:12px;font-weight:500;cursor:pointer;border-radius:5px;border:1px solid;transition:all .15s;font-family:'Inter',sans-serif;"
+                            class="vee-topbar__view-btn"
                             x-text="l"></button>
                     </template>
                 </div>
 
                 {{-- Env status --}}
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:7px;height:7px;border-radius:50%;background:#ff8800;display:inline-block;"></span>
-                    <span style="font-size:12px;color:#999;">4 ambientes ativos</span>
+                <div class="vee-topbar__env">
+                    <span class="vee-topbar__env-dot"></span>
+                    <span class="vee-topbar__env-text">4 ambientes ativos</span>
                 </div>
             </div>
 
             {{-- Content --}}
-            <div style="flex:1;overflow:hidden;position:relative;">
+            <div class="vee-content">
 
                 {{-- ===== TAB: PLANEJAMENTO ===== --}}
                 <div x-show="tab==='plan'" class="flex h-full" style="display:none;">
 
                     {{-- Conversations Sidebar (220px) --}}
-                    <div style="width:220px;flex-shrink:0;border-right:1px solid #2e2e2e;display:flex;flex-direction:column;background:#1a1a1a;">
-                        <div style="padding:14px 16px;border-bottom:1px solid #2e2e2e;display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-size:13px;font-weight:600;color:#fff;">Conversas</span>
-                            <button @click="newSession()"
-                                style="background:#ff8800;border:none;border-radius:5px;cursor:pointer;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+                    <div class="vee-sessions">
+                        <div class="vee-sessions__header">
+                            <span class="vee-sessions__title">Conversas</span>
+                            <button @click="newSession()" class="vee-sessions__new-btn">
                                 <i data-lucide="plus" style="stroke:#fff;"></i>
                             </button>
                         </div>
-                        <div style="flex:1;overflow-y:auto;">
+                        <div class="vee-sessions__list">
                             <template x-if="sessions.length === 0">
-                                <p style="color:#555;font-size:12px;text-align:center;padding:32px 16px;">Nenhuma conversa ainda</p>
+                                <p class="vee-sessions__empty">Nenhuma conversa ainda</p>
                             </template>
                             <template x-for="sess in sessions" :key="sess.id">
                                 <div @click="loadSession(sess.id)"
                                     :style="currentSession && currentSession.id === sess.id
-                                        ? 'background:rgba(255,136,0,.12);border-left:3px solid #ff8800;'
-                                        : 'background:transparent;border-left:3px solid transparent;'"
-                                    style="padding:12px 16px;cursor:pointer;border-bottom:1px solid #2e2e2e;transition:background .15s;">
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-                                        <span x-text="sess.title"
-                                              style="font-size:13px;font-weight:600;color:#fff;flex:1;margin-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-                                        <span x-text="formatDate(sess.updated_at)"
-                                              style="font-size:11px;color:#555;flex-shrink:0;"></span>
+                                        ? 'background:rgba(255,136,0,.1);border-left-color:#ff8800;'
+                                        : 'background:#222;border-left-color:#444;'"
+                                    class="vee-sidebar-card">
+                                    <div class="vee-sidebar-card__header">
+                                        <span x-text="sess.title" class="vee-sidebar-card__title"></span>
+                                        <span x-text="formatDate(sess.updated_at)" class="vee-sidebar-card__date"></span>
                                     </div>
-                                    <div style="font-size:12px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px;"
+                                    <div class="vee-sidebar-card__preview"
                                          x-text="sess.preview || '...'"></div>
-                                    <div style="display:flex;gap:10px;">
+                                    <div class="vee-sidebar-card__actions">
                                         <button @click.stop="toggleStar(sess.id)"
                                             :style="starredSessions.includes(sess.id) ? 'color:#f59e0b;' : 'color:#555;'"
-                                            style="background:none;border:none;cursor:pointer;padding:0;">
+                                            class="vee-icon-action-btn">
                                             <svg width="12" height="12" viewBox="0 0 24 24" :fill="starredSessions.includes(sess.id) ? '#f59e0b' : 'none'" :stroke="starredSessions.includes(sess.id) ? '#f59e0b' : '#555'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                                         </button>
                                         <button @click.stop="deleteSession(sess.id)"
-                                            style="background:none;border:none;cursor:pointer;padding:0;color:#555;">
+                                            class="vee-icon-action-btn">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
                                         </button>
                                     </div>
@@ -232,34 +229,34 @@
                     </div>
 
                     {{-- Chat area --}}
-                    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+                    <div class="vee-chat">
                         {{-- Chat header --}}
-                        <div style="padding:12px 20px;border-bottom:1px solid #2e2e2e;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+                        <div class="vee-chat-header">
                             <div>
-                                <div style="font-size:14px;font-weight:600;color:#fff;"
+                                <div class="vee-chat-header__title"
                                      x-text="currentSession ? currentSession.title : 'Nova conversa'"></div>
-                                <div style="font-size:12px;color:#999;"
+                                <div class="vee-chat-header__count"
                                      x-text="messages.length + ' mensagem' + (messages.length !== 1 ? 's' : '')"></div>
                             </div>
-                            <div style="display:flex;gap:6px;">
-                                <span style="font-size:11px;padding:3px 8px;background:#2a2a2a;border:1px solid #2e2e2e;border-radius:4px;color:#999;">local</span>
-                                <span style="font-size:11px;padding:3px 8px;background:#2a2a2a;border:1px solid #2e2e2e;border-radius:4px;color:#999;">vault</span>
+                            <div class="vee-chat-header__badges">
+                                <span class="vee-tag">local</span>
+                                <span class="vee-tag">vault</span>
                             </div>
                         </div>
 
                         {{-- Messages --}}
-                        <div x-ref="messagesArea" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;">
+                        <div x-ref="messagesArea" class="vee-messages">
 
                             {{-- Empty state --}}
                             <template x-if="messages.length === 0">
-                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:80px 0;">
-                                    <div style="width:56px;height:56px;border-radius:16px;background:rgba(255,136,0,.1);border:1px solid rgba(255,136,0,.2);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                <div class="vee-empty-state">
+                                    <div class="vee-empty-state__icon">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff8800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M4 6l8 12 8-12"/>
                                         </svg>
                                     </div>
-                                    <p style="color:#fff;font-weight:500;font-size:17px;">Olá! Sou a Vee.</p>
-                                    <p style="color:#999;font-size:13px;margin-top:4px;">Aqui para planejar, discutir e coordenar agentes.</p>
+                                    <p class="vee-empty-state__title">Olá! Sou a Vee.</p>
+                                    <p class="vee-empty-state__sub">Aqui para planejar, discutir e coordenar agentes.</p>
                                 </div>
                             </template>
 
@@ -268,40 +265,40 @@
                                 <div>
                                     {{-- User message --}}
                                     <template x-if="msg.role === 'user'">
-                                        <div style="display:flex;justify-content:flex-end;">
-                                            <div style="max-width:70%;background:#ff8800;color:#fff;border-radius:8px;padding:10px 14px;font-size:14px;line-height:1.55;">
-                                                <p x-text="msg.content" style="white-space:pre-wrap;margin:0;"></p>
+                                        <div class="vee-msg-user">
+                                            <div class="vee-msg-user__bubble">
+                                                <p x-text="msg.content" class="vee-msg-user__text"></p>
                                             </div>
                                         </div>
                                     </template>
 
                                     {{-- Assistant message --}}
                                     <template x-if="msg.role === 'assistant'">
-                                        <div style="display:flex;justify-content:flex-start;gap:10px;align-items:flex-end;">
-                                            <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,136,0,.12);border:1px solid rgba(255,136,0,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <div class="vee-msg-assistant">
+                                            <div class="vee-msg-avatar">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff8800" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M4 6l8 12 8-12"/>
                                                 </svg>
                                             </div>
-                                            <div style="flex:1;min-width:0;">
+                                            <div class="vee-msg-body">
                                                 {{-- Tool activities --}}
                                                 <template x-if="msg.toolActivities && msg.toolActivities.length > 0">
-                                                    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+                                                    <div class="vee-tool-activities">
                                                         <template x-for="(tool, ti) in msg.toolActivities" :key="ti">
                                                             <div :style="tool.status==='running' ? 'border-color:rgba(255,136,0,.5);background:rgba(255,136,0,.05);' : tool.status==='done' ? 'border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.05);' : 'border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.05);'"
-                                                                 style="border:1px solid;border-radius:6px;padding:6px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;">
-                                                                <div style="display:flex;align-items:center;gap:8px;">
+                                                                 class="vee-tool-row">
+                                                                <div class="vee-tool-row__inner">
                                                                     <span x-show="tool.status === 'running'"
-                                                                          style="width:10px;height:10px;border:1.5px solid #ff8800;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;display:inline-block;"></span>
-                                                                    <svg x-show="tool.status === 'done'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                                                    <svg x-show="tool.status === 'error'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                                                                    <span style="color:#e2e8f0;" x-text="tool.name"></span>
+                                                                          class="vee-tool-spinner"></span>
+                                                                    <svg x-show="tool.status === 'done'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="vee-tool-row__icon"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                                    <svg x-show="tool.status === 'error'" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="vee-tool-row__icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                                                    <span class="vee-tool-row__name" x-text="tool.name"></span>
                                                                     <span x-show="tool.duration_ms"
                                                                           x-text="tool.duration_ms + 'ms'"
-                                                                          style="color:#555;margin-left:auto;"></span>
+                                                                          class="vee-tool-row__duration"></span>
                                                                 </div>
                                                                 <template x-if="tool.status === 'error' && tool.error">
-                                                                    <p x-text="tool.error" style="color:#ef4444;margin:4px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></p>
+                                                                    <p x-text="tool.error" class="vee-tool-row__error"></p>
                                                                 </template>
                                                             </div>
                                                         </template>
@@ -310,16 +307,15 @@
 
                                                 {{-- Text content --}}
                                                 <template x-if="msg.content">
-                                                    <div class="vee-msg-content"
-                                                         style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:10px 14px;font-size:14px;color:#e2e8f0;line-height:1.55;"
+                                                    <div class="vee-msg-bubble vee-msg-content"
                                                          x-html="renderMarkdown(msg.content)">
                                                     </div>
                                                 </template>
 
                                                 {{-- Streaming cursor --}}
                                                 <template x-if="isStreaming && idx === messages.length - 1 && !msg.content">
-                                                    <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:10px 14px;">
-                                                        <span style="display:inline-block;width:6px;height:16px;background:#ff8800;animation:pulse 1s ease infinite;border-radius:2px;"></span>
+                                                    <div class="vee-msg-bubble">
+                                                        <span class="vee-cursor"></span>
                                                     </div>
                                                 </template>
                                             </div>
@@ -330,46 +326,46 @@
 
                             {{-- Streaming placeholder --}}
                             <template x-if="isStreaming && (messages.length === 0 || messages[messages.length-1].role === 'user')">
-                                <div style="display:flex;justify-content:flex-start;gap:10px;align-items:flex-end;">
-                                    <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,136,0,.12);border:1px solid rgba(255,136,0,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <div class="vee-msg-assistant">
+                                    <div class="vee-msg-avatar">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff8800" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M4 6l8 12 8-12"/>
                                         </svg>
                                     </div>
-                                    <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:10px 14px;">
-                                        <span style="display:inline-block;width:6px;height:16px;background:#ff8800;animation:pulse 1s ease infinite;border-radius:2px;"></span>
+                                    <div class="vee-msg-bubble">
+                                        <span class="vee-cursor"></span>
                                     </div>
                                 </div>
                             </template>
                         </div>
 
                         {{-- Input --}}
-                        <div style="border-top:1px solid #2e2e2e;padding:12px 20px;flex-shrink:0;background:#0d0d0d;">
-                            <div style="border:1px solid #2e2e2e;border-radius:8px;overflow:hidden;background:#222;">
+                        <div class="vee-input-wrap">
+                            <div class="vee-input-box">
                                 <textarea
                                     x-model="inputText"
                                     @keydown.enter.prevent="if (!$event.shiftKey && !isStreaming) sendMessage()"
                                     :disabled="isStreaming"
                                     placeholder="Escreva para a Vee..."
                                     rows="1"
-                                    style="width:100%;padding:12px 14px;background:transparent;border:none;outline:none;color:#fff;font-size:14px;resize:none;height:68px;font-family:'Inter',sans-serif;"
+                                    class="vee-input-textarea"
                                     @input="$el.style.height='auto'; $el.style.height=Math.min($el.scrollHeight,180)+'px'"
                                 ></textarea>
-                                <div style="display:flex;justify-content:space-between;padding:8px 12px;border-top:1px solid #2e2e2e;">
-                                    <div style="display:flex;gap:10px;">
-                                        <button style="background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;">
-                                            <i data-lucide="mic" style="stroke:#999;width:16px;height:16px;"></i>
+                                <div class="vee-input-actions">
+                                    <div class="vee-input-left">
+                                        <button class="vee-input-icon-btn">
+                                            <i data-lucide="mic"></i>
                                         </button>
-                                        <button style="background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;">
-                                            <i data-lucide="paperclip" style="stroke:#999;width:16px;height:16px;"></i>
+                                        <button class="vee-input-icon-btn">
+                                            <i data-lucide="paperclip"></i>
                                         </button>
                                     </div>
                                     <button @click="sendMessage()"
                                         :disabled="isStreaming || !inputText.trim()"
-                                        style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:#ff8800;color:#fff;border:none;transition:all .15s;font-family:'Inter',sans-serif;"
+                                        class="vee-send-btn"
                                         :style="(isStreaming || !inputText.trim()) ? 'opacity:.4;cursor:not-allowed;' : ''">
-                                        <i x-show="!isStreaming" data-lucide="send" style="width:12px;height:12px;stroke:#fff;"></i>
-                                        <span x-show="isStreaming" style="width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;"></span>
+                                        <i x-show="!isStreaming" data-lucide="send" class="vee-send-btn__icon"></i>
+                                        <span x-show="isStreaming" class="vee-send-spinner"></span>
                                         Enviar
                                     </button>
                                 </div>
@@ -382,20 +378,20 @@
                 <div x-show="tab==='orch'" class="flex h-full" style="display:none;">
 
                     {{-- Agents sidebar (200px) --}}
-                    <div style="width:200px;flex-shrink:0;border-right:1px solid #2e2e2e;background:#1a1a1a;display:flex;flex-direction:column;">
-                        <div style="padding:14px 16px;border-bottom:1px solid #2e2e2e;font-size:13px;font-weight:600;color:#fff;">Agentes</div>
-                        <div style="flex:1;overflow-y:auto;">
+                    <div class="vee-agents">
+                        <div class="vee-sidebar-header">Agentes</div>
+                        <div class="vee-agents__list">
                             <template x-for="agent in orchAgents" :key="agent.id">
                                 <div @click="activeAgentId=agent.id"
-                                    :style="activeAgentId===agent.id ? 'background:rgba(255,136,0,.12);border-left:3px solid #ff8800;' : 'background:transparent;border-left:3px solid transparent;'"
-                                    style="padding:12px 16px;cursor:pointer;border-bottom:1px solid #2e2e2e;transition:background .15s;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-                                        <span x-text="agent.name" style="font-size:13px;font-weight:600;color:#fff;"></span>
+                                    :style="activeAgentId===agent.id ? 'background:rgba(255,136,0,.1);border-left-color:#ff8800;' : 'background:#222;border-left-color:#444;'"
+                                    class="vee-sidebar-card">
+                                    <div class="vee-agent-card__header">
+                                        <span x-text="agent.name" class="vee-sidebar-card__name"></span>
                                         <span :style="`background:${agentStatusColor(agent.status)};`"
-                                              style="width:7px;height:7px;border-radius:50%;display:inline-block;"></span>
+                                              class="vee-status-dot"></span>
                                     </div>
-                                    <div x-text="agent.env" style="font-size:11px;color:#555;margin-bottom:2px;"></div>
-                                    <div x-text="agent.task" :style="`color:${agentStatusColor(agent.status)};`" style="font-size:12px;"></div>
+                                    <div x-text="agent.env" class="vee-agent-card__env"></div>
+                                    <div x-text="agent.task" :style="`color:${agentStatusColor(agent.status)};`" class="vee-agent-card__task"></div>
                                 </div>
                             </template>
                         </div>
@@ -403,39 +399,39 @@
 
                     {{-- Feed view --}}
                     <div x-show="orchView==='A'" style="flex:1;display:flex;flex-direction:column;overflow:hidden;display:none;">
-                        <div style="padding:14px 20px;border-bottom:1px solid #2e2e2e;background:#1a1a1a;display:flex;gap:8px;align-items:center;flex-shrink:0;">
-                            <span style="font-size:14px;font-weight:600;color:#fff;">Feed de atividade</span>
-                            <div style="flex:1;"></div>
+                        <div class="vee-section-header">
+                            <span class="vee-section-header__title">Feed de atividade</span>
+                            <div class="vee-spacer"></div>
                             <span class="vee-badge vee-badge--accent">2 ativos</span>
                             <span class="vee-badge vee-badge--success">2 concluídos</span>
                         </div>
-                        <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;">
+                        <div class="vee-feed-list">
                             <template x-for="item in orchFeed" :key="item.id">
-                                <div :style="`border-left:3px solid ${item.status==='done'?'#22c55e':item.status==='working'?'#ff8800':'#2e2e2e'};border-color:${item.status==='working'?'rgba(255,136,0,.35)':'#2e2e2e'};`"
-                                     style="padding:12px 16px;background:#1a1a1a;border:1px solid;border-radius:8px;">
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                                        <span style="font-size:12px;font-weight:600;color:#ff8800;" x-text="item.from + ' → ' + item.to"></span>
-                                        <span style="font-size:11px;color:#555;font-family:'JetBrains Mono',monospace;" x-text="item.time"></span>
+                                <div :style="`border-left-color:${item.status==='done'?'#22c55e':item.status==='working'?'#ff8800':'#444'};`"
+                                     class="vee-content-card">
+                                    <div class="vee-content-card__header">
+                                        <span class="vee-feed-card__route" x-text="item.from + ' → ' + item.to"></span>
+                                        <span class="vee-feed-card__time" x-text="item.time"></span>
                                     </div>
-                                    <div style="font-size:13px;color:#fff;line-height:1.5;" x-text="item.msg"></div>
+                                    <div class="vee-feed-card__msg" x-text="item.msg"></div>
                                     <template x-if="item.status==='working'">
-                                        <div style="margin-top:10px;height:5px;background:#2a2a2a;border-radius:4px;overflow:hidden;">
-                                            <div :style="`width:${item.pct}%;`" style="height:100%;background:#ff8800;border-radius:4px;transition:width .4s;"></div>
+                                        <div class="vee-progress">
+                                            <div :style="`width:${item.pct}%;`" class="vee-progress__fill" style="background:#ff8800;"></div>
                                         </div>
                                     </template>
                                     <template x-if="item.status==='done'">
-                                        <div style="margin-top:6px;font-size:11px;color:#22c55e;">✓ concluído</div>
+                                        <div class="vee-feed-card__done">✓ concluído</div>
                                     </template>
                                 </div>
                             </template>
                         </div>
-                        <div style="padding:10px 16px;border-top:1px solid #2e2e2e;background:#1a1a1a;">
-                            <div style="border:1px solid #2e2e2e;border-radius:8px;overflow:hidden;background:#222;">
+                        <div class="vee-feed-input">
+                            <div class="vee-input-box">
                                 <textarea placeholder="Instruir Vee ou agentes..."
-                                    style="width:100%;padding:10px 14px;background:transparent;border:none;outline:none;color:#fff;font-size:14px;resize:none;height:52px;font-family:'Inter',sans-serif;"></textarea>
-                                <div style="display:flex;justify-content:flex-end;padding:6px 10px;border-top:1px solid #2e2e2e;">
-                                    <button style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:#ff8800;color:#fff;border:none;font-family:'Inter',sans-serif;">
-                                        <i data-lucide="send" style="width:12px;height:12px;stroke:#fff;"></i> Enviar
+                                    class="vee-input-textarea" style="height:52px;"></textarea>
+                                <div class="vee-input-actions" style="justify-content:flex-end;padding:6px 10px;">
+                                    <button class="vee-send-btn">
+                                        <i data-lucide="send" class="vee-send-btn__icon"></i> Enviar
                                     </button>
                                 </div>
                             </div>
@@ -444,29 +440,29 @@
 
                     {{-- Pipeline view --}}
                     <div x-show="orchView==='B'" style="flex:1;overflow-y:auto;padding:24px;display:none;">
-                        <div style="font-size:13px;color:#999;font-weight:500;margin-bottom:20px;">Pipeline: projeto ativo</div>
-                        <div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:16px;">
+                        <div class="vee-pipeline-label">Pipeline: projeto ativo</div>
+                        <div class="vee-pipeline">
                             <template x-for="(step, i) in orchPipeline" :key="step.agent">
-                                <div style="display:flex;align-items:center;flex-shrink:0;">
+                                <div class="vee-pipeline__step">
                                     <div :style="`border-color:${step.status==='done'?'#22c55e':step.status==='working'?'#ff8800':'#2e2e2e'};`"
-                                         style="min-width:168px;padding:16px;background:#1a1a1a;border:1px solid;border-radius:8px;position:relative;">
+                                         class="vee-pipeline-card">
                                         <div :style="`color:${step.status==='done'?'#22c55e':step.status==='working'?'#ff8800':'#999'};`"
-                                             style="font-size:12px;font-weight:700;margin-bottom:4px;" x-text="step.agent"></div>
-                                        <div style="font-size:13px;color:#fff;" x-text="step.label"></div>
+                                             class="vee-pipeline-card__agent" x-text="step.agent"></div>
+                                        <div class="vee-pipeline-card__label" x-text="step.label"></div>
                                         <template x-if="step.out">
-                                            <div style="font-size:11px;color:#3b82f6;margin-top:6px;font-family:'JetBrains Mono',monospace;" x-text="'→ '+step.out"></div>
+                                            <div class="vee-pipeline-card__out" x-text="'→ '+step.out"></div>
                                         </template>
                                         <template x-if="step.status==='working'">
-                                            <div style="margin-top:10px;height:5px;background:#2a2a2a;border-radius:4px;overflow:hidden;">
-                                                <div :style="`width:${step.pct}%;`" style="height:100%;background:#ff8800;border-radius:4px;"></div>
+                                            <div class="vee-progress">
+                                                <div :style="`width:${step.pct}%;`" class="vee-progress__fill" style="background:#ff8800;"></div>
                                             </div>
                                         </template>
                                         <div :style="`color:${step.status==='done'?'#22c55e':step.status==='working'?'#ff8800':'#555'};`"
-                                             style="position:absolute;top:10px;right:12px;font-size:12px;"
+                                             class="vee-pipeline-card__status"
                                              x-text="step.status==='done'?'✓':step.status==='working'?'●':'○'"></div>
                                     </div>
                                     <template x-if="i < orchPipeline.length - 1">
-                                        <div style="font-size:18px;color:#555;padding:0 6px;">→</div>
+                                        <div class="vee-pipeline__arrow">→</div>
                                     </template>
                                 </div>
                             </template>
@@ -475,8 +471,8 @@
 
                     {{-- Graph view --}}
                     <div x-show="orchView==='C'" style="flex:1;overflow-y:auto;padding:20px;display:none;">
-                        <div style="font-size:13px;color:#999;font-weight:500;margin-bottom:14px;">Topologia de agentes — projeto ativo</div>
-                        <div style="position:relative;height:340px;background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;">
+                        <div class="vee-graph-label">Topologia de agentes — projeto ativo</div>
+                        <div class="vee-graph">
                             <svg style="position:absolute;inset:0;width:100%;height:100%;">
                                 <template x-for="([a,b], i) in orchGraphEdges" :key="i">
                                     <line :x1="`${orchGraphNodes[a].x}%`" :y1="`${orchGraphNodes[a].y}%`"
@@ -486,11 +482,11 @@
                             </svg>
                             <template x-for="node in orchGraphNodes" :key="node.label">
                                 <div :style="`left:${node.x}%;top:${node.y}%;border-color:${node.main?'#ff8800':agentStatusColor(node.status||'idle')};background:${node.main?'rgba(255,136,0,.12)':'#222'};color:${node.main?'#ff8800':'#fff'};font-weight:${node.main?'700':'600'};`"
-                                     style="position:absolute;transform:translate(-50%,-50%);padding:8px 12px;border:1.5px solid;border-radius:8px;text-align:center;min-width:72px;cursor:pointer;font-size:12px;white-space:pre-line;">
+                                     class="vee-graph-node">
                                     <span x-text="node.label"></span>
                                     <template x-if="node.status">
                                         <div :style="`color:${agentStatusColor(node.status)};`"
-                                             style="font-size:10px;margin-top:2px;"
+                                             class="vee-graph-node__status"
                                              x-text="node.status==='working'?'● ativo':node.status==='done'?'✓ done':'○ idle'"></div>
                                     </template>
                                 </div>
@@ -503,44 +499,44 @@
                 <div x-show="tab==='cowork'" class="flex h-full" style="display:none;">
 
                     {{-- Tasks (flex: 1) --}}
-                    <div style="flex:1;display:flex;flex-direction:column;border-right:1px solid #2e2e2e;overflow:hidden;min-width:0;">
-                        <div style="padding:14px 20px;border-bottom:1px solid #2e2e2e;background:#1a1a1a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-                            <span style="font-size:13px;font-weight:600;color:#fff;">Tasks do Projeto</span>
-                            <div style="display:flex;gap:6px;">
+                    <div class="vee-tasks">
+                        <div class="vee-tasks__header">
+                            <span class="vee-tasks__title">Tasks do Projeto</span>
+                            <div class="vee-tasks__badges">
                                 <span class="vee-badge vee-badge--success">2 concluídas</span>
                                 <span class="vee-badge vee-badge--accent">3 rodando</span>
                                 <span class="vee-badge vee-badge--muted">3 pendentes</span>
                             </div>
                         </div>
-                        <div style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;">
+                        <div class="vee-tasks__list">
                             <template x-for="task in coworkTasks" :key="task.id">
-                                <div :style="`border-left:3px solid ${task.status==='done'?'#22c55e':task.status==='running'?'#ff8800':'#2e2e2e'};border-color:${task.status==='running'?'rgba(255,136,0,.35)':'#2e2e2e'};`"
-                                     style="padding:12px 16px;background:#1a1a1a;border:1px solid;border-radius:8px;">
-                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+                                <div :style="`border-left-color:${task.status==='done'?'#22c55e':task.status==='running'?'#ff8800':'#444'};`"
+                                     class="vee-content-card">
+                                    <div class="vee-task-card__header">
                                         <div>
-                                            <div style="font-size:13px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;">
+                                            <div class="vee-task-card__title-row">
                                                 <span :style="`color:${task.status==='done'?'#22c55e':task.status==='running'?'#ff8800':'#555'};`"
                                                       x-text="task.status==='done'?'✓':task.status==='running'?'●':'○'"
-                                                      style="font-size:11px;"></span>
+                                                      class="vee-task-card__status-icon"></span>
                                                 <span x-text="task.title"></span>
                                             </div>
-                                            <div style="display:flex;gap:12px;margin-top:4px;">
-                                                <span x-text="task.agent" style="font-size:11px;color:#ff8800;font-weight:600;"></span>
-                                                <span x-text="'env:'+task.env" style="font-size:11px;color:#555;"></span>
-                                                <span x-text="'due '+task.due" style="font-size:11px;color:#555;"></span>
+                                            <div class="vee-task-card__meta">
+                                                <span x-text="task.agent" class="vee-task-card__agent"></span>
+                                                <span x-text="'env:'+task.env" class="vee-task-card__meta-item"></span>
+                                                <span x-text="'due '+task.due" class="vee-task-card__meta-item"></span>
                                             </div>
                                         </div>
                                         <span :style="`background:${task.status==='done'?'rgba(34,197,94,.12)':task.status==='running'?'rgba(255,136,0,.12)':'rgba(85,85,85,.12)'};color:${task.status==='done'?'#22c55e':task.status==='running'?'#ff8800':'#555'};border:1px solid ${task.status==='done'?'rgba(34,197,94,.27)':task.status==='running'?'rgba(255,136,0,.27)':'rgba(85,85,85,.27)'};`"
-                                              style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;"
+                                              class="vee-task-card__badge"
                                               x-text="task.status==='done'?'concluído':task.status==='running'?'rodando':'pendente'"></span>
                                     </div>
                                     <template x-if="task.status !== 'pending'">
-                                        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
-                                            <div style="flex:1;height:5px;background:#2a2a2a;border-radius:4px;overflow:hidden;">
+                                        <div class="vee-task-card__progress">
+                                            <div class="vee-progress" style="flex:1;margin-top:0;">
                                                 <div :style="`width:${task.pct}%;background:${task.status==='done'?'#22c55e':'#ff8800'};`"
-                                                     style="height:100%;border-radius:4px;transition:width .4s;"></div>
+                                                     class="vee-progress__fill"></div>
                                             </div>
-                                            <span x-text="task.pct+'%'" style="font-size:11px;color:#999;min-width:28px;"></span>
+                                            <span x-text="task.pct+'%'" class="vee-task-card__pct"></span>
                                         </div>
                                     </template>
                                 </div>
@@ -549,24 +545,24 @@
                     </div>
 
                     {{-- Crons sidebar (260px) --}}
-                    <div style="width:260px;flex-shrink:0;display:flex;flex-direction:column;background:#1a1a1a;">
-                        <div style="padding:14px 16px;border-bottom:1px solid #2e2e2e;font-size:13px;font-weight:600;color:#fff;">Agendamentos</div>
-                        <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;">
+                    <div class="vee-crons">
+                        <div class="vee-sidebar-header">Agendamentos</div>
+                        <div class="vee-crons__list">
                             <template x-for="cron in coworkCrons" :key="cron.id">
                                 <div :style="!cron.active ? 'opacity:.5;' : ''"
-                                     style="padding:12px 14px;background:#222;border:1px solid #2e2e2e;border-radius:8px;position:relative;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                                        <span x-text="cron.name" style="font-size:13px;font-weight:600;color:#fff;"></span>
+                                     class="vee-cron-card">
+                                    <div class="vee-cron-card__header">
+                                        <span x-text="cron.name" class="vee-cron-card__name"></span>
                                         <span :style="`background:${cron.active?'#ff8800':'#555'};`"
-                                              style="width:7px;height:7px;border-radius:50%;display:inline-block;"></span>
+                                              class="vee-status-dot"></span>
                                     </div>
-                                    <div x-text="cron.schedule" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3b82f6;margin-bottom:4px;"></div>
-                                    <div style="font-size:12px;color:#999;" x-text="'próximo: '+cron.next"></div>
-                                    <div style="font-size:11px;color:#ff8800;margin-top:2px;font-weight:600;" x-text="'→ '+cron.agent"></div>
+                                    <div x-text="cron.schedule" class="vee-cron-card__schedule"></div>
+                                    <div class="vee-cron-card__next" x-text="'próximo: '+cron.next"></div>
+                                    <div class="vee-cron-card__agent" x-text="'→ '+cron.agent"></div>
                                 </div>
                             </template>
-                            <button style="padding:10px;background:none;border:1px dashed #2e2e2e;border-radius:8px;color:#555;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center;font-family:'Inter',sans-serif;">
-                                <i data-lucide="plus" style="width:12px;height:12px;stroke:#555;"></i> Novo agendamento
+                            <button class="vee-cron-add-btn">
+                                <i data-lucide="plus"></i> Novo agendamento
                             </button>
                         </div>
                     </div>
@@ -576,50 +572,50 @@
                 <div x-show="tab==='logs'" style="display:flex;flex-direction:column;height:100%;display:none;">
 
                     {{-- Toolbar --}}
-                    <div style="padding:10px 20px;border-bottom:1px solid #2e2e2e;background:#1a1a1a;display:flex;gap:8px;align-items:center;flex-shrink:0;">
-                        <i data-lucide="filter" style="stroke:#555;width:13px;height:13px;flex-shrink:0;"></i>
+                    <div class="vee-log-toolbar">
+                        <i data-lucide="filter" class="vee-filter-icon"></i>
                         <template x-for="f in logFilters" :key="f.key">
                             <button @click="logFilter=f.key"
                                 :style="logFilter===f.key ? 'background:rgba(255,136,0,.12);border-color:#ff8800;color:#ff8800;' : 'background:transparent;border-color:#2e2e2e;color:#999;'"
-                                style="padding:4px 10px;font-size:12px;font-weight:500;cursor:pointer;border-radius:5px;border:1px solid;transition:all .15s;font-family:'Inter',sans-serif;"
+                                class="vee-filter-btn"
                                 x-text="f.label"></button>
                         </template>
-                        <div style="flex:1;"></div>
-                        <span x-show="logConnected" style="display:flex;align-items:center;gap:6px;font-size:11px;color:#22c55e;">
-                            <span style="width:6px;height:6px;background:#22c55e;border-radius:50%;animation:pulse 1.2s ease infinite;display:inline-block;"></span>
+                        <div class="vee-spacer"></div>
+                        <span x-show="logConnected" class="vee-live-indicator">
+                            <span class="vee-live-dot"></span>
                             Ao vivo
                         </span>
-                        <span x-show="!logConnected" style="font-size:11px;color:#555;">Desconectado</span>
-                        <span x-text="logEventsFilt.length+' eventos'" style="font-size:11px;color:#555;font-family:'JetBrains Mono',monospace;"></span>
-                        <button @click="clearLogEvents()" style="font-size:11px;color:#555;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;">Limpar</button>
+                        <span x-show="!logConnected" class="vee-log-disconnected">Desconectado</span>
+                        <span x-text="logEventsFilt.length+' eventos'" class="vee-log-count"></span>
+                        <button @click="clearLogEvents()" class="vee-log-clear-btn">Limpar</button>
                     </div>
 
                     {{-- Timeline --}}
-                    <div x-ref="logArea" style="flex:1;overflow-y:auto;padding:16px 20px;">
+                    <div x-ref="logArea" class="vee-log-area">
                         <template x-if="logEventsFilt.length === 0">
-                            <div style="display:flex;align-items:center;justify-content:center;padding:64px 0;">
-                                <p style="color:#555;font-size:13px;">Nenhum evento ainda. Aguardando atividade...</p>
+                            <div class="vee-log-empty">
+                                <p>Nenhum evento ainda. Aguardando atividade...</p>
                             </div>
                         </template>
-                        <div style="position:relative;padding-left:20px;border-left:2px solid #2e2e2e;">
+                        <div class="vee-log-timeline">
                             <template x-for="(log, i) in logEventsFilt" :key="i">
-                                <div style="position:relative;margin-bottom:12px;">
+                                <div class="vee-log-entry">
                                     <div :style="`background:${logLevelColor(log.level||log.type)};`"
-                                         style="position:absolute;left:-25px;top:10px;width:8px;height:8px;border-radius:50%;border:2px solid #0f0f0f;"></div>
+                                         class="vee-log-entry__dot"></div>
                                     <div :style="`border-color:${(log.level==='ERROR'||log.type==='tool_error')?'rgba(239,68,68,.27)':(log.level==='WARN')?'rgba(245,158,11,.2)':'#2e2e2e'};`"
-                                         style="padding:10px 14px;background:#1a1a1a;border:1px solid;border-radius:8px;">
-                                        <div style="display:flex;gap:12px;align-items:center;margin-bottom:4px;flex-wrap:wrap;">
-                                            <span x-text="formatTime(log.timestamp||log.time)" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#555;"></span>
+                                         class="vee-log-card">
+                                        <div class="vee-log-card__meta">
+                                            <span x-text="formatTime(log.timestamp||log.time)" class="vee-log-card__time"></span>
                                             <span :style="`color:${logLevelColor(log.level||log.type)};`"
-                                                  x-text="log.level||log.type" style="font-size:11px;font-weight:700;"></span>
+                                                  x-text="log.level||log.type" class="vee-log-card__level"></span>
                                             <span x-show="log.agent||log.tool_name"
-                                                  x-text="log.agent||log.tool_name" style="font-size:11px;font-weight:600;color:#ff8800;"></span>
-                                            <span x-show="log.env" x-text="'env:'+log.env" style="font-size:11px;color:#555;"></span>
-                                            <span x-show="log.duration_ms" x-text="log.duration_ms+'ms'" style="font-size:11px;color:#555;margin-left:auto;"></span>
+                                                  x-text="log.agent||log.tool_name" class="vee-log-card__agent"></span>
+                                            <span x-show="log.env" x-text="'env:'+log.env" class="vee-log-card__env"></span>
+                                            <span x-show="log.duration_ms" x-text="log.duration_ms+'ms'" class="vee-log-card__duration"></span>
                                         </div>
-                                        <div x-text="log.msg||log.message" style="font-size:13px;color:#fff;"></div>
+                                        <div x-text="log.msg||log.message" class="vee-log-card__msg"></div>
                                         <template x-if="log.error">
-                                            <p x-text="log.error" style="color:#ef4444;font-size:11px;margin:4px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'JetBrains Mono',monospace;"></p>
+                                            <p x-text="log.error" class="vee-log-card__error"></p>
                                         </template>
                                     </div>
                                 </div>
@@ -632,159 +628,6 @@
         </div>{{-- end main --}}
     </div>{{-- end drawer panel --}}
 </div>
-
-<style>
-    [x-cloak] { display: none !important; }
-
-    @keyframes pulse    { 0%,100%{opacity:1}   50%{opacity:.3} }
-    @keyframes spin     { to{transform:rotate(360deg)} }
-    @keyframes vee-call-fade { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-    @keyframes vee-transcript-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-
-    /* Ring animations — listening */
-    @keyframes ring1-listen { 0%,100%{transform:scale(1);opacity:.4}  50%{transform:scale(1.08);opacity:.25} }
-    @keyframes ring2-listen { 0%,100%{transform:scale(1);opacity:.2}  50%{transform:scale(1.1); opacity:.1}  }
-    @keyframes ring3-listen { 0%,100%{transform:scale(1);opacity:.1}  50%{transform:scale(1.12);opacity:.04} }
-    @keyframes ring4-listen { 0%,100%{transform:scale(1);opacity:.05} 50%{transform:scale(1.14);opacity:.02} }
-    /* Ring animations — speaking */
-    @keyframes ring1-speak  { 0%,100%{transform:scale(1);opacity:.8}  50%{transform:scale(1.35);opacity:.55} }
-    @keyframes ring2-speak  { 0%,100%{transform:scale(1);opacity:.55} 50%{transform:scale(1.48);opacity:.3}  }
-    @keyframes ring3-speak  { 0%,100%{transform:scale(1);opacity:.3}  50%{transform:scale(1.6); opacity:.12} }
-    @keyframes ring4-speak  { 0%,100%{transform:scale(1);opacity:.15} 50%{transform:scale(1.75);opacity:.05} }
-    /* Ring animations — thinking */
-    @keyframes ring1-think  { 0%,100%{transform:scale(1);opacity:.7}  50%{transform:scale(1.18);opacity:.5}  }
-    @keyframes ring2-think  { 0%,100%{transform:scale(1);opacity:.45} 50%{transform:scale(1.22);opacity:.25} }
-    @keyframes ring3-think  { 0%,100%{transform:scale(1);opacity:.25} 50%{transform:scale(1.28);opacity:.1}  }
-    @keyframes ring4-think  { 0%,100%{transform:scale(1);opacity:.12} 50%{transform:scale(1.35);opacity:.04} }
-
-    /* Sidebar nav icons */
-    .vee-sidebar {
-        --vee-icon-size: 18px;
-        --vee-icon-stroke: 2;
-        width: 56px; flex-shrink: 0;
-        background: #1a1a1a; border-right: 1px solid #2e2e2e;
-        display: flex; flex-direction: column; align-items: center;
-    }
-    .vee-sidebar-logo-wrap {
-        width: 100%; padding: 14px 0;
-        display: flex; justify-content: center;
-        border-bottom: 1px solid #2e2e2e;
-    }
-    .vee-logo-icon {
-        width: 32px; height: 32px; border-radius: 8px; background: #ff8800;
-        display: flex; align-items: center; justify-content: center;
-    }
-    .vee-nav {
-        flex: 1; padding: 10px 0;
-        display: flex; flex-direction: column; gap: 4px;
-        width: 100%; align-items: center;
-    }
-    .vee-nav-btn {
-        width: 40px; height: 40px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        border: none; cursor: pointer; transition: all .15s; background: transparent;
-    }
-    .vee-nav-btn--active  { background: #ff8800 !important; color: #fff !important; }
-    .vee-nav-btn--inactive { background: transparent !important; color: #999 !important; }
-    .vee-nav-btn--inactive:hover { color: #fff !important; }
-    .vee-sidebar-bottom {
-        padding: 10px 0 14px; border-top: 1px solid #2e2e2e;
-        display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%;
-    }
-    .vee-call-btn {
-        width: 40px; height: 40px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        border: 1px solid; cursor: pointer; transition: all .2s;
-    }
-    .vee-call-btn--active  { background: #ff8800 !important; border-color: rgba(255,136,0,.35) !important; box-shadow: 0 0 14px rgba(255,136,0,.55) !important; }
-    .vee-call-btn--inactive { background: rgba(255,136,0,.12) !important; border-color: rgba(255,136,0,.35) !important; }
-
-    .vee-sidebar [data-lucide] {
-        width: var(--vee-icon-size);
-        height: var(--vee-icon-size);
-        stroke-width: var(--vee-icon-stroke);
-        flex-shrink: 0;
-    }
-    .vee-nav-btn--active [data-lucide]          { stroke: #fff; }
-    .vee-nav-btn--inactive [data-lucide]        { stroke: #999; }
-    .vee-nav-btn--inactive:hover [data-lucide]  { stroke: #fff; }
-
-    /* Call panel */
-    .vee-call-panel {
-        width: 200px; flex-shrink: 0;
-        border-right: 1px solid #2e2e2e; background: #1a1a1a;
-        display: flex; flex-direction: column;
-    }
-    .vee-call-header {
-        padding: 12px 14px; border-bottom: 1px solid #2e2e2e;
-        display: flex; justify-content: space-between; align-items: center;
-    }
-    .vee-call-dot-pulse {
-        width: 7px; height: 7px; border-radius: 50%; background: #ff8800;
-        display: inline-block; animation: pulse 1.2s ease infinite;
-    }
-    .vee-rings-wrap {
-        display: flex; justify-content: center; align-items: center;
-        padding: 24px 0 16px; position: relative; height: 148px;
-    }
-    .vee-ring {
-        position: absolute; border-radius: 50%; border: 1.5px solid #ff8800;
-    }
-    .vee-ring-1 { width: 56px;  height: 56px;  }
-    .vee-ring-2 { width: 76px;  height: 76px;  }
-    .vee-ring-3 { width: 98px;  height: 98px;  }
-    .vee-ring-4 { width: 122px; height: 122px; }
-    /* listening */
-    .vee-ring-1.vee-ring--listening { animation: ring1-listen 2.0s ease-in-out 0.00s infinite; }
-    .vee-ring-2.vee-ring--listening { animation: ring2-listen 2.0s ease-in-out 0.12s infinite; }
-    .vee-ring-3.vee-ring--listening { animation: ring3-listen 2.0s ease-in-out 0.26s infinite; }
-    .vee-ring-4.vee-ring--listening { animation: ring4-listen 2.0s ease-in-out 0.40s infinite; }
-    /* speaking */
-    .vee-ring-1.vee-ring--speaking  { animation: ring1-speak 1.0s ease-in-out 0.00s infinite; }
-    .vee-ring-2.vee-ring--speaking  { animation: ring2-speak 1.35s ease-in-out 0.12s infinite; }
-    .vee-ring-3.vee-ring--speaking  { animation: ring3-speak 1.65s ease-in-out 0.26s infinite; }
-    .vee-ring-4.vee-ring--speaking  { animation: ring4-speak 2.0s ease-in-out 0.40s infinite; }
-    /* thinking */
-    .vee-ring-1.vee-ring--thinking  { animation: ring1-think 1.0s ease-in-out 0.00s infinite; }
-    .vee-ring-2.vee-ring--thinking  { animation: ring2-think 1.35s ease-in-out 0.12s infinite; }
-    .vee-ring-3.vee-ring--thinking  { animation: ring3-think 1.65s ease-in-out 0.26s infinite; }
-    .vee-ring-4.vee-ring--thinking  { animation: ring4-think 2.0s ease-in-out 0.40s infinite; }
-    .vee-avatar-center {
-        width: 44px; height: 44px; border-radius: 50%; position: relative; z-index: 2;
-        background: linear-gradient(135deg, #ff8800, #cc6600);
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 0 20px rgba(255,136,0,.45);
-    }
-
-    /* Badges */
-    .vee-badge {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
-    }
-    .vee-badge--accent  { background: rgba(255,136,0,.12);  color: #ff8800; border: 1px solid rgba(255,136,0,.27);  }
-    .vee-badge--success { background: rgba(34,197,94,.12);  color: #22c55e; border: 1px solid rgba(34,197,94,.27);  }
-    .vee-badge--muted   { background: rgba(85,85,85,.12);   color: #555;    border: 1px solid rgba(85,85,85,.27);   }
-
-    /* Msg content prose */
-    .vee-msg-content h1, .vee-msg-content h2, .vee-msg-content h3 { color:#fff; margin-top:.75rem; margin-bottom:.25rem; }
-    .vee-msg-content p  { margin-bottom:.5rem; }
-    .vee-msg-content code { color:#ff8800; background:#1f1f1f; padding:.1rem .3rem; border-radius:4px; }
-    .vee-msg-content pre { background:#111; border:1px solid #333; border-radius:8px; padding:.75rem; overflow-x:auto; }
-    .vee-msg-content pre code { color:#e2e8f0; background:transparent; padding:0; }
-    .vee-msg-content ul, .vee-msg-content ol { padding-left:1.25rem; margin-bottom:.5rem; }
-    .vee-msg-content li  { margin-bottom:.125rem; }
-    .vee-msg-content a   { color:#ff8800; }
-    .vee-msg-content blockquote { border-left:3px solid #ff8800; padding-left:.75rem; color:#aaa; }
-    .vee-msg-content table { width:100%; border-collapse:collapse; margin-bottom:.5rem; }
-    .vee-msg-content th, .vee-msg-content td { border:1px solid #333; padding:.4rem .75rem; font-size:.8rem; }
-    .vee-msg-content th  { background:#1a1a1a; color:#ff8800; }
-
-    /* Scrollbar */
-    .vee-sidebar ::-webkit-scrollbar,
-    .vee-call-panel ::-webkit-scrollbar { width:4px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:#2e2e2e; border-radius:4px; }
-</style>
 
 <script>
 document.addEventListener('alpine:init', () => {
@@ -922,12 +765,22 @@ document.addEventListener('alpine:init', () => {
                 if (val) this._startCallCycle();
                 else     this._stopCallCycle();
             });
+
+            // Pré-carrega sessões em background para o sidebar já estar pronto quando o drawer abrir
+            if (this.agentUrl) this.loadSessions();
         },
 
         openDrawer() {
             this.open = true;
             document.body.classList.add('overflow-hidden');
-            this.loadSessions();
+            this.loadSessions().then(() => {
+                if (!this.currentSession) {
+                    const lastId = localStorage.getItem('vee-last-session');
+                    if (lastId && this.sessions.find(s => s.id === lastId)) {
+                        this.loadSession(lastId);
+                    }
+                }
+            });
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
         },
 
@@ -1010,7 +863,13 @@ document.addEventListener('alpine:init', () => {
                 const res = await fetch(`${this.agentUrl}/sessions?limit=50`, { headers: this.authHeaders() });
                 if (!res.ok) return;
                 const data = await res.json();
-                this.sessions = data.sessions || [];
+                // Merge previews: memória > localStorage > vazio
+                const memMap  = Object.fromEntries(this.sessions.map(s => [s.id, s]));
+                const lsPrev  = JSON.parse(localStorage.getItem('vee-previews') || '{}');
+                this.sessions = (data.sessions || []).map(s => ({
+                    ...s,
+                    preview: memMap[s.id]?.preview || lsPrev[s.id] || '',
+                }));
             } catch {}
         },
 
@@ -1022,6 +881,7 @@ document.addEventListener('alpine:init', () => {
                 const data = await res.json();
                 this.currentSession = data.session;
                 this.messages = this.normalizeMessages(data.messages || []);
+                localStorage.setItem('vee-last-session', id);
                 this.$nextTick(() => this.scrollToBottom());
             } catch {}
         },
@@ -1105,11 +965,32 @@ document.addEventListener('alpine:init', () => {
                         try { evt = JSON.parse(raw); } catch { continue; }
 
                         switch (evt.type) {
-                            case 'session_created':
-                                this.currentSession = { id:evt.session_id, title:'Nova tarefa', mode:evt.mode };
+                            case 'session_created': {
+                                const newSess = { id:evt.session_id, title:'Nova conversa', mode:evt.mode, updated_at: new Date().toISOString(), preview:'' };
+                                this.currentSession = newSess;
+                                this.sessions = [newSess, ...this.sessions.filter(s => s.id !== evt.session_id)];
+                                localStorage.setItem('vee-last-session', evt.session_id);
                                 break;
+                            }
                             case 'text':
                                 this.messages[assistantIdx].content += evt.content;
+                                // Captura as primeiras palavras como preview da sessão
+                                if (this.currentSession && !this.messages[assistantIdx]._previewSet) {
+                                    const full = this.messages[assistantIdx].content;
+                                    if (full.length > 20) {
+                                        const preview = full.replace(/[#*`\n]/g, ' ').trim().slice(0, 80);
+                                        this.messages[assistantIdx]._previewSet = true;
+                                        const s = this.sessions.find(s => s.id === this.currentSession.id);
+                                        if (s) s.preview = preview;
+                                        if (this.currentSession) this.currentSession.preview = preview;
+                                        // Persiste preview no localStorage para sobreviver ao refresh
+                                        try {
+                                            const lsPrev = JSON.parse(localStorage.getItem('vee-previews') || '{}');
+                                            lsPrev[this.currentSession.id] = preview;
+                                            localStorage.setItem('vee-previews', JSON.stringify(lsPrev));
+                                        } catch {}
+                                    }
+                                }
                                 this.$nextTick(() => this.scrollToBottom());
                                 break;
                             case 'tool_start':
@@ -1133,7 +1014,8 @@ document.addEventListener('alpine:init', () => {
                                 if (this.currentSession) {
                                     this.currentSession.title = evt.title;
                                     const s = this.sessions.find(s => s.id === evt.session_id);
-                                    if (s) s.title = evt.title; else this.loadSessions();
+                                    if (s) s.title = evt.title;
+                                    else this.loadSessions();
                                 }
                                 break;
                             case 'done':

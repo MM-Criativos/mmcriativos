@@ -1,0 +1,1473 @@
+/**
+ * ═══════════════════════════════════════════════════════════════
+ *  Vee Drawer — Stylesheet
+ *  Componente: resources/views/components/vee-drawer.blade.php
+ *
+ *  SEÇÕES — use Ctrl+F com o marcador para navegar:
+ *
+ *  §0   CSS Variables / Tokens
+ *  §1   Reset & Base
+ *  §2   Keyframes — animações gerais
+ *  §3   Keyframes — anéis da chamada
+ *  §4   Sidebar de Navegação (ícones, 56px)
+ *  §5   Painel de Chamada (call panel, 200px)
+ *  §6   Área Principal & Top Bar
+ *  §7   Tab: Planejamento — Sidebar de Conversas (220px)
+ *  §8   Tab: Planejamento — Área de Chat
+ *  §9   Tab: Planejamento — Mensagens (user & assistant)
+ *  §10  Tab: Planejamento — Caixa de Input
+ *  §11  Tab: Orquestramento — Sidebar de Agentes (200px)
+ *  §12  Tab: Orquestramento — Feed View
+ *  §13  Tab: Orquestramento — Pipeline View
+ *  §14  Tab: Orquestramento — Graph View
+ *  §15  Tab: Cowork — Tasks
+ *  §16  Tab: Cowork — Agendamentos (crons, 260px)
+ *  §17  Tab: Logs
+ *  §18  Componentes Compartilhados (badges, progress bar, cards)
+ *  §19  Prose — Conteúdo Markdown das mensagens (.vee-msg-content)
+ *  §20  Scrollbars
+ *
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+
+/* ─────────────────────────────────────────────────────────────
+   §0  CSS Variables / Tokens
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+    --vee-orange:       #ff8800;
+    --vee-orange-dim:   rgba(255, 136, 0, .12);
+    --vee-orange-mid:   rgba(255, 136, 0, .35);
+    --vee-green:        #22c55e;
+    --vee-green-dim:    rgba(34, 197, 94, .12);
+    --vee-green-mid:    rgba(34, 197, 94, .27);
+    --vee-red:          #ef4444;
+    --vee-red-dim:      rgba(239, 68, 68, .12);
+    --vee-yellow:       #f59e0b;
+    --vee-blue:         #3b82f6;
+    --vee-muted:        #555;
+
+    --vee-bg:           #0f0f0f;
+    --vee-surface:      #1a1a1a;
+    --vee-surface2:     #222;
+    --vee-border:       #2e2e2e;
+    --vee-border-dark:  #333;
+
+    --vee-text:         #ffffff;
+    --vee-text-sub:     #e2e8f0;
+    --vee-text-muted:   #999;
+    --vee-text-dim:     #555;
+
+    --vee-font:         'Inter', sans-serif;
+    --vee-mono:         'JetBrains Mono', monospace;
+
+    --vee-radius-sm:    4px;
+    --vee-radius:       6px;
+    --vee-radius-md:    8px;
+    --vee-radius-lg:    16px;
+
+    --vee-icon-size:    18px;
+    --vee-icon-stroke:  2;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §1  Reset & Base
+   ───────────────────────────────────────────────────────────── */
+
+[x-cloak] { display: none !important; }
+
+.vee-drawer-panel {
+    background: var(--vee-bg);
+    color: var(--vee-text);
+    font-family: var(--vee-font);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §2  Keyframes — animações gerais
+   ───────────────────────────────────────────────────────────── */
+
+@keyframes pulse    { 0%, 100% { opacity: 1 }   50% { opacity: .3 } }
+@keyframes spin     { to       { transform: rotate(360deg) } }
+@keyframes vee-call-fade {
+    from { opacity: 0; transform: scale(.92) }
+    to   { opacity: 1; transform: scale(1) }
+}
+@keyframes vee-transcript-in {
+    from { opacity: 0; transform: translateY(6px) }
+    to   { opacity: 1; transform: translateY(0) }
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §3  Keyframes — anéis da chamada (listening / speaking / thinking)
+   ───────────────────────────────────────────────────────────── */
+
+/* listening */
+@keyframes ring1-listen { 0%,100%{transform:scale(1);opacity:.4}  50%{transform:scale(1.08);opacity:.25} }
+@keyframes ring2-listen { 0%,100%{transform:scale(1);opacity:.2}  50%{transform:scale(1.1); opacity:.1}  }
+@keyframes ring3-listen { 0%,100%{transform:scale(1);opacity:.1}  50%{transform:scale(1.12);opacity:.04} }
+@keyframes ring4-listen { 0%,100%{transform:scale(1);opacity:.05} 50%{transform:scale(1.14);opacity:.02} }
+/* speaking */
+@keyframes ring1-speak  { 0%,100%{transform:scale(1);opacity:.8}  50%{transform:scale(1.35);opacity:.55} }
+@keyframes ring2-speak  { 0%,100%{transform:scale(1);opacity:.55} 50%{transform:scale(1.48);opacity:.3}  }
+@keyframes ring3-speak  { 0%,100%{transform:scale(1);opacity:.3}  50%{transform:scale(1.6); opacity:.12} }
+@keyframes ring4-speak  { 0%,100%{transform:scale(1);opacity:.15} 50%{transform:scale(1.75);opacity:.05} }
+/* thinking */
+@keyframes ring1-think  { 0%,100%{transform:scale(1);opacity:.7}  50%{transform:scale(1.18);opacity:.5}  }
+@keyframes ring2-think  { 0%,100%{transform:scale(1);opacity:.45} 50%{transform:scale(1.22);opacity:.25} }
+@keyframes ring3-think  { 0%,100%{transform:scale(1);opacity:.25} 50%{transform:scale(1.28);opacity:.1}  }
+@keyframes ring4-think  { 0%,100%{transform:scale(1);opacity:.12} 50%{transform:scale(1.35);opacity:.04} }
+
+
+/* ─────────────────────────────────────────────────────────────
+   §4  Sidebar de Navegação (ícones, 56px)
+   ───────────────────────────────────────────────────────────── */
+
+.vee-sidebar {
+    --vee-icon-size:   18px;
+    --vee-icon-stroke: 2;
+    width: 56px;
+    flex-shrink: 0;
+    background: var(--vee-surface);
+    border-right: 1px solid var(--vee-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.vee-sidebar-logo-wrap {
+    width: 100%;
+    padding: 14px 0;
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid var(--vee-border);
+}
+
+.vee-logo-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--vee-orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vee-nav {
+    flex: 1;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    align-items: center;
+}
+
+.vee-nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all .15s;
+    background: transparent;
+}
+
+.vee-nav-btn--active   { background: var(--vee-orange) !important; color: #fff !important; }
+.vee-nav-btn--inactive { background: transparent !important; color: var(--vee-muted) !important; }
+.vee-nav-btn--inactive:hover { color: #fff !important; }
+
+/* Ícones Lucide dentro da sidebar */
+.vee-sidebar [data-lucide] {
+    width:  var(--vee-icon-size);
+    height: var(--vee-icon-size);
+    stroke-width: var(--vee-icon-stroke);
+    flex-shrink: 0;
+}
+.vee-nav-btn--active  [data-lucide]       { stroke: #fff; }
+.vee-nav-btn--inactive [data-lucide]      { stroke: var(--vee-muted); }
+.vee-nav-btn--inactive:hover [data-lucide] { stroke: #fff; }
+
+.vee-sidebar-bottom {
+    padding: 10px 0 14px;
+    border-top: 1px solid var(--vee-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+}
+
+.vee-call-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all .2s;
+}
+.vee-call-btn--active   {
+    background:  var(--vee-orange) !important;
+    border-color: var(--vee-orange-mid) !important;
+    box-shadow: 0 0 14px rgba(255, 136, 0, .55) !important;
+}
+.vee-call-btn--inactive {
+    background:  var(--vee-orange-dim) !important;
+    border-color: var(--vee-orange-mid) !important;
+}
+
+/* Pequeno gap entre o botão de call e o de fechar */
+.vee-call-btn + .vee-nav-btn { margin-top: 4px; }
+
+
+/* ─────────────────────────────────────────────────────────────
+   §5  Painel de Chamada (call panel, 200px)
+   ───────────────────────────────────────────────────────────── */
+
+.vee-call-panel {
+    width: 200px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--vee-border);
+    background: var(--vee-surface);
+    display: flex;
+    flex-direction: column;
+}
+
+.vee-call-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--vee-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.vee-call-header__group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.vee-call-header__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--vee-orange);
+}
+.vee-call-header__end-btn {
+    background:  rgba(239, 68, 68, .12);
+    border:      1px solid rgba(239, 68, 68, .27);
+    border-radius: var(--vee-radius-sm);
+    cursor:      pointer;
+    padding:     3px 8px;
+    color:       var(--vee-red);
+    font-size:   11px;
+    font-weight: 600;
+    font-family: var(--vee-font);
+}
+
+.vee-call-dot-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--vee-orange);
+    display: inline-block;
+    animation: pulse 1.2s ease infinite;
+}
+
+/* Anéis animados */
+.vee-rings-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 0 16px;
+    position: relative;
+    height: 148px;
+}
+.vee-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid var(--vee-orange);
+}
+.vee-ring-1 { width: 56px;  height: 56px;  }
+.vee-ring-2 { width: 76px;  height: 76px;  }
+.vee-ring-3 { width: 98px;  height: 98px;  }
+.vee-ring-4 { width: 122px; height: 122px; }
+
+/* listening */
+.vee-ring-1.vee-ring--listening { animation: ring1-listen 2.0s ease-in-out 0.00s infinite; }
+.vee-ring-2.vee-ring--listening { animation: ring2-listen 2.0s ease-in-out 0.12s infinite; }
+.vee-ring-3.vee-ring--listening { animation: ring3-listen 2.0s ease-in-out 0.26s infinite; }
+.vee-ring-4.vee-ring--listening { animation: ring4-listen 2.0s ease-in-out 0.40s infinite; }
+/* speaking */
+.vee-ring-1.vee-ring--speaking  { animation: ring1-speak 1.00s ease-in-out 0.00s infinite; }
+.vee-ring-2.vee-ring--speaking  { animation: ring2-speak 1.35s ease-in-out 0.12s infinite; }
+.vee-ring-3.vee-ring--speaking  { animation: ring3-speak 1.65s ease-in-out 0.26s infinite; }
+.vee-ring-4.vee-ring--speaking  { animation: ring4-speak 2.00s ease-in-out 0.40s infinite; }
+/* thinking */
+.vee-ring-1.vee-ring--thinking  { animation: ring1-think 1.00s ease-in-out 0.00s infinite; }
+.vee-ring-2.vee-ring--thinking  { animation: ring2-think 1.35s ease-in-out 0.12s infinite; }
+.vee-ring-3.vee-ring--thinking  { animation: ring3-think 1.65s ease-in-out 0.26s infinite; }
+.vee-ring-4.vee-ring--thinking  { animation: ring4-think 2.00s ease-in-out 0.40s infinite; }
+
+.vee-avatar-center {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(135deg, #ff8800, #cc6600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(255, 136, 0, .45);
+}
+
+/* Status (nome + sub) */
+.vee-call-status {
+    text-align: center;
+    padding: 0 12px 14px;
+}
+.vee-call-status__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+
+/* Transcript */
+.vee-call-transcript {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid var(--vee-border);
+}
+.vee-call-transcript__msg {
+    padding: 6px 9px;
+    border-radius: var(--vee-radius);
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--vee-text);
+    /* border e background são dinâmicos via :style */
+}
+.vee-call-transcript__who {
+    font-size: 10px;
+    margin-bottom: 2px;
+    font-weight: 600;
+    /* color é dinâmica via :style */
+}
+
+/* Mute */
+.vee-call-mute {
+    padding: 10px 12px;
+    border-top: 1px solid var(--vee-border);
+    display: flex;
+    justify-content: center;
+}
+.vee-call-mute__btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+    position: relative;
+    /* background e border são dinâmicos via :style */
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §6  Área Principal & Top Bar
+   ───────────────────────────────────────────────────────────── */
+
+.vee-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.vee-topbar {
+    height: 48px;
+    background: var(--vee-surface);
+    border-bottom: 1px solid var(--vee-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+}
+.vee-topbar__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+/* Orch view toggle */
+.vee-topbar__view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.vee-topbar__label {
+    font-size: 12px;
+    color: var(--vee-text-muted);
+}
+.vee-topbar__view-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--vee-radius-sm);
+    border: 1px solid;
+    transition: all .15s;
+    font-family: var(--vee-font);
+    /* background, border-color, color são dinâmicos via :style */
+}
+/* Env status */
+.vee-topbar__env {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.vee-topbar__env-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--vee-orange);
+    display: inline-block;
+}
+.vee-topbar__env-text {
+    font-size: 12px;
+    color: var(--vee-text-muted);
+}
+
+.vee-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §7  Tab: Planejamento — Sidebar de Conversas (220px)
+   ───────────────────────────────────────────────────────────── */
+
+.vee-sessions {
+    width: 220px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--vee-border);
+    display: flex;
+    flex-direction: column;
+    background: var(--vee-surface);
+}
+.vee-sessions__header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--vee-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.vee-sessions__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+.vee-sessions__new-btn {
+    background: var(--vee-orange);
+    border: none;
+    border-radius: var(--vee-radius-sm);
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.vee-sessions__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.vee-sessions__empty {
+    color: var(--vee-text-dim);
+    font-size: 12px;
+    text-align: center;
+    padding: 32px 8px;
+}
+
+/* Session card — mesma base do agent card (§11) */
+.vee-sidebar-card {
+    padding: 14px 16px;
+    cursor: pointer;
+    border-radius: 7px;
+    border: 1px solid var(--vee-border);
+    border-left: 3px solid;
+    transition: background .15s;
+    /* background e border-left-color são dinâmicos via :style */
+}
+.vee-sidebar-card__header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+.vee-sidebar-card__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+    flex: 1;
+    margin-right: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.vee-sidebar-card__date {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+    flex-shrink: 0;
+}
+.vee-sidebar-card__preview {
+    font-size: 12px;
+    color: var(--vee-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 10px;
+}
+.vee-sidebar-card__actions {
+    display: flex;
+    gap: 10px;
+}
+.vee-icon-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    /* color é dinâmica via :style para o star; estática #555 para o delete */
+    color: var(--vee-text-dim);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §8  Tab: Planejamento — Área de Chat
+   ───────────────────────────────────────────────────────────── */
+
+.vee-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+.vee-chat-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--vee-border);
+    background: var(--vee-surface);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+.vee-chat-header__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+.vee-chat-header__count {
+    font-size: 12px;
+    color: var(--vee-text-muted);
+}
+.vee-chat-header__badges {
+    display: flex;
+    gap: 6px;
+}
+/* Tags de ambiente (local, vault) */
+.vee-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    background: #2a2a2a;
+    border: 1px solid var(--vee-border);
+    border-radius: var(--vee-radius-sm);
+    color: var(--vee-text-muted);
+}
+
+.vee-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Estado vazio */
+.vee-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 80px 0;
+}
+.vee-empty-state__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--vee-radius-lg);
+    background: var(--vee-orange-dim);
+    border: 1px solid rgba(255, 136, 0, .2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+.vee-empty-state__title {
+    color: var(--vee-text);
+    font-weight: 500;
+    font-size: 17px;
+}
+.vee-empty-state__sub {
+    color: var(--vee-text-muted);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §9  Tab: Planejamento — Mensagens (user & assistant)
+   ───────────────────────────────────────────────────────────── */
+
+/* User */
+.vee-msg-user {
+    display: flex;
+    justify-content: flex-end;
+}
+.vee-msg-user__bubble {
+    max-width: 70%;
+    background: var(--vee-orange);
+    color: #fff;
+    border-radius: var(--vee-radius-md);
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.55;
+}
+.vee-msg-user__text {
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+/* Assistant row */
+.vee-msg-assistant {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    align-items: flex-end;
+}
+/* Avatar Vee (usado também no streaming placeholder) */
+.vee-msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--vee-orange-dim);
+    border: 1px solid var(--vee-orange-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.vee-msg-body {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Tool activities */
+.vee-tool-activities {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.vee-tool-row {
+    border: 1px solid;
+    border-radius: var(--vee-radius);
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: var(--vee-mono);
+    /* background e border-color são dinâmicos via :style */
+}
+.vee-tool-row__inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.vee-tool-spinner {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--vee-orange);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    flex-shrink: 0;
+    display: inline-block;
+}
+.vee-tool-row__icon { flex-shrink: 0; }
+.vee-tool-row__name { color: var(--vee-text-sub); }
+.vee-tool-row__duration {
+    color: var(--vee-text-dim);
+    margin-left: auto;
+}
+.vee-tool-row__error {
+    color: var(--vee-red);
+    margin: 4px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Bolha do texto da mensagem e cursor de streaming */
+.vee-msg-bubble {
+    background: var(--vee-surface);
+    border: 1px solid var(--vee-border);
+    border-radius: var(--vee-radius-md);
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--vee-text-sub);
+    line-height: 1.55;
+}
+.vee-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 16px;
+    background: var(--vee-orange);
+    animation: pulse 1s ease infinite;
+    border-radius: 2px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §10  Tab: Planejamento — Caixa de Input
+   ───────────────────────────────────────────────────────────── */
+
+.vee-input-wrap {
+    border-top: 1px solid var(--vee-border);
+    padding: 12px 20px;
+    flex-shrink: 0;
+    background: #0d0d0d;
+}
+.vee-input-box {
+    border: 1px solid var(--vee-border);
+    border-radius: var(--vee-radius-md);
+    overflow: hidden;
+    background: var(--vee-surface2);
+}
+.vee-input-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--vee-text);
+    font-size: 14px;
+    resize: none;
+    height: 68px;
+    font-family: var(--vee-font);
+}
+.vee-input-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-top: 1px solid var(--vee-border);
+}
+.vee-input-left {
+    display: flex;
+    gap: 10px;
+}
+.vee-input-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--vee-radius-sm);
+}
+.vee-input-icon-btn [data-lucide] {
+    stroke: var(--vee-text-muted);
+    width: 16px;
+    height: 16px;
+}
+.vee-send-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--vee-radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--vee-orange);
+    color: #fff;
+    border: none;
+    transition: all .15s;
+    font-family: var(--vee-font);
+}
+.vee-send-btn [data-lucide],
+.vee-send-btn__icon {
+    width: 12px;
+    height: 12px;
+    stroke: #fff;
+}
+.vee-send-spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    display: inline-block;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §11  Tab: Orquestramento — Sidebar de Agentes (200px)
+   ───────────────────────────────────────────────────────────── */
+
+/* Cabeçalho de seção reutilizado em várias sidebars */
+.vee-sidebar-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--vee-border);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+
+.vee-agents {
+    width: 200px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--vee-border);
+    background: var(--vee-surface);
+    display: flex;
+    flex-direction: column;
+}
+.vee-agents__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Agent card — mesma base visual do session card (.vee-sidebar-card) */
+.vee-sidebar-card__name { /* usado em agent card e em session card */
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+.vee-agent-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+/* Ponto de status colorido (também usado nos cron cards) */
+.vee-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    /* background é dinâmico via :style */
+}
+.vee-agent-card__env {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+    margin-bottom: 6px;
+}
+.vee-agent-card__task {
+    font-size: 12px;
+    /* color é dinâmica via :style */
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §12  Tab: Orquestramento — Feed View
+   ───────────────────────────────────────────────────────────── */
+
+.vee-section-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--vee-border);
+    background: var(--vee-surface);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.vee-section-header__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+.vee-spacer { flex: 1; }
+
+.vee-feed-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Feed card — mesma base do cowork task card */
+.vee-content-card {
+    padding: 16px;
+    background: var(--vee-surface);
+    border: 1px solid var(--vee-border);
+    border-left: 3px solid;
+    border-radius: var(--vee-radius-md);
+    /* border-left-color é dinâmico via :style */
+}
+.vee-content-card__header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.vee-feed-card__route {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--vee-orange);
+}
+.vee-feed-card__time {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+    font-family: var(--vee-mono);
+}
+.vee-feed-card__msg {
+    font-size: 13px;
+    color: var(--vee-text);
+    line-height: 1.5;
+}
+.vee-feed-card__done {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--vee-green);
+}
+
+/* Barra de progresso (reutilizada em feed, pipeline e tasks) */
+.vee-progress {
+    margin-top: 10px;
+    height: 5px;
+    background: #2a2a2a;
+    border-radius: var(--vee-radius-sm);
+    overflow: hidden;
+}
+.vee-progress__fill {
+    height: 100%;
+    border-radius: var(--vee-radius-sm);
+    transition: width .4s;
+    /* width e background são dinâmicos via :style */
+}
+
+/* Input do feed (mesmo padrão do chat input mas menor) */
+.vee-feed-input {
+    padding: 10px 16px;
+    border-top: 1px solid var(--vee-border);
+    background: var(--vee-surface);
+}
+.vee-feed-input .vee-input-textarea {
+    height: 52px;
+    padding: 10px 14px;
+}
+.vee-feed-input .vee-input-actions {
+    justify-content: flex-end;
+    padding: 6px 10px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §13  Tab: Orquestramento — Pipeline View
+   ───────────────────────────────────────────────────────────── */
+
+.vee-pipeline-label {
+    font-size: 13px;
+    color: var(--vee-text-muted);
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+.vee-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 16px;
+}
+.vee-pipeline__step {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.vee-pipeline-card {
+    min-width: 168px;
+    padding: 16px;
+    background: var(--vee-surface);
+    border: 1px solid;
+    border-radius: var(--vee-radius-md);
+    position: relative;
+    /* border-color é dinâmica via :style */
+}
+.vee-pipeline-card__agent {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    /* color é dinâmica via :style */
+}
+.vee-pipeline-card__label {
+    font-size: 13px;
+    color: var(--vee-text);
+}
+.vee-pipeline-card__out {
+    font-size: 11px;
+    color: var(--vee-blue);
+    margin-top: 6px;
+    font-family: var(--vee-mono);
+}
+.vee-pipeline-card__status {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 12px;
+    /* color é dinâmica via :style */
+}
+.vee-pipeline__arrow {
+    font-size: 18px;
+    color: var(--vee-text-dim);
+    padding: 0 6px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §14  Tab: Orquestramento — Graph View
+   ───────────────────────────────────────────────────────────── */
+
+.vee-graph-label {
+    font-size: 13px;
+    color: var(--vee-text-muted);
+    font-weight: 500;
+    margin-bottom: 14px;
+}
+.vee-graph {
+    position: relative;
+    height: 340px;
+    background: var(--vee-surface);
+    border: 1px solid var(--vee-border);
+    border-radius: var(--vee-radius-md);
+}
+.vee-graph-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    padding: 8px 12px;
+    border: 1.5px solid;
+    border-radius: var(--vee-radius-md);
+    text-align: center;
+    min-width: 72px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: pre-line;
+    /* border-color, background, color, font-weight são dinâmicos via :style */
+}
+.vee-graph-node__status {
+    font-size: 10px;
+    margin-top: 2px;
+    /* color é dinâmica via :style */
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §15  Tab: Cowork — Tasks
+   ───────────────────────────────────────────────────────────── */
+
+.vee-tasks {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--vee-border);
+    overflow: hidden;
+    min-width: 0;
+}
+.vee-tasks__header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--vee-border);
+    background: var(--vee-surface);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+.vee-tasks__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+.vee-tasks__badges {
+    display: flex;
+    gap: 6px;
+}
+.vee-tasks__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Task card usa .vee-content-card (§12) */
+.vee-task-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+.vee-task-card__title-row {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.vee-task-card__status-icon {
+    font-size: 11px;
+    /* color é dinâmica via :style */
+}
+.vee-task-card__meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+.vee-task-card__agent {
+    font-size: 11px;
+    color: var(--vee-orange);
+    font-weight: 600;
+}
+.vee-task-card__meta-item {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+}
+/* Badge de status dinâmico na task card */
+.vee-task-card__badge {
+    padding: 2px 8px;
+    border-radius: var(--vee-radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    /* background, color, border são dinâmicos via :style */
+}
+.vee-task-card__progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+.vee-task-card__pct {
+    font-size: 11px;
+    color: var(--vee-text-muted);
+    min-width: 28px;
+}
+/* Para a progress dentro da task card, a barra ocupa flex:1 */
+.vee-task-card__progress .vee-progress {
+    flex: 1;
+    margin-top: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §16  Tab: Cowork — Agendamentos / Crons (260px)
+   ───────────────────────────────────────────────────────────── */
+
+.vee-crons {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--vee-surface);
+}
+.vee-crons__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.vee-cron-card {
+    padding: 14px;
+    background: var(--vee-surface2);
+    border: 1px solid var(--vee-border);
+    border-radius: var(--vee-radius-md);
+    position: relative;
+    /* opacity é dinâmica via :style */
+}
+.vee-cron-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.vee-cron-card__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vee-text);
+}
+.vee-cron-card__schedule {
+    font-family: var(--vee-mono);
+    font-size: 11px;
+    color: var(--vee-blue);
+    margin-bottom: 6px;
+}
+.vee-cron-card__next {
+    font-size: 12px;
+    color: var(--vee-text-muted);
+}
+.vee-cron-card__agent {
+    font-size: 11px;
+    color: var(--vee-orange);
+    margin-top: 6px;
+    font-weight: 600;
+}
+.vee-cron-add-btn {
+    padding: 10px;
+    background: none;
+    border: 1px dashed var(--vee-border);
+    border-radius: var(--vee-radius-md);
+    color: var(--vee-text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    font-family: var(--vee-font);
+}
+.vee-cron-add-btn [data-lucide] {
+    width: 12px;
+    height: 12px;
+    stroke: var(--vee-text-dim);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §17  Tab: Logs
+   ───────────────────────────────────────────────────────────── */
+
+.vee-log-toolbar {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--vee-border);
+    background: var(--vee-surface);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.vee-log-toolbar [data-lucide].vee-filter-icon {
+    stroke: var(--vee-text-dim);
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+/* Filter buttons — mesma forma dos view-toggle buttons */
+.vee-filter-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--vee-radius-sm);
+    border: 1px solid;
+    transition: all .15s;
+    font-family: var(--vee-font);
+    /* background, border-color, color são dinâmicos via :style */
+}
+.vee-live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--vee-green);
+}
+.vee-live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--vee-green);
+    border-radius: 50%;
+    animation: pulse 1.2s ease infinite;
+    display: inline-block;
+}
+.vee-log-count {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+    font-family: var(--vee-mono);
+}
+.vee-log-clear-btn {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--vee-font);
+}
+
+.vee-log-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+.vee-log-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 0;
+}
+.vee-log-empty p {
+    color: var(--vee-text-dim);
+    font-size: 13px;
+}
+
+/* Timeline */
+.vee-log-timeline {
+    position: relative;
+    padding-left: 20px;
+    border-left: 2px solid var(--vee-border);
+}
+.vee-log-entry {
+    position: relative;
+    margin-bottom: 12px;
+}
+.vee-log-entry__dot {
+    position: absolute;
+    left: -25px;
+    top: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--vee-bg);
+    /* background é dinâmico via :style */
+}
+.vee-log-card {
+    padding: 10px 14px;
+    background: var(--vee-surface);
+    border: 1px solid;
+    border-radius: var(--vee-radius-md);
+    /* border-color é dinâmica via :style */
+}
+.vee-log-card__meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+.vee-log-card__time {
+    font-family: var(--vee-mono);
+    font-size: 11px;
+    color: var(--vee-text-dim);
+}
+.vee-log-card__level {
+    font-size: 11px;
+    font-weight: 700;
+    /* color é dinâmica via :style */
+}
+.vee-log-card__agent {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vee-orange);
+}
+.vee-log-card__env {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+}
+.vee-log-card__duration {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+    margin-left: auto;
+}
+.vee-log-card__msg {
+    font-size: 13px;
+    color: var(--vee-text);
+}
+.vee-log-card__error {
+    color: var(--vee-red);
+    font-size: 11px;
+    margin: 4px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--vee-mono);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §18  Componentes Compartilhados
+   ───────────────────────────────────────────────────────────── */
+
+/* Badges */
+.vee-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: var(--vee-radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+}
+.vee-badge--accent  { background: var(--vee-orange-dim); color: var(--vee-orange); border: 1px solid rgba(255,136,0,.27);  }
+.vee-badge--success { background: var(--vee-green-dim);  color: var(--vee-green);  border: 1px solid var(--vee-green-mid); }
+.vee-badge--muted   { background: rgba(85,85,85,.12);    color: var(--vee-muted);  border: 1px solid rgba(85,85,85,.27);   }
+
+/* Disconnected text no log toolbar */
+.vee-log-disconnected {
+    font-size: 11px;
+    color: var(--vee-text-dim);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   §19  Prose — Conteúdo Markdown das mensagens
+   ───────────────────────────────────────────────────────────── */
+
+.vee-msg-content h1,
+.vee-msg-content h2,
+.vee-msg-content h3 { color: #fff; margin-top: .75rem; margin-bottom: .25rem; }
+.vee-msg-content p  { margin-bottom: .5rem; }
+.vee-msg-content code { color: var(--vee-orange); background: #1f1f1f; padding: .1rem .3rem; border-radius: var(--vee-radius-sm); }
+.vee-msg-content pre { background: #111; border: 1px solid var(--vee-border-dark); border-radius: var(--vee-radius-md); padding: .75rem; overflow-x: auto; }
+.vee-msg-content pre code { color: var(--vee-text-sub); background: transparent; padding: 0; }
+.vee-msg-content ul,
+.vee-msg-content ol  { padding-left: 1.25rem; margin-bottom: .5rem; }
+.vee-msg-content li  { margin-bottom: .125rem; }
+.vee-msg-content a   { color: var(--vee-orange); }
+.vee-msg-content blockquote { border-left: 3px solid var(--vee-orange); padding-left: .75rem; color: #aaa; }
+.vee-msg-content table { width: 100%; border-collapse: collapse; margin-bottom: .5rem; }
+.vee-msg-content th,
+.vee-msg-content td { border: 1px solid var(--vee-border-dark); padding: .4rem .75rem; font-size: .8rem; }
+.vee-msg-content th { background: var(--vee-surface); color: var(--vee-orange); }
+
+
+/* ─────────────────────────────────────────────────────────────
+   §20  Scrollbars
+   ───────────────────────────────────────────────────────────── */
+
+.vee-sidebar ::-webkit-scrollbar,
+.vee-call-panel ::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--vee-border); border-radius: var(--vee-radius-sm); }
