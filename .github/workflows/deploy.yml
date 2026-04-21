@@ -18,6 +18,25 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
+      - name: 🚀 Sincronizar arquivos com rsync
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          echo "Sincronizando arquivos para o servidor..."
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='.env' \
+            --exclude='storage/app/public' \
+            --exclude='storage/logs' \
+            --exclude='storage/framework/cache' \
+            --exclude='storage/framework/sessions' \
+            --exclude='storage/framework/views' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ $SSH_USER@$SSH_HOST:/var/www/mmcriativos/
+
       - name: 🚀 Deploy para o servidor
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -31,10 +50,6 @@ jobs:
             echo "📡 Conectado ao servidor como $(whoami)"
 
             cd /var/www/mmcriativos || { echo "❌ Diretório não encontrado!"; exit 1; }
-
-            echo "📦 Atualizando código do Git..."
-            git config --global --add safe.directory /var/www/mmcriativos
-            git pull origin main || { echo "❌ Falha no git pull"; exit 1; }
 
             echo "🧩 Instalando dependências do Composer..."
             composer install --no-interaction --prefer-dist --optimize-autoloader || { echo "❌ Falha no composer"; exit 1; }
