@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import mysql from "mysql2/promise";
 import type { FieldPacket, RowDataPacket } from "mysql2/promise";
+import {
+  buildWriteQuery,
+  buildSnapshotQuery,
+  type StructuredWriteInput
+} from "./structuredQueryBuilder.js";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -75,6 +80,54 @@ export type DbIncident = {
   status: string;
   affected_service: string | null;
   created_at: string | null;
+};
+
+// ─── Layer 3 traceability types ───────────────────────────────────────────────
+
+export type DbProjectEvent = {
+  id: number;
+  event_id: string;
+  entity_type: string;
+  entity_id: number;
+  actor: string;
+  action: string;
+  created_at: string | null;
+};
+
+export type DbStatusHistory = {
+  id: number;
+  entity_type: string;
+  entity_id: number;
+  old_status: string | null;
+  new_status: string;
+  changed_by: string;
+  reason: string | null;
+  created_at: string | null;
+};
+
+export type DbOperationalDecision = {
+  id: number;
+  decision_id: string;
+  title: string;
+  actor: string;
+  project_id: number | null;
+  created_at: string | null;
+};
+
+export type DbBlockEntry = {
+  id: number;
+  entity_type: string;
+  entity_id: number;
+  reason: string;
+  blocked_by: string;
+  blocked_at: string | null;
+};
+
+export type DbStructuredWriteResult = DbWriteResult<Record<string, unknown>> & {
+  table: string;
+  resolved_table: string;
+  operation: "INSERT" | "UPDATE" | "UPSERT";
+  reason: string;
 };
 
 // ─── Adapter ──────────────────────────────────────────────────────────────────
@@ -489,5 +542,224 @@ export class DatabaseWriteAdapter {
       await this.pool.end();
       this.pool = null;
     }
+  }
+
+  // ─── Generic structured write ─────────────────────────────────────────────
+
+  /**
+   * Executes a structured INSERT / UPDATE / UPSERT against allowlisted tables.
+   * Validates table, columns, and write mode before building SQL.
+   * All values are bound as prepared-statement parameters.
+   *
+   * NOTE: This method should only be called for safe_execute tables.
+   * For approval_required tables, server.ts handles the approval gate and
+   * calls this method only after a valid approval is confirmed.
+   */
+  async executeStructuredWrite(
+    input: StructuredWriteInput
+  ): Promise<DbStructuredWriteResult> {
+    this.assertEnabled();
+
+    const built = buildWriteQuery(input);
+    // buildWriteQuery throws on any policy violation before any DB call.
+
+    // Capture before-state for UPDATE (snapshot via WHERE conditions)
+    let before: Record<string, unknown> | null = null;
+    if (input.operation === "UPDATE" && input.where && input.where.length > 0) {
+      const snap = buildSnapshotQuery(input.table, input.where, Object.keys(input.data));
+      before = await this.queryOne<Record<string, unknown>>(snap.sql, snap.params);
+    }
+
+    const result = await this.execute(built.sql, built.params);
+
+    // Capture after-state
+    let after: Record<string, unknown> | null = null;
+    if (input.operation === "INSERT" && result.insertId) {
+      after = await this.queryOne<Record<string, unknown>>(
+        `SELECT * FROM \`${built.resolvedTable}\` WHERE id = ? LIMIT 1`,
+        [result.insertId]
+      );
+    } else if (input.operation === "UPDATE" && input.where && input.where.length > 0) {
+      const snap = buildSnapshotQuery(input.table, input.where, Object.keys(input.data));
+      after = await this.queryOne<Record<string, unknown>>(snap.sql, snap.params);
+    }
+    // UPSERT: after = null (insertId not reliable with ON DUPLICATE KEY UPDATE)
+
+    return {
+      ok: result.affectedRows > 0,
+      affected_rows: result.affectedRows,
+      before,
+      after,
+      table: input.table,
+      resolved_table: built.resolvedTable,
+      operation: input.operation,
+      reason: input.reason
+    };
+  }
+
+  // ─── Traceability: record_project_event ──────────────────────────────────
+
+  async recordProjectEvent(params: {
+    entityType: string;
+    entityId: number;
+    actor: string;
+    action: string;
+    payload?: Record<string, unknown> | null;
+    context?: Record<string, unknown> | null;
+  }): Promise<DbWriteResult<DbProjectEvent>> {
+    this.assertEnabled();
+
+    const eventId = randomUUID();
+    const result = await this.execute(
+      `INSERT INTO vee_project_events (event_id, entity_type, entity_id, actor, action, payload, context)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        eventId,
+        params.entityType,
+        params.entityId,
+        params.actor,
+        params.action,
+        params.payload != null ? JSON.stringify(params.payload) : null,
+        params.context != null ? JSON.stringify(params.context) : null
+      ]
+    );
+
+    const after = await this.queryOne<DbProjectEvent>(
+      "SELECT id, event_id, entity_type, entity_id, actor, action, created_at FROM vee_project_events WHERE id = ? LIMIT 1",
+      [result.insertId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before: null, after };
+  }
+
+  // ─── Traceability: record_status_change ──────────────────────────────────
+
+  async recordStatusChange(params: {
+    entityType: string;
+    entityId: number;
+    oldStatus: string | null;
+    newStatus: string;
+    changedBy: string;
+    reason?: string | null;
+  }): Promise<DbWriteResult<DbStatusHistory>> {
+    this.assertEnabled();
+
+    const result = await this.execute(
+      `INSERT INTO vee_status_history (entity_type, entity_id, old_status, new_status, changed_by, reason)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        params.entityType,
+        params.entityId,
+        params.oldStatus ?? null,
+        params.newStatus,
+        params.changedBy,
+        params.reason ?? null
+      ]
+    );
+
+    const after = await this.queryOne<DbStatusHistory>(
+      "SELECT id, entity_type, entity_id, old_status, new_status, changed_by, reason, created_at FROM vee_status_history WHERE id = ? LIMIT 1",
+      [result.insertId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before: null, after };
+  }
+
+  // ─── Traceability: record_operational_decision ───────────────────────────
+
+  async recordOperationalDecision(params: {
+    title: string;
+    context: string;
+    rationale: string;
+    outcome: string;
+    actor: string;
+    projectId?: number | null;
+  }): Promise<DbWriteResult<DbOperationalDecision>> {
+    this.assertEnabled();
+
+    const decisionId = randomUUID();
+    const result = await this.execute(
+      `INSERT INTO vee_operational_decisions (decision_id, title, context, rationale, outcome, actor, project_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        decisionId,
+        params.title,
+        params.context,
+        params.rationale,
+        params.outcome,
+        params.actor,
+        params.projectId ?? null
+      ]
+    );
+
+    const after = await this.queryOne<DbOperationalDecision>(
+      "SELECT id, decision_id, title, actor, project_id, created_at FROM vee_operational_decisions WHERE id = ? LIMIT 1",
+      [result.insertId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before: null, after };
+  }
+
+  // ─── Traceability: record_entity_block ───────────────────────────────────
+
+  async recordEntityBlock(params: {
+    entityType: string;
+    entityId: number;
+    reason: string;
+    blockedBy: string;
+  }): Promise<DbWriteResult<DbBlockEntry>> {
+    this.assertEnabled();
+
+    const result = await this.execute(
+      `INSERT INTO vee_blocks (entity_type, entity_id, reason, blocked_by)
+       VALUES (?, ?, ?, ?)`,
+      [params.entityType, params.entityId, params.reason, params.blockedBy]
+    );
+
+    const after = await this.queryOne<DbBlockEntry>(
+      "SELECT id, entity_type, entity_id, reason, blocked_by, blocked_at FROM vee_blocks WHERE id = ? LIMIT 1",
+      [result.insertId]
+    );
+
+    return { ok: result.affectedRows > 0, affected_rows: result.affectedRows, before: null, after };
+  }
+
+  // ─── Traceability: unblock_entity ────────────────────────────────────────
+
+  async unblockEntity(params: {
+    entityType: string;
+    entityId: number;
+    unblockReason: string;
+    unblockedBy: string;
+  }): Promise<DbWriteResult<{ entity_type: string; entity_id: number; unblocked_at: string | null }>> {
+    this.assertEnabled();
+
+    const before = await this.queryOne<DbBlockEntry>(
+      "SELECT id, entity_type, entity_id, reason, blocked_by, blocked_at FROM vee_blocks WHERE entity_type = ? AND entity_id = ? AND unblocked_at IS NULL ORDER BY id DESC LIMIT 1",
+      [params.entityType, params.entityId]
+    );
+
+    const result = await this.execute(
+      "UPDATE vee_blocks SET unblocked_at = NOW(), unblock_reason = ?, unblocked_by = ? WHERE entity_type = ? AND entity_id = ? AND unblocked_at IS NULL",
+      [params.unblockReason, params.unblockedBy, params.entityType, params.entityId]
+    );
+
+    const after =
+      result.affectedRows > 0
+        ? {
+            entity_type: params.entityType,
+            entity_id: params.entityId,
+            unblocked_at: new Date().toISOString().slice(0, 19).replace("T", " ")
+          }
+        : null;
+
+    return {
+      ok: result.affectedRows > 0,
+      affected_rows: result.affectedRows,
+      before: before
+        ? { entity_type: before.entity_type, entity_id: before.entity_id, unblocked_at: null }
+        : null,
+      after
+    };
   }
 }

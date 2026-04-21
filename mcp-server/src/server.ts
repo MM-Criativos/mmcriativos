@@ -12,6 +12,8 @@ import { N8nRestAdapter } from "./adapters/n8nRestAdapter.js";
 import { ObsidianAdapter } from "./adapters/obsidianAdapter.js";
 import { ServerSshAdapter } from "./adapters/serverSshAdapter.js";
 import { VeeControlAdapter } from "./adapters/veeControlAdapter.js";
+import { resolveTablePolicy } from "./adapters/queryAllowlist.js";
+import type { WhereCondition } from "./adapters/structuredQueryBuilder.js";
 import {
   applyWorkflowOperations,
   parseWorkflowOperations,
@@ -22,7 +24,7 @@ import {
 
 type CapabilityDescriptor = {
   name: string;
-  phase: "v0.1" | "v0.2" | "future";
+  phase: "v0.1" | "v0.2" | "v0.3" | "future";
   permission: "read_only" | "safe_execute" | "approval_required" | "restricted";
   status: "enabled" | "planned";
 };
@@ -91,6 +93,16 @@ const SERVER_SSH_ALLOWED_LOG_PATHS = (process.env.SERVER_SSH_ALLOWED_LOG_PATHS ?
   .map(s => s.trim())
   .filter(Boolean);
 const CLAUDE_MCP_PUBLIC_URL = (process.env.CLAUDE_MCP_PUBLIC_URL ?? "").trim();
+const FS_ALLOWED_ROOTS = (process.env.FS_ALLOWED_ROOTS ?? "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+const FS_MAX_FILE_BYTES = Number.parseInt(process.env.FS_MAX_FILE_BYTES ?? "262144", 10);
+const FS_WRITE_ENABLED = (process.env.FS_WRITE_ENABLED ?? "false").trim().toLowerCase() === "true";
+const FS_WRITE_ALLOWED_PATHS = (process.env.FS_WRITE_ALLOWED_PATHS ?? "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
 const DB_READONLY_HOST = (process.env.DB_READONLY_HOST ?? "").trim();
 const DB_READONLY_PORT = Number.parseInt(process.env.DB_READONLY_PORT ?? "3306", 10);
 const DB_READONLY_USER = (process.env.DB_READONLY_USER ?? "").trim();
@@ -135,7 +147,11 @@ const serverSshAdapter = new ServerSshAdapter({
   restartEnabled: SERVER_SSH_RESTART_ENABLED,
   allowedContainers: SERVER_SSH_ALLOWED_CONTAINERS,
   allowedServices: SERVER_SSH_ALLOWED_SERVICES,
-  allowedLogPaths: SERVER_SSH_ALLOWED_LOG_PATHS
+  allowedLogPaths: SERVER_SSH_ALLOWED_LOG_PATHS,
+  fsAllowedRoots: FS_ALLOWED_ROOTS,
+  fsMaxFileBytes: Number.isNaN(FS_MAX_FILE_BYTES) ? 262144 : FS_MAX_FILE_BYTES,
+  fsWriteEnabled: FS_WRITE_ENABLED,
+  fsWriteAllowedPaths: FS_WRITE_ALLOWED_PATHS
 });
 
 const dbReadOnlyAdapter = new DatabaseReadOnlyAdapter({
@@ -224,7 +240,17 @@ const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_db_attach_task_to_project", phase: "v0.2", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_mark_task_as_blocked", phase: "v0.2", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_mark_task_as_done", phase: "v0.2", permission: "safe_execute", status: "enabled" },
-  { name: "vee_mmcc_list_tenants", phase: "v0.1", permission: "read_only", status: "planned" }
+  { name: "vee_mmcc_list_tenants", phase: "v0.1", permission: "read_only", status: "planned" },
+  { name: "vee_fs_list_directory", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_fs_read_file", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_fs_search_text", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_fs_write_file", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  { name: "vee_fs_list_allowed_paths", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_query", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_write", phase: "v0.3", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_record_event", phase: "v0.3", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_record_decision", phase: "v0.3", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_get_timeline", phase: "v0.3", permission: "read_only", status: "enabled" }
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -674,6 +700,33 @@ async function executeApprovedWorkflowChange(options: {
     structuredContent: payload
   };
 }
+
+// ─── Reusable Zod schemas for structured DB tools (v0.3) ─────────────────────
+
+const whereConditionSchema = z.object({
+  column: z.string().min(1).describe("Column name (bare or table-qualified like projects.id)"),
+  operator: z
+    .enum(["=", "!=", ">", ">=", "<", "<=", "LIKE", "NOT LIKE", "IN", "NOT IN", "IS NULL", "IS NOT NULL"])
+    .describe("Comparison operator"),
+  value: z
+    .union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.union([z.string(), z.number()]))])
+    .optional()
+    .describe("Bound value (omit for IS NULL / IS NOT NULL; array for IN / NOT IN)")
+});
+
+const joinClauseSchema = z.object({
+  type: z.enum(["INNER", "LEFT", "RIGHT"]).optional().describe("Join type (default INNER)"),
+  table: z.string().min(1).describe("Table name to join (must be in the allowed table list)"),
+  on: z
+    .string()
+    .min(5)
+    .describe("ON clause — only format tableA.colA = tableB.colB accepted")
+});
+
+const orderBySchema = z.object({
+  column: z.string().min(1).describe("Column to order by"),
+  direction: z.enum(["ASC", "DESC"]).optional().describe("Sort direction (default ASC)")
+});
 
 function createServer(): McpServer {
   const server = new McpServer(
@@ -2497,6 +2550,557 @@ function createServer(): McpServer {
       })
   );
 
+  // ─── Filesystem tools ─────────────────────────────────────────────────────
+
+  server.registerTool(
+    "vee_fs_list_allowed_paths",
+    {
+      title: "FS — List Allowed Paths",
+      description:
+        "Returns the configured filesystem allowed roots and write paths. Use this to know which directories are accessible before calling other vee_fs_* tools.",
+      inputSchema: {}
+    },
+    async () =>
+      runAuditedTool({
+        toolName: "vee_fs_list_allowed_paths",
+        permission: "read_only",
+        isWrite: false,
+        args: {},
+        errorContext: "Failed to list FS allowed paths",
+        handler: async () => {
+          const result = serverSshAdapter.listAllowedFsPaths();
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_fs_list_directory",
+    {
+      title: "FS — List Directory",
+      description:
+        "Lists the contents of a directory on the remote server via SSH. Returns each entry's name, type (file/dir/link), size in bytes, and last modified time. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
+      inputSchema: {
+        path: z
+          .string()
+          .min(1)
+          .describe("Absolute path to the directory to list (e.g. /opt/mmcriativos)"),
+        max_entries: z
+          .number()
+          .int()
+          .min(1)
+          .max(1000)
+          .optional()
+          .describe("Max number of entries to return (default 200, max 1000)")
+      }
+    },
+    async ({ path, max_entries }) =>
+      runAuditedTool({
+        toolName: "vee_fs_list_directory",
+        permission: "read_only",
+        isWrite: false,
+        args: { path, max_entries },
+        errorContext: `Failed to list directory ${path}`,
+        handler: async () => {
+          const result = await serverSshAdapter.listDirectory(path, max_entries);
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_fs_read_file",
+    {
+      title: "FS — Read File",
+      description:
+        "Reads the contents of a file on the remote server via SSH. Truncates at FS_MAX_FILE_BYTES (default 256 KB). Returns content, total size, and whether it was truncated. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
+      inputSchema: {
+        path: z
+          .string()
+          .min(1)
+          .describe("Absolute path to the file to read (e.g. /opt/mmcriativos/.env)"),
+        max_bytes: z
+          .number()
+          .int()
+          .min(1)
+          .optional()
+          .describe("Max bytes to read (default and cap: FS_MAX_FILE_BYTES, usually 262144)")
+      }
+    },
+    async ({ path, max_bytes }) =>
+      runAuditedTool({
+        toolName: "vee_fs_read_file",
+        permission: "read_only",
+        isWrite: false,
+        args: { path, max_bytes },
+        errorContext: `Failed to read file ${path}`,
+        handler: async () => {
+          const result = await serverSshAdapter.readFile(path, max_bytes);
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_fs_search_text",
+    {
+      title: "FS — Search Text in Files",
+      description:
+        "Searches for a text pattern in files on the remote server via SSH (grep -rn). Returns matching file paths, line numbers, and matched lines. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
+      inputSchema: {
+        pattern: z
+          .string()
+          .min(1)
+          .max(200)
+          .describe(
+            "Search pattern (grep regex). Avoid shell metacharacters: ` $ ! ; | & < > \\"
+          ),
+        path: z
+          .string()
+          .min(1)
+          .describe("Absolute path to search in — file or directory (e.g. /opt/mmcriativos)"),
+        max_matches: z
+          .number()
+          .int()
+          .min(1)
+          .max(500)
+          .optional()
+          .describe("Max number of matching lines to return (default 100, max 500)"),
+        case_insensitive: z
+          .boolean()
+          .optional()
+          .describe("If true, search is case-insensitive (grep -i). Default false."),
+        include: z
+          .string()
+          .optional()
+          .describe(
+            "Glob pattern to filter files (e.g. *.env, *.yml). Only alphanumeric, dots, asterisks, hyphens allowed."
+          )
+      }
+    },
+    async ({ pattern, path, max_matches, case_insensitive, include }) =>
+      runAuditedTool({
+        toolName: "vee_fs_search_text",
+        permission: "read_only",
+        isWrite: false,
+        args: { pattern, path, max_matches, case_insensitive, include },
+        errorContext: `Failed to search "${pattern}" in ${path}`,
+        handler: async () => {
+          const result = await serverSshAdapter.searchText(pattern, path, {
+            maxMatches: max_matches,
+            caseInsensitive: case_insensitive,
+            include
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_fs_write_file",
+    {
+      title: "FS — Write File",
+      description:
+        "Writes content to a file on the remote server via SSH. Requires FS_WRITE_ENABLED=true and path must match FS_WRITE_ALLOWED_PATHS (if configured). Content is transferred safely as base64. Creates or overwrites the file.",
+      inputSchema: {
+        path: z
+          .string()
+          .min(1)
+          .describe("Absolute path to the file to write (e.g. /opt/mmcriativos/config.json)"),
+        content: z.string().describe("Text content to write to the file")
+      }
+    },
+    async ({ path, content }) =>
+      runAuditedTool({
+        toolName: "vee_fs_write_file",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { path, content_length: content.length },
+        errorContext: `Failed to write file ${path}`,
+        handler: async () => {
+          const result = await serverSshAdapter.writeFile(path, content);
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  // ─── DB generic tools (v0.3) ───────────────────────────────────────────────
+
+  server.registerTool(
+    "vee_db_query",
+    {
+      title: "DB — Structured Query",
+      description:
+        "Executes a structured SELECT against allowed tables or named views (project_timeline, active_projects, pending_work). " +
+        "Supports WHERE filters, JOINs, ORDER BY, and pagination. No raw SQL — all inputs are validated. " +
+        "Tables with blocked columns require an explicit 'columns' list. Max 100 rows.",
+      inputSchema: {
+        table: z
+          .string()
+          .min(1)
+          .describe(
+            "Table name (e.g. projects, project_tasks) or named view (project_timeline, active_projects, pending_work)"
+          ),
+        columns: z
+          .array(z.string().min(1))
+          .optional()
+          .describe("Columns to return. Required for tables with blocked columns (contacts, users)."),
+        where: z.array(whereConditionSchema).optional().describe("WHERE conditions (AND-joined)"),
+        joins: z.array(joinClauseSchema).optional().describe("JOIN clauses"),
+        order_by: z.array(orderBySchema).optional().describe("ORDER BY clauses"),
+        limit: z.number().int().min(1).max(100).optional().describe("Max rows (default 20, max 100)"),
+        offset: z.number().int().min(0).optional().describe("Row offset for pagination")
+      }
+    },
+    async ({ table, columns, where, joins, order_by, limit, offset }) =>
+      runAuditedTool({
+        toolName: "vee_db_query",
+        permission: "read_only",
+        isWrite: false,
+        args: { table, columns, where_count: where?.length ?? 0, joins_count: joins?.length ?? 0 },
+        errorContext: `Failed to execute structured query on "${table}"`,
+        handler: async () => {
+          const result = await dbReadOnlyAdapter.executeStructuredQuery(
+            {
+              table,
+              columns,
+              where: where as Parameters<typeof dbReadOnlyAdapter.executeStructuredQuery>[0]["where"],
+              joins: joins as Parameters<typeof dbReadOnlyAdapter.executeStructuredQuery>[0]["joins"],
+              orderBy: order_by as Parameters<typeof dbReadOnlyAdapter.executeStructuredQuery>[0]["orderBy"],
+              limit: limit ?? 20,
+              offset
+            },
+            "vee"
+          );
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_write",
+    {
+      title: "DB — Structured Write",
+      description:
+        "Executes a structured INSERT / UPDATE / UPSERT against allowlisted tables. " +
+        "Safe tables (projects, project_tasks, vee_*, etc.) execute directly. " +
+        "Protected tables (tenants, clients, contacts, users) require approval: call without approval_id to create one, then call again with the returned approval_id after it is approved. " +
+        "UPDATE without WHERE is rejected. DELETE / DROP / TRUNCATE are never allowed.",
+      inputSchema: {
+        operation: z.enum(["INSERT", "UPDATE", "UPSERT"]).describe("Write operation type"),
+        table: z.string().min(1).describe("Target table name (must be in allowed list)"),
+        data: z.record(z.string(), z.unknown()).describe("Column-value pairs to write"),
+        where: z
+          .array(whereConditionSchema)
+          .optional()
+          .describe("WHERE conditions (required for UPDATE)"),
+        reason: z
+          .string()
+          .min(10)
+          .describe("Justification for this write (min 10 characters)"),
+        upsert_key: z
+          .array(z.string())
+          .optional()
+          .describe("Unique-key columns for UPSERT (excluded from ON DUPLICATE KEY UPDATE)"),
+        approval_id: z
+          .string()
+          .optional()
+          .describe(
+            "For protected tables: provide the approval_id returned from the first call once it is approved"
+          )
+      }
+    },
+    async ({ operation, table, data, where, reason, upsert_key, approval_id }) =>
+      runAuditedTool({
+        toolName: "vee_db_write",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { operation, table, columns: Object.keys(data), reason: reason.slice(0, 120) },
+        errorContext: `Failed to execute structured write on "${table}"`,
+        handler: async () => {
+          const policy = resolveTablePolicy(table);
+          if (!policy) {
+            throw new Error(
+              `Table "${table}" is not in the allowed list. Use vee_db_query to see available tables.`
+            );
+          }
+          if (policy.writeMode === "read_only") {
+            throw new Error(`Table "${table}" is read-only and does not allow writes.`);
+          }
+
+          // ── Approval gate for protected tables ──────────────────────────
+          if (policy.writeMode === "approval_required") {
+            if (!approval_id) {
+              // First call: create pending approval
+              const approval = await veeControlAdapter.createApproval({
+                action_name: `db_write:${operation.toLowerCase()}:${table}`,
+                tool_name: "vee_db_write",
+                summary: `${operation} on ${table}: ${reason}`,
+                request_payload: { operation, table, data, where, reason, upsert_key },
+                meta: { source: "vee-mcp-server", requested_at: new Date().toISOString() }
+              });
+              return buildApprovalCreationResult({
+                approvalId: approval.approval_id,
+                status: approval.status,
+                message: `Write to protected table "${table}" requires approval. Approval created — share the approval_id with the approver.`,
+                extra: { table, operation, reason }
+              });
+            }
+
+            // Second call: verify and execute
+            const approval = await veeControlAdapter.getApproval(approval_id);
+            if (approval.status === "pending") return buildApprovalPendingResult(approval_id);
+            if (approval.status === "rejected") return buildApprovalRejectedResult(approval_id);
+            if (approval.status === "executed") return buildApprovalExecutedResult(approval_id);
+            if (approval.status !== "approved") {
+              throw new Error(
+                `Approval ${approval_id} has unexpected status "${approval.status}".`
+              );
+            }
+
+            // Anti-replay: use only the data from the approved payload
+            const saved = isRecord(approval.request_payload) ? approval.request_payload : null;
+            if (
+              !saved ||
+              saved["table"] !== table ||
+              saved["operation"] !== operation
+            ) {
+              throw new Error(
+                `Approval ${approval_id} does not match current request (table/operation mismatch).`
+              );
+            }
+
+            const writeResult = await dbWriteAdapter.executeStructuredWrite({
+              operation: saved["operation"] as "INSERT" | "UPDATE" | "UPSERT",
+              table: saved["table"] as string,
+              data: saved["data"] as Record<string, unknown>,
+              where: saved["where"] as WhereCondition[] | undefined,
+              reason: saved["reason"] as string,
+              upsertKey: saved["upsert_key"] as string[] | undefined
+            });
+
+            await veeControlAdapter.markApprovalExecuted(approval_id, {
+              table,
+              operation,
+              affected_rows: writeResult.affected_rows
+            });
+
+            const payload = { approval_id, ...writeResult, ok: true };
+            return {
+              content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+              structuredContent: payload
+            };
+          }
+
+          // ── safe_execute: run directly ────────────────────────────────────
+          const writeResult = await dbWriteAdapter.executeStructuredWrite({
+            operation,
+            table,
+            data,
+            where: where as WhereCondition[] | undefined,
+            reason,
+            upsertKey: upsert_key
+          });
+
+          return {
+            content: [{ type: "text", text: JSON.stringify(writeResult, null, 2) }],
+            structuredContent: writeResult
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_record_event",
+    {
+      title: "DB — Record Project Event",
+      description:
+        "Appends an event to the vee_project_events log. Use to record any meaningful state change, " +
+        "action, or observation about a project, task, appointment, or other entity. " +
+        "Forms the core of the traceability timeline.",
+      inputSchema: {
+        entity_type: z
+          .string()
+          .min(1)
+          .describe("Entity type: project, task, appointment, session, incident, etc."),
+        entity_id: z
+          .number()
+          .int()
+          .min(1)
+          .describe("ID of the entity"),
+        actor: z
+          .string()
+          .min(1)
+          .describe("Who triggered this event (e.g. Vee, system, user name)"),
+        action: z
+          .string()
+          .min(1)
+          .describe("Event action name (e.g. status_changed, created, blocked, note_added)"),
+        payload: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Event-specific data (e.g. { from: 'pending', to: 'done' })"),
+        context: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Surrounding context (e.g. { session_id, tool_name })")
+      }
+    },
+    async ({ entity_type, entity_id, actor, action, payload, context }) =>
+      runAuditedTool({
+        toolName: "vee_db_record_event",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { entity_type, entity_id, actor, action },
+        errorContext: "Failed to record project event",
+        handler: async () => {
+          const result = await dbWriteAdapter.recordProjectEvent({
+            entityType: entity_type,
+            entityId: entity_id,
+            actor,
+            action,
+            payload: payload ?? null,
+            context: context ?? null
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_record_decision",
+    {
+      title: "DB — Record Operational Decision",
+      description:
+        "Records a decision made during operations or analysis into vee_operational_decisions. " +
+        "Use to document why something was done, what alternatives were considered, and what the outcome was. " +
+        "Forms the institutional memory layer for future context.",
+      inputSchema: {
+        title: z.string().min(1).describe("Short title for the decision"),
+        context: z
+          .string()
+          .min(1)
+          .describe("Situation or problem that prompted this decision"),
+        rationale: z
+          .string()
+          .min(1)
+          .describe("Why this decision was made; alternatives considered"),
+        outcome: z
+          .string()
+          .min(1)
+          .describe("What was decided or will be done"),
+        actor: z
+          .string()
+          .min(1)
+          .describe("Who made this decision (e.g. Vee, user name)"),
+        project_id: z
+          .number()
+          .int()
+          .optional()
+          .describe("Optional: associate with a project ID")
+      }
+    },
+    async ({ title, context, rationale, outcome, actor, project_id }) =>
+      runAuditedTool({
+        toolName: "vee_db_record_decision",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { title, actor, project_id },
+        errorContext: "Failed to record operational decision",
+        handler: async () => {
+          const result = await dbWriteAdapter.recordOperationalDecision({
+            title,
+            context,
+            rationale,
+            outcome,
+            actor,
+            projectId: project_id ?? null
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_get_timeline",
+    {
+      title: "DB — Get Entity Timeline",
+      description:
+        "Returns the event timeline from vee_project_events for a given entity or project. " +
+        "Shows who did what and when, ordered newest first. " +
+        "Use for investigation, context recovery, or audit of any entity.",
+      inputSchema: {
+        entity_type: z
+          .string()
+          .optional()
+          .describe("Filter by entity type (e.g. project, task, appointment)"),
+        entity_id: z.number().int().optional().describe("Filter by entity ID"),
+        actor: z.string().optional().describe("Filter by actor name"),
+        action: z.string().optional().describe("Filter by action (exact match)"),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(100)
+          .optional()
+          .describe("Max events to return (default 50)")
+      }
+    },
+    async ({ entity_type, entity_id, actor, action, limit }) =>
+      runAuditedTool({
+        toolName: "vee_db_get_timeline",
+        permission: "read_only",
+        isWrite: false,
+        args: { entity_type, entity_id, actor, action, limit },
+        errorContext: "Failed to get entity timeline",
+        handler: async () => {
+          const where: WhereCondition[] = [];
+          if (entity_type) where.push({ column: "entity_type", operator: "=", value: entity_type });
+          if (entity_id) where.push({ column: "entity_id", operator: "=", value: entity_id });
+          if (actor) where.push({ column: "actor", operator: "=", value: actor });
+          if (action) where.push({ column: "action", operator: "=", value: action });
+
+          const result = await dbReadOnlyAdapter.executeStructuredQuery(
+            {
+              table: "vee_project_events",
+              where,
+              orderBy: [{ column: "created_at", direction: "DESC" }],
+              limit: limit ?? 50
+            },
+            "vee"
+          );
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result
+          };
+        }
+      })
+  );
+
   return server;
 }
 
@@ -2561,6 +3165,10 @@ app.listen(PORT, HOST, () => {
   const dbMode = dbReadOnlyAdapter.isConfigured() ? "db readonly enabled" : "db readonly disabled";
   const dbWriteMode = dbWriteAdapter.isConfigured() ? "db write enabled" : "db write disabled";
   const claudeMode = CLAUDE_MCP_PUBLIC_URL ? "claude endpoint configured" : "claude endpoint auto";
+  const fsMode =
+    FS_ALLOWED_ROOTS.length > 0
+      ? `fs enabled (roots: ${FS_ALLOWED_ROOTS.join(", ")}${FS_WRITE_ENABLED ? ", writes ON" : ""})`
+      : "fs disabled (FS_ALLOWED_ROOTS not set)";
 
   console.log(`[Vee MCP] listening on http://${HOST}:${PORT}`);
   console.log(`[Vee MCP] /mcp (${authMode})`);
@@ -2573,7 +3181,8 @@ app.listen(PORT, HOST, () => {
   console.log(`[Vee MCP] ${dbMode}`);
   console.log(`[Vee MCP] ${dbWriteMode}`);
   console.log(`[Vee MCP] ${claudeMode}`);
+  console.log(`[Vee MCP] ${fsMode}`);
   console.log(
-    "[Vee MCP] enabled tools: vee.health, vee.list_capabilities, vee.n8n.list_workflows, vee.n8n.get_workflow, vee.n8n.preview_workflow_diff, vee.n8n.list_recent_executions, vee.n8n.get_execution, vee.n8n.retry_execution, vee.n8n.stop_execution, vee.n8n.update_workflow, vee.n8n.patch_workflow_nodes, vee.n8n.rollback_workflow, vee.obsidian.health, vee.obsidian.search, vee.obsidian.read_note, vee.obsidian.create_note, vee.obsidian.append_to_note, vee.obsidian.update_note_section, vee.obsidian.append_to_daily_log, vee.obsidian.create_task_note, vee.server.status, vee.server.list_containers, vee.server.get_container_logs, vee.server.disk_usage, vee.server.memory_usage, vee.server.list_containers_detailed, vee.server.inspect_container, vee.server.restart_container, vee.server.tail_log, vee.server.service_status, vee.server.health_check, vee.server.list_allowed_paths, vee.claude.connection_info, vee.db.get_tenant_by_slug, vee.db.get_client_by_phone, vee.db.get_recent_ai_messages, vee.db.get_context_state, vee.db.get_booking_session, vee.db.get_recent_appointments, vee.db.get_project_summary, vee.db.get_pending_tasks, vee.db.get_user_preferences, vee.db.get_agent_execution_history, vee.db.update_project_status, vee.db.create_internal_task, vee.db.save_execution_note, vee.db.update_context_state, vee.db.register_incident, vee.db.attach_task_to_project, vee.db.mark_task_as_blocked, vee.db.mark_task_as_done"
+    "[Vee MCP] enabled tools: vee.health, vee.list_capabilities, vee.n8n.list_workflows, vee.n8n.get_workflow, vee.n8n.preview_workflow_diff, vee.n8n.list_recent_executions, vee.n8n.get_execution, vee.n8n.retry_execution, vee.n8n.stop_execution, vee.n8n.update_workflow, vee.n8n.patch_workflow_nodes, vee.n8n.rollback_workflow, vee.obsidian.health, vee.obsidian.search, vee.obsidian.read_note, vee.obsidian.create_note, vee.obsidian.append_to_note, vee.obsidian.update_note_section, vee.obsidian.append_to_daily_log, vee.obsidian.create_task_note, vee.server.status, vee.server.list_containers, vee.server.get_container_logs, vee.server.disk_usage, vee.server.memory_usage, vee.server.list_containers_detailed, vee.server.inspect_container, vee.server.restart_container, vee.server.tail_log, vee.server.service_status, vee.server.health_check, vee.server.list_allowed_paths, vee.claude.connection_info, vee.db.get_tenant_by_slug, vee.db.get_client_by_phone, vee.db.get_recent_ai_messages, vee.db.get_context_state, vee.db.get_booking_session, vee.db.get_recent_appointments, vee.db.get_project_summary, vee.db.get_pending_tasks, vee.db.get_user_preferences, vee.db.get_agent_execution_history, vee.db.update_project_status, vee.db.create_internal_task, vee.db.save_execution_note, vee.db.update_context_state, vee.db.register_incident, vee.db.attach_task_to_project, vee.db.mark_task_as_blocked, vee.db.mark_task_as_done, vee.fs.list_allowed_paths, vee.fs.list_directory, vee.fs.read_file, vee.fs.search_text, vee.fs.write_file, vee.db.query, vee.db.write, vee.db.record_event, vee.db.record_decision, vee.db.get_timeline"
   );
 });

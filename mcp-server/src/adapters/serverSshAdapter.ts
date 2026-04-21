@@ -13,6 +13,10 @@ export type ServerSshAdapterConfig = {
   allowedContainers: string[];
   allowedServices: string[];
   allowedLogPaths: string[];
+  fsAllowedRoots: string[];
+  fsMaxFileBytes: number;
+  fsWriteEnabled: boolean;
+  fsWriteAllowedPaths: string[];
 };
 
 export type ServerCommandResult = {
@@ -73,6 +77,38 @@ export type ServerHealthCheckResult = {
   container_count: number;
 };
 
+export type FsEntry = {
+  name: string;
+  type: "file" | "dir" | "link" | "other";
+  size_bytes: number | null;
+  modified_at: string | null;
+};
+
+export type FsReadResult = {
+  path: string;
+  content: string;
+  total_bytes: number;
+  truncated: boolean;
+};
+
+export type FsSearchMatch = {
+  file: string;
+  line: number;
+  text: string;
+};
+
+export type FsSearchResult = {
+  path: string;
+  pattern: string;
+  matches: FsSearchMatch[];
+  truncated: boolean;
+};
+
+export type FsWriteResult = {
+  ok: boolean;
+  path: string;
+};
+
 const DEFAULT_ALLOWED_SERVICES = ["docker", "nginx", "mysql", "postgresql", "redis", "n8n-worker"];
 const DEFAULT_ALLOWED_LOG_PATHS = [
   "/var/log/nginx",
@@ -94,6 +130,10 @@ export class ServerSshAdapter {
   private readonly allowedContainers: string[];
   private readonly allowedServices: string[];
   private readonly allowedLogPaths: string[];
+  private readonly fsAllowedRoots: string[];
+  private readonly fsMaxFileBytes: number;
+  private readonly fsWriteEnabled: boolean;
+  private readonly fsWriteAllowedPaths: string[];
 
   constructor(config: ServerSshAdapterConfig) {
     this.host = config.host.trim();
@@ -113,6 +153,10 @@ export class ServerSshAdapter {
       config.allowedLogPaths.length > 0
         ? config.allowedLogPaths.map(s => s.trim()).filter(Boolean)
         : DEFAULT_ALLOWED_LOG_PATHS;
+    this.fsAllowedRoots = config.fsAllowedRoots.map(s => s.trim()).filter(Boolean);
+    this.fsMaxFileBytes = config.fsMaxFileBytes > 0 ? config.fsMaxFileBytes : 262144;
+    this.fsWriteEnabled = config.fsWriteEnabled;
+    this.fsWriteAllowedPaths = config.fsWriteAllowedPaths.map(s => s.trim()).filter(Boolean);
   }
 
   isConfigured(): boolean {
@@ -424,6 +468,158 @@ export class ServerSshAdapter {
     };
   }
 
+  listAllowedFsPaths(): { roots: string[]; write_enabled: boolean; write_paths: string[] } {
+    return {
+      roots: this.fsAllowedRoots,
+      write_enabled: this.fsWriteEnabled,
+      write_paths: this.fsWriteAllowedPaths
+    };
+  }
+
+  async listDirectory(
+    dirPath: string,
+    maxEntries = 200
+  ): Promise<{ path: string; entries: FsEntry[]; total: number }> {
+    this.assertConfigured();
+    const safe = this.validateFsPath(dirPath, "read");
+    const safeMax = Math.max(1, Math.min(maxEntries, 1000));
+
+    // Use find for structured, parseable output; fallback handled by 2>/dev/null
+    const cmd =
+      `find ${shellQuote(safe)} -maxdepth 1 -mindepth 1 ` +
+      `-printf '%f\\t%y\\t%s\\t%TY-%Tm-%TdT%TH:%TM:%.0TS\\n' 2>/dev/null | sort | head -n ${safeMax + 1}`;
+
+    const result = await this.execute(cmd);
+    const lines = result.stdout
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    const entries: FsEntry[] = lines.slice(0, safeMax).map(line => {
+      const [name, typeChar, sizeStr, mtime] = line.split("\t");
+      const typeMap: Record<string, FsEntry["type"]> = {
+        f: "file",
+        d: "dir",
+        l: "link"
+      };
+      return {
+        name: name ?? "",
+        type: typeMap[typeChar ?? ""] ?? "other",
+        size_bytes: sizeStr != null && sizeStr !== "" ? Number.parseInt(sizeStr, 10) || null : null,
+        modified_at: mtime?.trim() || null
+      };
+    });
+
+    return { path: safe, entries, total: entries.length };
+  }
+
+  async readFile(filePath: string, maxBytes?: number): Promise<FsReadResult> {
+    this.assertConfigured();
+    const safe = this.validateFsPath(filePath, "read");
+    const limit = Math.min(maxBytes ?? this.fsMaxFileBytes, this.fsMaxFileBytes);
+
+    // Get size and content in one round-trip using shell
+    const cmd =
+      `SIZE=$(wc -c < ${shellQuote(safe)} 2>/dev/null || echo -1); ` +
+      `echo "$SIZE"; ` +
+      `head -c ${limit} ${shellQuote(safe)} 2>&1`;
+
+    const result = await this.execute(cmd);
+    if (result.exitCode !== 0 && result.stdout.trim() === "") {
+      throw new Error(`Cannot read file: ${result.stderr.trim() || "unknown error"}`);
+    }
+
+    const newlineIdx = result.stdout.indexOf("\n");
+    const sizeLine = newlineIdx >= 0 ? result.stdout.slice(0, newlineIdx).trim() : "";
+    const content = newlineIdx >= 0 ? result.stdout.slice(newlineIdx + 1) : result.stdout;
+
+    const totalBytes = Number.parseInt(sizeLine, 10);
+    const validSize = !Number.isNaN(totalBytes) && totalBytes >= 0 ? totalBytes : content.length;
+
+    return {
+      path: safe,
+      content,
+      total_bytes: validSize,
+      truncated: validSize > limit
+    };
+  }
+
+  async searchText(
+    pattern: string,
+    searchPath: string,
+    options?: { maxMatches?: number; caseInsensitive?: boolean; include?: string }
+  ): Promise<FsSearchResult> {
+    this.assertConfigured();
+    const safe = this.validateFsPath(searchPath, "read");
+    const safePattern = this.validateGrepPattern(pattern);
+    const maxMatches = Math.max(1, Math.min(options?.maxMatches ?? 100, 500));
+
+    const flags = ["-rn", `--max-count=5`];
+    if (options?.caseInsensitive) {
+      flags.push("-i");
+    }
+    if (options?.include) {
+      const safeInclude = options.include.replace(/[^a-zA-Z0-9.*_\-]/g, "");
+      if (safeInclude) {
+        flags.push(`--include=${shellQuote(safeInclude)}`);
+      }
+    }
+
+    const cmd =
+      `grep ${flags.join(" ")} ${shellQuote(safePattern)} ${shellQuote(safe)} 2>/dev/null | head -n ${maxMatches}`;
+
+    const result = await this.execute(cmd);
+    // exit code 1 = no matches (not an error), exit code 2 = real error
+    if (result.exitCode === 2) {
+      throw new Error(`grep error: ${result.stderr.trim()}`);
+    }
+
+    const lines = result.stdout
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    const matches: FsSearchMatch[] = lines.map(line => {
+      // Format: /path/to/file:linenum:text
+      const firstColon = line.indexOf(":");
+      const secondColon = firstColon >= 0 ? line.indexOf(":", firstColon + 1) : -1;
+      if (firstColon >= 0 && secondColon >= 0) {
+        const file = line.slice(0, firstColon);
+        const lineNum = Number.parseInt(line.slice(firstColon + 1, secondColon), 10);
+        const text = line.slice(secondColon + 1);
+        return {
+          file,
+          line: Number.isNaN(lineNum) ? 0 : lineNum,
+          text
+        };
+      }
+      return { file: "", line: 0, text: line };
+    });
+
+    return {
+      path: safe,
+      pattern,
+      matches: matches.slice(0, maxMatches),
+      truncated: lines.length >= maxMatches
+    };
+  }
+
+  async writeFile(filePath: string, content: string): Promise<FsWriteResult> {
+    this.assertConfigured();
+    const safe = this.validateFsPath(filePath, "write");
+
+    // Encode content as base64 and decode on the remote side to avoid shell injection
+    const b64 = Buffer.from(content, "utf8").toString("base64");
+    const cmd = `python3 -c "import base64,sys; open(sys.argv[1],'wb').write(base64.b64decode(sys.argv[2]))" ${shellQuote(safe)} ${shellQuote(b64)}`;
+
+    const result = await this.execute(cmd);
+    if (result.exitCode !== 0) {
+      throw new Error(`Write failed: ${result.stderr.trim() || result.stdout.trim() || "unknown error"}`);
+    }
+
+    return { ok: true, path: safe };
+  }
+
   private assertConfigured(): void {
     if (!this.isConfigured()) {
       throw new Error("SERVER_SSH_HOST and SERVER_SSH_USERNAME are required.");
@@ -435,6 +631,70 @@ export class ServerSshAdapter {
     if (!/^[a-zA-Z0-9_.-]+$/.test(safe)) {
       throw new Error("containerName contains invalid characters.");
     }
+  }
+
+  private validateFsPath(rawPath: string, operation: "read" | "write"): string {
+    const normalized = rawPath.trim().replace(/\\/g, "/");
+
+    if (!normalized.startsWith("/")) {
+      throw new Error(`Path must be absolute: ${rawPath}`);
+    }
+    if (normalized.includes("..")) {
+      throw new Error("Path traversal (..) is not allowed.");
+    }
+    if (!/^\/[a-zA-Z0-9._\-/]+$/.test(normalized)) {
+      throw new Error("Path contains invalid characters. Only alphanumeric, dots, hyphens, underscores, and slashes are allowed.");
+    }
+
+    if (this.fsAllowedRoots.length === 0) {
+      throw new Error(
+        "FS_ALLOWED_ROOTS is not configured. Set it to a comma-separated list of allowed root paths."
+      );
+    }
+
+    const readAllowed = this.fsAllowedRoots.some(
+      root =>
+        normalized.startsWith(root.endsWith("/") ? root : `${root}/`) || normalized === root
+    );
+    if (!readAllowed) {
+      throw new Error(
+        `Path "${normalized}" is not under any allowed root. Allowed: ${this.fsAllowedRoots.join(", ")}`
+      );
+    }
+
+    if (operation === "write") {
+      if (!this.fsWriteEnabled) {
+        throw new Error("Filesystem writes are disabled. Set FS_WRITE_ENABLED=true to enable.");
+      }
+      if (this.fsWriteAllowedPaths.length > 0) {
+        const writeAllowed = this.fsWriteAllowedPaths.some(
+          p => normalized.startsWith(p.endsWith("/") ? p : `${p}/`) || normalized === p
+        );
+        if (!writeAllowed) {
+          throw new Error(
+            `Write to "${normalized}" is not allowed. Allowed write paths: ${this.fsWriteAllowedPaths.join(", ")}`
+          );
+        }
+      }
+    }
+
+    return normalized;
+  }
+
+  private validateGrepPattern(pattern: string): string {
+    if (!pattern || pattern.trim().length === 0) {
+      throw new Error("Search pattern cannot be empty.");
+    }
+    if (pattern.length > 200) {
+      throw new Error("Search pattern exceeds 200 characters.");
+    }
+    // Allow common regex/search chars; reject shell injection candidates
+    if (/[`$!;|&<>\\]/.test(pattern)) {
+      throw new Error(
+        "Search pattern contains disallowed characters (`$!;|&<>\\). Use only letters, digits, spaces, and common punctuation."
+      );
+    }
+    return pattern.trim();
   }
 
   private async execute(command: string): Promise<ServerCommandResult> {
@@ -547,6 +807,13 @@ export class ServerSshAdapter {
       );
     }
   }
+}
+
+// ─── Shell helpers ───────────────────────────────────────────────────────────
+
+/** Wraps a string in single quotes for POSIX shell, escaping any embedded single quotes. */
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
 // ─── Parsers ─────────────────────────────────────────────────────────────────

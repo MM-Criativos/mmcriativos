@@ -1,5 +1,9 @@
 import mysql from "mysql2/promise";
 import type { FieldPacket, RowDataPacket } from "mysql2/promise";
+import {
+  buildSelectQuery,
+  type StructuredQueryInput
+} from "./structuredQueryBuilder.js";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -611,5 +615,50 @@ export class DatabaseReadOnlyAdapter {
       await this.pool.end();
       this.pool = null;
     }
+  }
+
+  // ─── Generic structured query ─────────────────────────────────────────────
+
+  /**
+   * Executes a structured SELECT query against allowlisted tables / named views.
+   * Validates table, columns, JOIN tables, and WHERE operators before building SQL.
+   * All values are bound as prepared-statement parameters — no SQL injection possible.
+   */
+  async executeStructuredQuery(
+    input: StructuredQueryInput,
+    clientKey: string
+  ): Promise<{
+    table: string;
+    resolved_table: string;
+    columns_requested: string[] | null;
+    sensitive_query: boolean;
+    total: number;
+    rows: Record<string, unknown>[];
+  }> {
+    this.assertConfigured();
+
+    const built = buildSelectQuery(input, this.config.maxRowsPerQuery);
+    // buildSelectQuery throws on any policy violation — no SQL reaches MySQL.
+
+    checkRateLimit(clientKey, this.config.rateLimitPerMinute);
+
+    const [rawRows] = await this.getPool().execute(
+      built.sql,
+      built.params
+    ) as [RowDataPacket[], FieldPacket[]];
+
+    const rows = (rawRows as unknown as Record<string, unknown>[]).slice(
+      0,
+      this.config.maxRowsPerQuery
+    );
+
+    return {
+      table: input.table,
+      resolved_table: built.resolvedTable,
+      columns_requested: input.columns ?? null,
+      sensitive_query: built.sensitive,
+      total: rows.length,
+      rows
+    };
   }
 }
