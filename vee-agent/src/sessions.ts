@@ -43,9 +43,10 @@ export async function getSession(id: string): Promise<Session | null> {
 }
 
 export async function listSessions(limit = 50): Promise<Session[]> {
+  // LIMIT não pode ser bind parameter no mysql2 com prepared statements
+  const safeLimit = Math.min(Math.max(1, Math.floor(limit)), 200);
   const [rows] = await pool.execute<RowDataPacket[]>(
-    "SELECT * FROM vee_sessions ORDER BY updated_at DESC LIMIT ?",
-    [limit]
+    `SELECT * FROM vee_sessions ORDER BY updated_at DESC LIMIT ${safeLimit}`
   );
   return rows as Session[];
 }
