@@ -10,6 +10,7 @@ import { DatabaseReadOnlyAdapter } from "./adapters/databaseReadOnlyAdapter.js";
 import { DatabaseWriteAdapter } from "./adapters/databaseWriteAdapter.js";
 import { N8nRestAdapter } from "./adapters/n8nRestAdapter.js";
 import { ObsidianAdapter } from "./adapters/obsidianAdapter.js";
+import { FilesystemLocalAdapter } from "./adapters/filesystemLocalAdapter.js";
 import { ServerSshAdapter } from "./adapters/serverSshAdapter.js";
 import { VeeControlAdapter } from "./adapters/veeControlAdapter.js";
 import { resolveTablePolicy } from "./adapters/queryAllowlist.js";
@@ -43,6 +44,9 @@ type WorkflowApprovalPayload = {
   diff_summary?: WorkflowDiffSummary;
   [key: string]: unknown;
 };
+
+const DB_TARGET_VALUES = ["mmcriativos", "mmcc"] as const;
+type DbTarget = (typeof DB_TARGET_VALUES)[number];
 
 const APP_NAME = "vee-mcp-server";
 const APP_VERSION = process.env.VEE_MCP_VERSION ?? "0.1.0";
@@ -116,6 +120,19 @@ const DB_WRITE_USER = (process.env.DB_WRITE_USER ?? "").trim();
 const DB_WRITE_PASSWORD = process.env.DB_WRITE_PASSWORD ?? "";
 const DB_WRITE_DATABASE = (process.env.DB_WRITE_DATABASE ?? "").trim();
 const DB_WRITE_ENABLED = (process.env.DB_WRITE_ENABLED ?? "false").trim().toLowerCase() === "true";
+const DB_DEFAULT_TARGET = normalizeDbTarget(process.env.DB_DEFAULT_TARGET) ?? "mmcriativos";
+const DB_MMCC_READONLY_HOST = (process.env.DB_MMCC_READONLY_HOST ?? "").trim();
+const DB_MMCC_READONLY_PORT = Number.parseInt(process.env.DB_MMCC_READONLY_PORT ?? "3306", 10);
+const DB_MMCC_READONLY_USER = (process.env.DB_MMCC_READONLY_USER ?? "").trim();
+const DB_MMCC_READONLY_PASSWORD = process.env.DB_MMCC_READONLY_PASSWORD ?? "";
+const DB_MMCC_READONLY_DATABASE = (process.env.DB_MMCC_READONLY_DATABASE ?? "").trim();
+const DB_MMCC_WRITE_HOST = (process.env.DB_MMCC_WRITE_HOST ?? "").trim();
+const DB_MMCC_WRITE_PORT = Number.parseInt(process.env.DB_MMCC_WRITE_PORT ?? "3306", 10);
+const DB_MMCC_WRITE_USER = (process.env.DB_MMCC_WRITE_USER ?? "").trim();
+const DB_MMCC_WRITE_PASSWORD = process.env.DB_MMCC_WRITE_PASSWORD ?? "";
+const DB_MMCC_WRITE_DATABASE = (process.env.DB_MMCC_WRITE_DATABASE ?? "").trim();
+const DB_MMCC_WRITE_ENABLED =
+  (process.env.DB_MMCC_WRITE_ENABLED ?? "false").trim().toLowerCase() === "true";
 
 const n8nAdapter = new N8nRestAdapter({
   baseUrl: N8N_BASE_URL,
@@ -154,24 +171,113 @@ const serverSshAdapter = new ServerSshAdapter({
   fsWriteAllowedPaths: FS_WRITE_ALLOWED_PATHS
 });
 
-const dbReadOnlyAdapter = new DatabaseReadOnlyAdapter({
-  host: DB_READONLY_HOST,
-  port: Number.isNaN(DB_READONLY_PORT) ? 3306 : DB_READONLY_PORT,
-  user: DB_READONLY_USER,
-  password: DB_READONLY_PASSWORD,
-  database: DB_READONLY_DATABASE,
-  maxRowsPerQuery: Number.isNaN(DB_READONLY_MAX_ROWS) ? 100 : Math.max(1, Math.min(DB_READONLY_MAX_ROWS, 100)),
-  rateLimitPerMinute: Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT)
+const filesystemLocalAdapter = new FilesystemLocalAdapter({
+  allowedRoots: FS_ALLOWED_ROOTS,
+  maxFileBytes: Number.isNaN(FS_MAX_FILE_BYTES) ? 262144 : FS_MAX_FILE_BYTES,
+  writeEnabled: FS_WRITE_ENABLED,
+  writeAllowedPaths: FS_WRITE_ALLOWED_PATHS
 });
 
-const dbWriteAdapter = new DatabaseWriteAdapter({
-  host: DB_WRITE_HOST,
-  port: Number.isNaN(DB_WRITE_PORT) ? 3306 : DB_WRITE_PORT,
-  user: DB_WRITE_USER,
-  password: DB_WRITE_PASSWORD,
-  database: DB_WRITE_DATABASE,
-  enabled: DB_WRITE_ENABLED
-});
+const dbReadOnlyAdapters: Record<DbTarget, DatabaseReadOnlyAdapter> = {
+  mmcriativos: new DatabaseReadOnlyAdapter({
+    host: DB_READONLY_HOST,
+    port: Number.isNaN(DB_READONLY_PORT) ? 3306 : DB_READONLY_PORT,
+    user: DB_READONLY_USER,
+    password: DB_READONLY_PASSWORD,
+    database: DB_READONLY_DATABASE,
+    maxRowsPerQuery: Number.isNaN(DB_READONLY_MAX_ROWS)
+      ? 100
+      : Math.max(1, Math.min(DB_READONLY_MAX_ROWS, 100)),
+    rateLimitPerMinute: Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT)
+  }),
+  mmcc: new DatabaseReadOnlyAdapter({
+    host: DB_MMCC_READONLY_HOST,
+    port: Number.isNaN(DB_MMCC_READONLY_PORT) ? 3306 : DB_MMCC_READONLY_PORT,
+    user: DB_MMCC_READONLY_USER,
+    password: DB_MMCC_READONLY_PASSWORD,
+    database: DB_MMCC_READONLY_DATABASE,
+    maxRowsPerQuery: Number.isNaN(DB_READONLY_MAX_ROWS)
+      ? 100
+      : Math.max(1, Math.min(DB_READONLY_MAX_ROWS, 100)),
+    rateLimitPerMinute: Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT)
+  })
+};
+
+const dbWriteAdapters: Record<DbTarget, DatabaseWriteAdapter> = {
+  mmcriativos: new DatabaseWriteAdapter({
+    host: DB_WRITE_HOST,
+    port: Number.isNaN(DB_WRITE_PORT) ? 3306 : DB_WRITE_PORT,
+    user: DB_WRITE_USER,
+    password: DB_WRITE_PASSWORD,
+    database: DB_WRITE_DATABASE,
+    enabled: DB_WRITE_ENABLED
+  }),
+  mmcc: new DatabaseWriteAdapter({
+    host: DB_MMCC_WRITE_HOST,
+    port: Number.isNaN(DB_MMCC_WRITE_PORT) ? 3306 : DB_MMCC_WRITE_PORT,
+    user: DB_MMCC_WRITE_USER,
+    password: DB_MMCC_WRITE_PASSWORD,
+    database: DB_MMCC_WRITE_DATABASE,
+    enabled: DB_MMCC_WRITE_ENABLED
+  })
+};
+
+// Backward-compatible defaults for legacy db tools without db_target.
+const dbReadOnlyAdapter = dbReadOnlyAdapters[DB_DEFAULT_TARGET];
+const dbWriteAdapter = dbWriteAdapters[DB_DEFAULT_TARGET];
+
+const dbTargetSchema = z
+  .enum(DB_TARGET_VALUES)
+  .optional()
+  .describe(`Database target (${DB_TARGET_VALUES.join(" | ")}). Default: ${DB_DEFAULT_TARGET}`);
+
+function normalizeDbTarget(raw: unknown): DbTarget | undefined {
+  if (typeof raw !== "string") {
+    return undefined;
+  }
+  const value = raw.trim().toLowerCase();
+  return (DB_TARGET_VALUES as readonly string[]).includes(value) ? (value as DbTarget) : undefined;
+}
+
+function getConfiguredReadTargets(): DbTarget[] {
+  return (Object.entries(dbReadOnlyAdapters) as Array<[DbTarget, DatabaseReadOnlyAdapter]>)
+    .filter(([, adapter]) => adapter.isConfigured())
+    .map(([target]) => target);
+}
+
+function getConfiguredWriteTargets(): DbTarget[] {
+  return (Object.entries(dbWriteAdapters) as Array<[DbTarget, DatabaseWriteAdapter]>)
+    .filter(([, adapter]) => adapter.isConfigured())
+    .map(([target]) => target);
+}
+
+function resolveReadOnlyAdapter(dbTarget?: DbTarget): { target: DbTarget; adapter: DatabaseReadOnlyAdapter } {
+  const target = dbTarget ?? DB_DEFAULT_TARGET;
+  const adapter = dbReadOnlyAdapters[target];
+  if (!adapter || !adapter.isConfigured()) {
+    const configured = getConfiguredReadTargets();
+    throw new Error(
+      configured.length > 0
+        ? `DB target "${target}" is not configured for read. Configured read targets: ${configured.join(", ")}`
+        : "No DB read target is configured. Set DB_READONLY_* (and optionally DB_MMCC_READONLY_*)."
+    );
+  }
+  return { target, adapter };
+}
+
+function resolveWriteAdapter(dbTarget?: DbTarget): { target: DbTarget; adapter: DatabaseWriteAdapter } {
+  const target = dbTarget ?? DB_DEFAULT_TARGET;
+  const adapter = dbWriteAdapters[target];
+  if (!adapter || !adapter.isConfigured()) {
+    const configured = getConfiguredWriteTargets();
+    throw new Error(
+      configured.length > 0
+        ? `DB target "${target}" is not configured for write. Configured write targets: ${configured.join(", ")}`
+        : "No DB write target is configured. Set DB_WRITE_* and DB_WRITE_ENABLED=true (and optionally DB_MMCC_WRITE_*)."
+    );
+  }
+  return { target, adapter };
+}
 
 const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_health", phase: "v0.1", permission: "read_only", status: "enabled" },
@@ -2568,7 +2674,7 @@ function createServer(): McpServer {
         args: {},
         errorContext: "Failed to list FS allowed paths",
         handler: async () => {
-          const result = serverSshAdapter.listAllowedFsPaths();
+          const result = filesystemLocalAdapter.listAllowedPaths();
           return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             structuredContent: result
@@ -2582,12 +2688,12 @@ function createServer(): McpServer {
     {
       title: "FS — List Directory",
       description:
-        "Lists the contents of a directory on the remote server via SSH. Returns each entry's name, type (file/dir/link), size in bytes, and last modified time. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
+        "Lists the contents of a local directory. Returns each entry's name, type (file/dir/link), size in bytes, and last modified time. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
       inputSchema: {
         path: z
           .string()
           .min(1)
-          .describe("Absolute path to the directory to list (e.g. /opt/mmcriativos)"),
+          .describe("Absolute path to the directory to list (e.g. /workspace/project)"),
         max_entries: z
           .number()
           .int()
@@ -2605,7 +2711,7 @@ function createServer(): McpServer {
         args: { path, max_entries },
         errorContext: `Failed to list directory ${path}`,
         handler: async () => {
-          const result = await serverSshAdapter.listDirectory(path, max_entries);
+          const result = await filesystemLocalAdapter.listDirectory(path, max_entries);
           return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             structuredContent: result
@@ -2619,12 +2725,12 @@ function createServer(): McpServer {
     {
       title: "FS — Read File",
       description:
-        "Reads the contents of a file on the remote server via SSH. Truncates at FS_MAX_FILE_BYTES (default 256 KB). Returns content, total size, and whether it was truncated. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
+        "Reads the contents of a local file. Truncates at FS_MAX_FILE_BYTES (default 256 KB). Returns content, total size, and whether it was truncated. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
       inputSchema: {
         path: z
           .string()
           .min(1)
-          .describe("Absolute path to the file to read (e.g. /opt/mmcriativos/.env)"),
+          .describe("Absolute path to the file to read (e.g. /workspace/project/.env)"),
         max_bytes: z
           .number()
           .int()
@@ -2641,7 +2747,7 @@ function createServer(): McpServer {
         args: { path, max_bytes },
         errorContext: `Failed to read file ${path}`,
         handler: async () => {
-          const result = await serverSshAdapter.readFile(path, max_bytes);
+          const result = await filesystemLocalAdapter.readFile(path, max_bytes);
           return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             structuredContent: result
@@ -2655,19 +2761,19 @@ function createServer(): McpServer {
     {
       title: "FS — Search Text in Files",
       description:
-        "Searches for a text pattern in files on the remote server via SSH (grep -rn). Returns matching file paths, line numbers, and matched lines. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
+        "Searches for a text pattern in local files under a path. Returns matching file paths, line numbers, and matched lines. Path must be absolute and under a configured FS_ALLOWED_ROOTS prefix.",
       inputSchema: {
         pattern: z
           .string()
           .min(1)
           .max(200)
           .describe(
-            "Search pattern (grep regex). Avoid shell metacharacters: ` $ ! ; | & < > \\"
+            "Search text pattern (substring match)"
           ),
         path: z
           .string()
           .min(1)
-          .describe("Absolute path to search in — file or directory (e.g. /opt/mmcriativos)"),
+          .describe("Absolute path to search in — file or directory (e.g. /workspace/project)"),
         max_matches: z
           .number()
           .int()
@@ -2678,7 +2784,7 @@ function createServer(): McpServer {
         case_insensitive: z
           .boolean()
           .optional()
-          .describe("If true, search is case-insensitive (grep -i). Default false."),
+          .describe("If true, search is case-insensitive. Default false."),
         include: z
           .string()
           .optional()
@@ -2695,7 +2801,7 @@ function createServer(): McpServer {
         args: { pattern, path, max_matches, case_insensitive, include },
         errorContext: `Failed to search "${pattern}" in ${path}`,
         handler: async () => {
-          const result = await serverSshAdapter.searchText(pattern, path, {
+          const result = await filesystemLocalAdapter.searchText(pattern, path, {
             maxMatches: max_matches,
             caseInsensitive: case_insensitive,
             include
@@ -2713,12 +2819,12 @@ function createServer(): McpServer {
     {
       title: "FS — Write File",
       description:
-        "Writes content to a file on the remote server via SSH. Requires FS_WRITE_ENABLED=true and path must match FS_WRITE_ALLOWED_PATHS (if configured). Content is transferred safely as base64. Creates or overwrites the file.",
+        "Writes content to a local file. Requires FS_WRITE_ENABLED=true and path must match FS_WRITE_ALLOWED_PATHS (if configured). Creates or overwrites the file.",
       inputSchema: {
         path: z
           .string()
           .min(1)
-          .describe("Absolute path to the file to write (e.g. /opt/mmcriativos/config.json)"),
+          .describe("Absolute path to the file to write (e.g. /workspace/project/config.json)"),
         content: z.string().describe("Text content to write to the file")
       }
     },
@@ -2730,7 +2836,7 @@ function createServer(): McpServer {
         args: { path, content_length: content.length },
         errorContext: `Failed to write file ${path}`,
         handler: async () => {
-          const result = await serverSshAdapter.writeFile(path, content);
+          const result = await filesystemLocalAdapter.writeFile(path, content);
           return {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
             structuredContent: result
@@ -2750,6 +2856,7 @@ function createServer(): McpServer {
         "Supports WHERE filters, JOINs, ORDER BY, and pagination. No raw SQL — all inputs are validated. " +
         "Tables with blocked columns require an explicit 'columns' list. Max 100 rows.",
       inputSchema: {
+        db_target: dbTargetSchema,
         table: z
           .string()
           .min(1)
@@ -2767,29 +2874,37 @@ function createServer(): McpServer {
         offset: z.number().int().min(0).optional().describe("Row offset for pagination")
       }
     },
-    async ({ table, columns, where, joins, order_by, limit, offset }) =>
+    async ({ db_target, table, columns, where, joins, order_by, limit, offset }) =>
       runAuditedTool({
         toolName: "vee_db_query",
         permission: "read_only",
         isWrite: false,
-        args: { table, columns, where_count: where?.length ?? 0, joins_count: joins?.length ?? 0 },
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          table,
+          columns,
+          where_count: where?.length ?? 0,
+          joins_count: joins?.length ?? 0
+        },
         errorContext: `Failed to execute structured query on "${table}"`,
         handler: async () => {
-          const result = await dbReadOnlyAdapter.executeStructuredQuery(
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const result = await adapter.executeStructuredQuery(
             {
               table,
               columns,
-              where: where as Parameters<typeof dbReadOnlyAdapter.executeStructuredQuery>[0]["where"],
-              joins: joins as Parameters<typeof dbReadOnlyAdapter.executeStructuredQuery>[0]["joins"],
-              orderBy: order_by as Parameters<typeof dbReadOnlyAdapter.executeStructuredQuery>[0]["orderBy"],
+              where: where as Parameters<DatabaseReadOnlyAdapter["executeStructuredQuery"]>[0]["where"],
+              joins: joins as Parameters<DatabaseReadOnlyAdapter["executeStructuredQuery"]>[0]["joins"],
+              orderBy: order_by as Parameters<DatabaseReadOnlyAdapter["executeStructuredQuery"]>[0]["orderBy"],
               limit: limit ?? 20,
               offset
             },
-            "vee"
+            `vee:${target}`
           );
+          const payload = { db_target: target, ...result };
           return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-            structuredContent: result
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
           };
         }
       })
@@ -2805,6 +2920,7 @@ function createServer(): McpServer {
         "Protected tables (tenants, clients, contacts, users) require approval: call without approval_id to create one, then call again with the returned approval_id after it is approved. " +
         "UPDATE without WHERE is rejected. DELETE / DROP / TRUNCATE are never allowed.",
       inputSchema: {
+        db_target: dbTargetSchema,
         operation: z.enum(["INSERT", "UPDATE", "UPSERT"]).describe("Write operation type"),
         table: z.string().min(1).describe("Target table name (must be in allowed list)"),
         data: z.record(z.string(), z.unknown()).describe("Column-value pairs to write"),
@@ -2828,12 +2944,18 @@ function createServer(): McpServer {
           )
       }
     },
-    async ({ operation, table, data, where, reason, upsert_key, approval_id }) =>
+    async ({ db_target, operation, table, data, where, reason, upsert_key, approval_id }) =>
       runAuditedTool({
         toolName: "vee_db_write",
         permission: "safe_execute",
         isWrite: true,
-        args: { operation, table, columns: Object.keys(data), reason: reason.slice(0, 120) },
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          operation,
+          table,
+          columns: Object.keys(data),
+          reason: reason.slice(0, 120)
+        },
         errorContext: `Failed to execute structured write on "${table}"`,
         handler: async () => {
           const policy = resolveTablePolicy(table);
@@ -2854,14 +2976,22 @@ function createServer(): McpServer {
                 action_name: `db_write:${operation.toLowerCase()}:${table}`,
                 tool_name: "vee_db_write",
                 summary: `${operation} on ${table}: ${reason}`,
-                request_payload: { operation, table, data, where, reason, upsert_key },
+                request_payload: {
+                  db_target: db_target ?? DB_DEFAULT_TARGET,
+                  operation,
+                  table,
+                  data,
+                  where,
+                  reason,
+                  upsert_key
+                },
                 meta: { source: "vee-mcp-server", requested_at: new Date().toISOString() }
               });
               return buildApprovalCreationResult({
                 approvalId: approval.approval_id,
                 status: approval.status,
                 message: `Write to protected table "${table}" requires approval. Approval created — share the approval_id with the approver.`,
-                extra: { table, operation, reason }
+                extra: { db_target: db_target ?? DB_DEFAULT_TARGET, table, operation, reason }
               });
             }
 
@@ -2888,7 +3018,15 @@ function createServer(): McpServer {
               );
             }
 
-            const writeResult = await dbWriteAdapter.executeStructuredWrite({
+            const savedTarget = normalizeDbTarget(saved["db_target"]) ?? DB_DEFAULT_TARGET;
+            if (db_target && db_target !== savedTarget) {
+              throw new Error(
+                `Approval ${approval_id} is for db_target "${savedTarget}", but received "${db_target}".`
+              );
+            }
+
+            const { adapter: approvedWriteAdapter } = resolveWriteAdapter(savedTarget);
+            const writeResult = await approvedWriteAdapter.executeStructuredWrite({
               operation: saved["operation"] as "INSERT" | "UPDATE" | "UPSERT",
               table: saved["table"] as string,
               data: saved["data"] as Record<string, unknown>,
@@ -2898,12 +3036,13 @@ function createServer(): McpServer {
             });
 
             await veeControlAdapter.markApprovalExecuted(approval_id, {
+              db_target: savedTarget,
               table,
               operation,
               affected_rows: writeResult.affected_rows
             });
 
-            const payload = { approval_id, ...writeResult, ok: true };
+            const payload = { approval_id, db_target: savedTarget, ...writeResult, ok: true };
             return {
               content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
               structuredContent: payload
@@ -2911,7 +3050,8 @@ function createServer(): McpServer {
           }
 
           // ── safe_execute: run directly ────────────────────────────────────
-          const writeResult = await dbWriteAdapter.executeStructuredWrite({
+          const { target, adapter } = resolveWriteAdapter(db_target);
+          const writeResult = await adapter.executeStructuredWrite({
             operation,
             table,
             data,
@@ -2920,9 +3060,10 @@ function createServer(): McpServer {
             upsertKey: upsert_key
           });
 
+          const payload = { db_target: target, ...writeResult };
           return {
-            content: [{ type: "text", text: JSON.stringify(writeResult, null, 2) }],
-            structuredContent: writeResult
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
           };
         }
       })
@@ -2937,6 +3078,7 @@ function createServer(): McpServer {
         "action, or observation about a project, task, appointment, or other entity. " +
         "Forms the core of the traceability timeline.",
       inputSchema: {
+        db_target: dbTargetSchema,
         entity_type: z
           .string()
           .min(1)
@@ -2964,15 +3106,16 @@ function createServer(): McpServer {
           .describe("Surrounding context (e.g. { session_id, tool_name })")
       }
     },
-    async ({ entity_type, entity_id, actor, action, payload, context }) =>
+    async ({ db_target, entity_type, entity_id, actor, action, payload, context }) =>
       runAuditedTool({
         toolName: "vee_db_record_event",
         permission: "safe_execute",
         isWrite: true,
-        args: { entity_type, entity_id, actor, action },
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, entity_type, entity_id, actor, action },
         errorContext: "Failed to record project event",
         handler: async () => {
-          const result = await dbWriteAdapter.recordProjectEvent({
+          const { target, adapter } = resolveWriteAdapter(db_target);
+          const result = await adapter.recordProjectEvent({
             entityType: entity_type,
             entityId: entity_id,
             actor,
@@ -2980,9 +3123,10 @@ function createServer(): McpServer {
             payload: payload ?? null,
             context: context ?? null
           });
+          const payloadResult = { db_target: target, ...result };
           return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-            structuredContent: result
+            content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
+            structuredContent: payloadResult
           };
         }
       })
@@ -2997,6 +3141,7 @@ function createServer(): McpServer {
         "Use to document why something was done, what alternatives were considered, and what the outcome was. " +
         "Forms the institutional memory layer for future context.",
       inputSchema: {
+        db_target: dbTargetSchema,
         title: z.string().min(1).describe("Short title for the decision"),
         context: z
           .string()
@@ -3021,15 +3166,16 @@ function createServer(): McpServer {
           .describe("Optional: associate with a project ID")
       }
     },
-    async ({ title, context, rationale, outcome, actor, project_id }) =>
+    async ({ db_target, title, context, rationale, outcome, actor, project_id }) =>
       runAuditedTool({
         toolName: "vee_db_record_decision",
         permission: "safe_execute",
         isWrite: true,
-        args: { title, actor, project_id },
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, title, actor, project_id },
         errorContext: "Failed to record operational decision",
         handler: async () => {
-          const result = await dbWriteAdapter.recordOperationalDecision({
+          const { target, adapter } = resolveWriteAdapter(db_target);
+          const result = await adapter.recordOperationalDecision({
             title,
             context,
             rationale,
@@ -3037,9 +3183,10 @@ function createServer(): McpServer {
             actor,
             projectId: project_id ?? null
           });
+          const payloadResult = { db_target: target, ...result };
           return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-            structuredContent: result
+            content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
+            structuredContent: payloadResult
           };
         }
       })
@@ -3054,6 +3201,7 @@ function createServer(): McpServer {
         "Shows who did what and when, ordered newest first. " +
         "Use for investigation, context recovery, or audit of any entity.",
       inputSchema: {
+        db_target: dbTargetSchema,
         entity_type: z
           .string()
           .optional()
@@ -3070,12 +3218,12 @@ function createServer(): McpServer {
           .describe("Max events to return (default 50)")
       }
     },
-    async ({ entity_type, entity_id, actor, action, limit }) =>
+    async ({ db_target, entity_type, entity_id, actor, action, limit }) =>
       runAuditedTool({
         toolName: "vee_db_get_timeline",
         permission: "read_only",
         isWrite: false,
-        args: { entity_type, entity_id, actor, action, limit },
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, entity_type, entity_id, actor, action, limit },
         errorContext: "Failed to get entity timeline",
         handler: async () => {
           const where: WhereCondition[] = [];
@@ -3084,18 +3232,20 @@ function createServer(): McpServer {
           if (actor) where.push({ column: "actor", operator: "=", value: actor });
           if (action) where.push({ column: "action", operator: "=", value: action });
 
-          const result = await dbReadOnlyAdapter.executeStructuredQuery(
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const result = await adapter.executeStructuredQuery(
             {
               table: "vee_project_events",
               where,
               orderBy: [{ column: "created_at", direction: "DESC" }],
               limit: limit ?? 50
             },
-            "vee"
+            `vee:${target}`
           );
+          const payloadResult = { db_target: target, ...result };
           return {
-            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-            structuredContent: result
+            content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
+            structuredContent: payloadResult
           };
         }
       })
@@ -3162,8 +3312,16 @@ app.listen(PORT, HOST, () => {
       : "approval control disabled";
   const obsidianMode = obsidianAdapter.isConfigured() ? "obsidian enabled" : "obsidian disabled";
   const serverMode = serverSshAdapter.isConfigured() ? "server ssh enabled" : "server ssh disabled";
-  const dbMode = dbReadOnlyAdapter.isConfigured() ? "db readonly enabled" : "db readonly disabled";
-  const dbWriteMode = dbWriteAdapter.isConfigured() ? "db write enabled" : "db write disabled";
+  const readTargets = getConfiguredReadTargets();
+  const writeTargets = getConfiguredWriteTargets();
+  const dbMode =
+    readTargets.length > 0
+      ? `db readonly enabled (${readTargets.join(", ")})`
+      : "db readonly disabled";
+  const dbWriteMode =
+    writeTargets.length > 0
+      ? `db write enabled (${writeTargets.join(", ")})`
+      : "db write disabled";
   const claudeMode = CLAUDE_MCP_PUBLIC_URL ? "claude endpoint configured" : "claude endpoint auto";
   const fsMode =
     FS_ALLOWED_ROOTS.length > 0
