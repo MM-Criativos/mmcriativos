@@ -3376,8 +3376,8 @@ function createServer(): McpServer {
           .describe("WHERE conditions (required for UPDATE)"),
         reason: z
           .string()
-          .min(15)
-          .describe("Mandatory justification in format \"context: detailed reason\" (min 15 characters)"),
+          .min(1)
+          .describe("Mandatory justification in format \"context: detailed reason\""),
         upsert_key: z
           .array(z.string())
           .optional()

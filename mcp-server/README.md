@@ -154,6 +154,10 @@ Authorization: Bearer <MCP_AUTH_TOKEN>
   - rejects destructive operations by design (`DELETE`, `DROP`, `TRUNCATE` unsupported)
   - accepts payload aliases: `data`, `values`, `set`, `payload.data`, `payload.values`, `payload.set`
   - requires reason in format `context: detailed justification`
+  - valid `reason` examples:
+    - `phase1_validation: validating insert flow in vee_execution_notes`
+    - `ops_fix: normalize stale timeline context fields`
+    - `audit_sync: update trace correlation metadata for incident session`
   - captures before/after snapshots when possible (UPDATE and UPSERT with identity keys; INSERT by `id` or identity fallback)
   - supports required/auto fields via env:
     - `DB_WRITE_REQUIRED_FIELDS_JSON`
@@ -184,3 +188,5 @@ Authorization: Bearer <MCP_AUTH_TOKEN>
 
 - Validation checklist and final runtime snapshot (allowlist + roots): `docs/phase1-validation.md`
 - Raw execution evidence file: `tmp/phase1-validation-results.json`
+- Real environment validation (production endpoint + runtime FS correction): `docs/phase1-real-validation.md`
+- Real environment evidence file: `tmp/phase1-real-validation-results.json`
