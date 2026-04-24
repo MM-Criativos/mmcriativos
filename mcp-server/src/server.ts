@@ -325,19 +325,13 @@ const MMCC_SAFE_EXECUTE_BASE = [
   "appointment_notes",
   "appointment_confirmation_reminder_dispatches",
   "customer_appointment_reminder_dispatches",
-  "professional_daily_schedule_dispatches",
-  "vee_project_events",
-  "vee_status_history",
-  "vee_blocks",
-  "vee_operational_decisions",
-  "vee_execution_notes"
+  "professional_daily_schedule_dispatches"
 ];
 
 const MMCC_APPROVAL_REQUIRED_BASE = [
   "tenants",
   "customers",
-  "users",
-  "messages"
+  "users"
 ];
 
 function buildFsAllowedRoots(fsEnv: FsAllowlistEnv): string[] {

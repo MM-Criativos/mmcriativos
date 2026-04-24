@@ -340,13 +340,6 @@ const BASE_TABLE_POLICIES_MMCC: Record<string, TablePolicy> = {
     sensitive: true,
     writeMode: "approval_required"
   },
-  messages: {
-    table: "messages",
-    allowedColumns: "*",
-    blockedColumns: [...DEFAULT_SENSITIVE_BLOCKED_COLUMNS],
-    sensitive: true,
-    writeMode: "approval_required"
-  },
   ai_messages: {
     table: "ai_messages",
     allowedColumns: "*",
@@ -423,66 +416,10 @@ const BASE_TABLE_POLICIES_MMCC: Record<string, TablePolicy> = {
     blockedColumns: [],
     sensitive: false,
     writeMode: "safe_execute"
-  },
-  vee_mcp_calls: {
-    table: "vee_mcp_calls",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "read_only"
-  },
-  vee_action_approvals: {
-    table: "vee_action_approvals",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "read_only"
-  },
-  vee_execution_notes: {
-    table: "vee_execution_notes",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "safe_execute"
-  },
-  vee_incidents: {
-    table: "vee_incidents",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "safe_execute"
-  },
-  vee_project_events: {
-    table: "vee_project_events",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "safe_execute"
-  },
-  vee_status_history: {
-    table: "vee_status_history",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "safe_execute"
-  },
-  vee_operational_decisions: {
-    table: "vee_operational_decisions",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "safe_execute"
-  },
-  vee_blocks: {
-    table: "vee_blocks",
-    allowedColumns: "*",
-    blockedColumns: [],
-    sensitive: false,
-    writeMode: "safe_execute"
   }
 };
 
-const BASE_NAMED_VIEWS: Record<string, string> = {
+const BASE_NAMED_VIEWS_MMCRIATIVOS: Record<string, string> = {
   project_timeline: "v_project_timeline",
   v_project_timeline: "v_project_timeline",
   active_projects: "v_active_projects",
@@ -494,9 +431,16 @@ const BASE_NAMED_VIEWS: Record<string, string> = {
   timeline_agent_actions: "vee_mcp_calls"
 };
 
+const BASE_NAMED_VIEWS_MMCC: Record<string, string> = {};
+
 const BASE_TABLE_POLICIES_BY_TARGET: Record<DbTarget, Record<string, TablePolicy>> = {
   mmcriativos: BASE_TABLE_POLICIES_MMCRIATIVOS,
   mmcc: BASE_TABLE_POLICIES_MMCC
+};
+
+const BASE_NAMED_VIEWS_BY_TARGET: Record<DbTarget, Record<string, string>> = {
+  mmcriativos: BASE_NAMED_VIEWS_MMCRIATIVOS,
+  mmcc: BASE_NAMED_VIEWS_MMCC
 };
 
 const TARGET_ALLOWLISTS: Record<DbTarget, TargetAllowlist> = {
@@ -656,7 +600,7 @@ function buildTargetAllowlist(dbTarget: DbTarget): TargetAllowlist {
     tablePolicySources.set(name, "base");
   }
 
-  for (const [rawName, rawActual] of Object.entries(BASE_NAMED_VIEWS)) {
+  for (const [rawName, rawActual] of Object.entries(BASE_NAMED_VIEWS_BY_TARGET[dbTarget])) {
     const name = normalizeIdentifier(rawName);
     const actual = normalizeIdentifier(rawActual);
     if (!name || !actual) {

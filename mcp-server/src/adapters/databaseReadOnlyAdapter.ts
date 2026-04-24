@@ -1030,7 +1030,7 @@ export class DatabaseReadOnlyAdapter {
          FROM information_schema.COLUMNS
          WHERE TABLE_SCHEMA = ?
            AND TABLE_NAME IN (${placeholders})
-           AND COLUMN_NAME LIKE '%\\_id' ESCAPE '\\'
+           AND COLUMN_NAME LIKE '%\\_id' ESCAPE '\\\\'
          ORDER BY TABLE_NAME, ORDINAL_POSITION`,
         [this.config.database, ...normalizedNames],
         clientKey,
