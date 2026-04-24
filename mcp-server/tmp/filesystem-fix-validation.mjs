@@ -5,6 +5,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 const MCP_URL = process.env.REAL_MCP_URL ?? "https://mcp.mmcriativos.cloud/mcp";
 const MCP_TOKEN = (process.env.REAL_MCP_TOKEN ?? "").trim();
 const TRACE_ID = `fs-fix-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const FS_TEST_ROOT = process.env.FS_TEST_ROOT ?? "/obsidian";
 
 if (!MCP_TOKEN) {
   throw new Error("REAL_MCP_TOKEN is required.");
@@ -75,11 +76,7 @@ async function main() {
       assert(!allowed.isError, "vee_fs_list_allowed_paths returned error.");
       const roots = Array.isArray(allowed.structured?.roots) ? allowed.structured.roots : [];
       assert(roots.length > 0, "No roots returned.");
-      assert(roots.includes("/obsidian"), `Expected /obsidian in roots. Received: ${JSON.stringify(roots)}`);
-      assert(
-        roots.includes("/opt/obsidian/mm-brain"),
-        `Expected /opt/obsidian/mm-brain in roots. Received: ${JSON.stringify(roots)}`
-      );
+      assert(roots.includes(FS_TEST_ROOT), `Expected ${FS_TEST_ROOT} in roots. Received: ${JSON.stringify(roots)}`);
 
       return {
         roots,
@@ -87,16 +84,16 @@ async function main() {
       };
     });
 
-    await check("2", "List directory real no path legado", async () => {
-      const listed = await call("vee_fs_list_directory", { path: "/opt/obsidian/mm-brain", max_entries: 80 });
+    await check("2", "List directory real", async () => {
+      const listed = await call("vee_fs_list_directory", { path: FS_TEST_ROOT, max_entries: 80 });
       assert(!listed.isError, "vee_fs_list_directory failed.");
-      assert((listed.structured?.total ?? 0) > 0, "No directory entries found for /opt/obsidian/mm-brain.");
+      assert((listed.structured?.total ?? 0) > 0, `No directory entries found for ${FS_TEST_ROOT}.`);
       return { total: listed.structured?.total ?? 0 };
     });
 
-    await check("3", "Read file real no path legado", async () => {
+    await check("3", "Read file real", async () => {
       const read = await call("vee_fs_read_file", {
-        path: "/opt/obsidian/mm-brain/MMCloud/agentes.md",
+        path: `${FS_TEST_ROOT}/MMCloud/agentes.md`,
         max_bytes: 12000
       });
       assert(!read.isError, "vee_fs_read_file failed.");
@@ -104,9 +101,9 @@ async function main() {
       return { total_bytes: read.structured?.total_bytes ?? null };
     });
 
-    await check("4", "Search text real no path legado", async () => {
+    await check("4", "Search text real", async () => {
       const search = await call("vee_fs_search_text", {
-        path: "/opt/obsidian/mm-brain",
+        path: FS_TEST_ROOT,
         pattern: "2026",
         case_insensitive: true,
         max_matches: 20
@@ -121,8 +118,8 @@ async function main() {
       };
     });
 
-    await check("5", "Write file em path permitido legado", async () => {
-      const writePath = `/opt/obsidian/mm-brain/Sessoes/fs-fix-validation-${Date.now()}.md`;
+    await check("5", "Write file em path permitido", async () => {
+      const writePath = `${FS_TEST_ROOT}/Sessoes/fs-fix-validation-${Date.now()}.md`;
       const write = await call("vee_fs_write_file", {
         path: writePath,
         content: `# Filesystem Fix Validation\n\ntrace_id: ${TRACE_ID}\n`
