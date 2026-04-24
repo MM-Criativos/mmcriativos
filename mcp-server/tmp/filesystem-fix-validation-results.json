@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-04-24T16:19:50.624Z",
+  "mcp_url": "https://mcp.mmcriativos.cloud/mcp",
+  "trace_id": "fs-fix-1777047590614-hc4htp",
+  "checks": [
+    {
+      "id": "1",
+      "title": "Allowed paths com roots reais",
+      "status": "pass",
+      "details": {
+        "roots": [
+          "/obsidian"
+        ],
+        "write_paths": [
+          "/obsidian/Sessoes",
+          "/obsidian/MMCloud/testes"
+        ]
+      }
+    },
+    {
+      "id": "2",
+      "title": "List directory real",
+      "status": "pass",
+      "details": {
+        "total": 12
+      }
+    },
+    {
+      "id": "3",
+      "title": "Read file real",
+      "status": "pass",
+      "details": {
+        "total_bytes": 838
+      }
+    },
+    {
+      "id": "4",
+      "title": "Search text real",
+      "status": "pass",
+      "details": {
+        "total_matches": 20
+      }
+    },
+    {
+      "id": "5",
+      "title": "Write file em path permitido",
+      "status": "pass",
+      "details": {
+        "path": "/obsidian/Sessoes/fs-fix-validation-1777047591463.md"
+      }
+    }
+  ],
+  "summary": {
+    "ok": true,
+    "passed": 5,
+    "failed": 0
+  },
+  "artifacts": {
+    "written_file": "/obsidian/Sessoes/fs-fix-validation-1777047591463.md"
+  }
+}
