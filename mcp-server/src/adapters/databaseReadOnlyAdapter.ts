@@ -300,8 +300,8 @@ export class DatabaseReadOnlyAdapter {
        FROM ai_messages
        WHERE session_id = ?
        ORDER BY created_at DESC
-       LIMIT ?`,
-      [sessionId, safeLimit],
+       LIMIT ${safeLimit}`,
+      [sessionId],
       clientKey
     );
     return rows.map((r) => ({
@@ -322,15 +322,16 @@ export class DatabaseReadOnlyAdapter {
     key: string | null,
     clientKey: string
   ): Promise<DbContextState[]> {
+    const safeLimit = Math.max(1, this.config.maxRowsPerQuery);
     const sql = key
       ? `SELECT id, tenant_id, session_id, \`key\`, state, updated_at
-         FROM agent_context_states WHERE session_id = ? AND \`key\` = ? LIMIT ?`
+         FROM agent_context_states WHERE session_id = ? AND \`key\` = ? LIMIT ${safeLimit}`
       : `SELECT id, tenant_id, session_id, \`key\`, state, updated_at
-         FROM agent_context_states WHERE session_id = ? LIMIT ?`;
+         FROM agent_context_states WHERE session_id = ? LIMIT ${safeLimit}`;
 
     const params = key
-      ? [sessionId, key, this.config.maxRowsPerQuery]
-      : [sessionId, this.config.maxRowsPerQuery];
+      ? [sessionId, key]
+      : [sessionId];
 
     const rows = await this.query<Record<string, unknown>>(sql, params, clientKey);
     return rows.map((r) => {
@@ -400,14 +401,14 @@ export class DatabaseReadOnlyAdapter {
          LEFT JOIN contacts c ON c.id = a.client_id
          WHERE a.tenant_id = ?
          ORDER BY a.scheduled_at DESC
-         LIMIT ?`
+         LIMIT ${safeLimit}`
       : `SELECT a.id, a.tenant_id, c.name AS client_name, a.scheduled_at, a.status, a.service, a.notes
          FROM appointments a
          LEFT JOIN contacts c ON c.id = a.client_id
          ORDER BY a.scheduled_at DESC
-         LIMIT ?`;
+         LIMIT ${safeLimit}`;
 
-    const params = tenantId !== null ? [tenantId, safeLimit] : [safeLimit];
+    const params = tenantId !== null ? [tenantId] : [];
     const rows = await this.query<Record<string, unknown>>(sql, params, clientKey);
     return rows.map((r) => ({
       id: this.safeNum(r["id"]) ?? 0,
@@ -496,7 +497,6 @@ export class DatabaseReadOnlyAdapter {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    params.push(safeLimit);
 
     const rows = await this.query<Record<string, unknown>>(
       `SELECT pt.id, pt.title, pt.description, pt.status, pt.created_at,
@@ -509,7 +509,7 @@ export class DatabaseReadOnlyAdapter {
        LEFT JOIN users u ON u.id = pt.assigned_to
        ${whereClause}
        ORDER BY pt.created_at DESC
-       LIMIT ?`,
+       LIMIT ${safeLimit}`,
       params,
       clientKey
     );
@@ -536,15 +536,16 @@ export class DatabaseReadOnlyAdapter {
     keyFilter: string | null,
     clientKey: string
   ): Promise<DbUserPreference[]> {
+    const safeLimit = Math.max(1, this.config.maxRowsPerQuery);
     const sql = keyFilter
       ? `SELECT \`key\`, value, tenant_id, updated_at
-         FROM user_preferences WHERE tenant_id = ? AND \`key\` LIKE ? LIMIT ?`
+         FROM user_preferences WHERE tenant_id = ? AND \`key\` LIKE ? LIMIT ${safeLimit}`
       : `SELECT \`key\`, value, tenant_id, updated_at
-         FROM user_preferences WHERE tenant_id = ? LIMIT ?`;
+         FROM user_preferences WHERE tenant_id = ? LIMIT ${safeLimit}`;
 
     const params = keyFilter
-      ? [tenantId, `%${keyFilter}%`, this.config.maxRowsPerQuery]
-      : [tenantId, this.config.maxRowsPerQuery];
+      ? [tenantId, `%${keyFilter}%`]
+      : [tenantId];
 
     const rows = await this.query<Record<string, unknown>>(sql, params, clientKey);
     return rows.map((r) => ({
@@ -585,14 +586,13 @@ export class DatabaseReadOnlyAdapter {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    params.push(safeLimit);
 
     const rows = await this.query<Record<string, unknown>>(
       `SELECT id, call_id, tool_name, status, permission_level, is_write, duration_ms, error_message, created_at
        FROM vee_mcp_calls
        ${whereClause}
        ORDER BY created_at DESC
-       LIMIT ?`,
+       LIMIT ${safeLimit}`,
       params,
       clientKey
     );
@@ -632,6 +632,20 @@ export class DatabaseReadOnlyAdapter {
     resolved_table: string;
     columns_requested: string[] | null;
     sensitive_query: boolean;
+    involved_tables: string[];
+    performance: {
+      execution_ms: number;
+      max_rows_per_query: number;
+      rate_limit_per_minute: number;
+    };
+    pagination: {
+      limit: number;
+      offset: number;
+      returned_rows: number;
+      has_more_possible: boolean;
+      next_offset: number | null;
+    };
+    result_schema: string[];
     total: number;
     rows: Record<string, unknown>[];
   }> {
@@ -641,24 +655,86 @@ export class DatabaseReadOnlyAdapter {
     // buildSelectQuery throws on any policy violation — no SQL reaches MySQL.
 
     checkRateLimit(clientKey, this.config.rateLimitPerMinute);
+    const startedAt = process.hrtime.bigint();
 
     const [rawRows] = await this.getPool().execute(
       built.sql,
       built.params
     ) as [RowDataPacket[], FieldPacket[]];
 
-    const rows = (rawRows as unknown as Record<string, unknown>[]).slice(
+    const limitedRows = (rawRows as unknown as Record<string, unknown>[]).slice(
       0,
       this.config.maxRowsPerQuery
     );
+    const rows = limitedRows.map(row => this.normalizeRow(row));
+
+    const executionMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+    const appliedLimit = built.appliedLimit ?? this.config.maxRowsPerQuery;
+    const appliedOffset = built.appliedOffset ?? 0;
+    const hasMorePossible = rows.length >= appliedLimit;
+    const resultSchema =
+      rows.length > 0
+        ? [...new Set(Object.keys(rows[0] ?? {}).map(key => String(key)))].sort()
+        : [];
 
     return {
       table: input.table,
       resolved_table: built.resolvedTable,
       columns_requested: input.columns ?? null,
       sensitive_query: built.sensitive,
+      involved_tables: built.involvedTables ?? [built.resolvedTable],
+      performance: {
+        execution_ms: Number(executionMs.toFixed(3)),
+        max_rows_per_query: this.config.maxRowsPerQuery,
+        rate_limit_per_minute: this.config.rateLimitPerMinute
+      },
+      pagination: {
+        limit: appliedLimit,
+        offset: appliedOffset,
+        returned_rows: rows.length,
+        has_more_possible: hasMorePossible,
+        next_offset: hasMorePossible ? appliedOffset + rows.length : null
+      },
+      result_schema: resultSchema,
       total: rows.length,
       rows
     };
+  }
+
+  private normalizeRow(row: Record<string, unknown>): Record<string, unknown> {
+    const normalized: Record<string, unknown> = {};
+    const keys = Object.keys(row).sort((a, b) => a.localeCompare(b));
+
+    for (const key of keys) {
+      normalized[key] = this.normalizeValue(row[key]);
+    }
+
+    return normalized;
+  }
+
+  private normalizeValue(value: unknown): unknown {
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    if (typeof value === "bigint") {
+      return value.toString();
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(item => this.normalizeValue(item));
+    }
+
+    if (value && typeof value === "object") {
+      const source = value as Record<string, unknown>;
+      const normalized: Record<string, unknown> = {};
+      const keys = Object.keys(source).sort((a, b) => a.localeCompare(b));
+      for (const key of keys) {
+        normalized[key] = this.normalizeValue(source[key]);
+      }
+      return normalized;
+    }
+
+    return value;
   }
 }

@@ -1,21 +1,11 @@
-// ─── Structured SQL Builder ───────────────────────────────────────────────────
-// Builds parameterized SELECT / INSERT / UPDATE / UPSERT statements from
-// structured inputs. No raw SQL reaches MySQL — all values are bound parameters.
-//
-// Security invariants:
-//   • Every table name is validated against the allowlist before SQL is built.
-//   • Column names are validated with a strict regex AND against table policy.
-//   • JOIN ON clauses accept only the exact pattern "table.col = table.col".
-//   • WHERE values are always bound as prepared-statement parameters.
-//   • UPDATE without WHERE is rejected (prevents full-table updates).
+// Structured SQL builder for vee_db_query / vee_db_write.
+// All statements are parameterized and validated against the DB allowlist.
 
 import {
   resolveTablePolicy,
   resolveActualTableName,
   type TablePolicy
 } from "./queryAllowlist.js";
-
-// ─── Public input / output types ─────────────────────────────────────────────
 
 export type WhereOperator =
   | "="
@@ -34,25 +24,14 @@ export type WhereOperator =
 export type SqlParam = string | number | boolean | null;
 
 export type WhereCondition = {
-  /** Column name (bare or table-qualified like "projects.id"). */
   column: string;
   operator: WhereOperator;
-  /**
-   * Bound value(s).
-   * Omit / null for IS NULL / IS NOT NULL.
-   * Array for IN / NOT IN.
-   */
   value?: SqlParam | SqlParam[];
 };
 
 export type JoinClause = {
   type?: "INNER" | "LEFT" | "RIGHT";
-  /** Table logical name — validated against allowlist. */
   table: string;
-  /**
-   * ON expression. Only the exact format "tableA.columnA = tableB.columnB"
-   * is accepted. No functions, no subqueries.
-   */
   on: string;
 };
 
@@ -75,10 +54,8 @@ export type StructuredWriteInput = {
   operation: "INSERT" | "UPDATE" | "UPSERT";
   table: string;
   data: Record<string, unknown>;
-  /** Required for UPDATE. Allowed for UPSERT but not used in WHERE. */
   where?: WhereCondition[];
   reason: string;
-  /** Unique-key columns for UPSERT — excluded from the ON DUPLICATE KEY UPDATE list. */
   upsertKey?: string[];
 };
 
@@ -88,19 +65,33 @@ export type BuiltQuery = {
   sensitive: boolean;
   policy: TablePolicy;
   resolvedTable: string;
+  appliedLimit?: number;
+  appliedOffset?: number;
+  involvedTables?: string[];
 };
 
-// ─── Internal constants ───────────────────────────────────────────────────────
+type ResolvedTableRef = {
+  logicalName: string;
+  actualName: string;
+  policy: TablePolicy;
+};
 
-/**
- * Strict regex for JOIN ON clauses.
- * Only accepts: tableA.columnA = tableB.columnB (optional surrounding spaces)
- */
-const JOIN_ON_REGEX =
-  /^[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*\s*=\s*[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*$/i;
+type QueryContext = {
+  base: ResolvedTableRef;
+  joins: ResolvedTableRef[];
+  hasJoins: boolean;
+  byName: Map<string, ResolvedTableRef>;
+};
 
-/** Column names may be bare (col) or table-qualified (table.col). */
+type ColumnRef = {
+  tableRef: ResolvedTableRef;
+  column: string;
+  sql: string;
+};
+
 const COLUMN_NAME_REGEX = /^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?$/i;
+const JOIN_ON_REGEX =
+  /^([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\s*=\s*([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)$/i;
 
 const ALLOWED_OPERATORS = new Set<WhereOperator>([
   "=", "!=", ">", ">=", "<", "<=",
@@ -108,8 +99,6 @@ const ALLOWED_OPERATORS = new Set<WhereOperator>([
   "IN", "NOT IN",
   "IS NULL", "IS NOT NULL"
 ]);
-
-// ─── Validation helpers ───────────────────────────────────────────────────────
 
 function assertSafeColumnName(column: string, context: string): void {
   if (!COLUMN_NAME_REGEX.test(column)) {
@@ -121,6 +110,10 @@ function bareColumn(column: string): string {
   return column.includes(".") ? column.split(".")[1]! : column;
 }
 
+function normalizeIdentifier(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 function assertColumnAllowed(column: string, policy: TablePolicy, context: string): void {
   const bare = bareColumn(column);
 
@@ -128,52 +121,129 @@ function assertColumnAllowed(column: string, policy: TablePolicy, context: strin
     throw new Error(`Column "${bare}" is blocked in "${context}".`);
   }
 
-  if (
-    policy.allowedColumns !== "*" &&
-    !policy.allowedColumns.includes(bare)
-  ) {
+  if (policy.allowedColumns !== "*" && !policy.allowedColumns.includes(bare)) {
     throw new Error(`Column "${bare}" is not in the allowed columns for "${context}".`);
   }
 }
 
-// ─── SELECT column list resolver ─────────────────────────────────────────────
+function registerTableRef(byName: Map<string, ResolvedTableRef>, ref: ResolvedTableRef): void {
+  byName.set(normalizeIdentifier(ref.logicalName), ref);
+  byName.set(normalizeIdentifier(ref.actualName), ref);
+}
 
-function resolveSelectColumns(
-  requestedColumns: string[] | undefined,
-  policy: TablePolicy,
-  resolvedTable: string
-): string {
+function resolveTableRef(byName: Map<string, ResolvedTableRef>, name: string, context: string): ResolvedTableRef {
+  const key = normalizeIdentifier(name);
+  const ref = byName.get(key);
+
+  if (!ref) {
+    const available = [...new Set([...byName.keys()])].sort().join(", ");
+    throw new Error(`Unknown table reference "${name}" in ${context}. Available: ${available}`);
+  }
+
+  return ref;
+}
+
+function splitColumnRef(column: string): { tableName?: string; columnName: string } {
+  const trimmed = column.trim();
+  if (!trimmed.includes(".")) {
+    return { columnName: trimmed };
+  }
+
+  const [tableName, columnName] = trimmed.split(".", 2);
+  return { tableName, columnName };
+}
+
+function resolveColumnRef(column: string, context: QueryContext, clause: string): ColumnRef {
+  assertSafeColumnName(column, clause);
+  const { tableName, columnName } = splitColumnRef(column);
+
+  if (!tableName) {
+    assertColumnAllowed(columnName, context.base.policy, context.base.logicalName);
+    return {
+      tableRef: context.base,
+      column: columnName,
+      sql: `\`${context.base.actualName}\`.\`${columnName}\``
+    };
+  }
+
+  const tableRef = resolveTableRef(context.byName, tableName, clause);
+  assertColumnAllowed(columnName, tableRef.policy, tableRef.logicalName);
+
+  return {
+    tableRef,
+    column: columnName,
+    sql: `\`${tableRef.actualName}\`.\`${columnName}\``
+  };
+}
+
+function buildQueryContext(input: StructuredQueryInput): QueryContext {
+  const basePolicy = resolveTablePolicy(input.table);
+  if (!basePolicy) {
+    throw new Error(`Table or view "${input.table}" is not in the allowed list.`);
+  }
+
+  const base: ResolvedTableRef = {
+    logicalName: normalizeIdentifier(input.table),
+    actualName: resolveActualTableName(input.table),
+    policy: basePolicy
+  };
+
+  const byName = new Map<string, ResolvedTableRef>();
+  registerTableRef(byName, base);
+
+  const joins: ResolvedTableRef[] = [];
+  for (const join of input.joins ?? []) {
+    const joinPolicy = resolveTablePolicy(join.table);
+    if (!joinPolicy) {
+      throw new Error(`JOIN table "${join.table}" is not in the allowed table list.`);
+    }
+
+    const joinRef: ResolvedTableRef = {
+      logicalName: normalizeIdentifier(join.table),
+      actualName: resolveActualTableName(join.table),
+      policy: joinPolicy
+    };
+
+    joins.push(joinRef);
+    registerTableRef(byName, joinRef);
+  }
+
+  return {
+    base,
+    joins,
+    hasJoins: joins.length > 0,
+    byName
+  };
+}
+
+function resolveSelectColumns(requestedColumns: string[] | undefined, context: QueryContext): string {
+  const basePolicy = context.base.policy;
+
   if (!requestedColumns || requestedColumns.length === 0) {
-    if (policy.blockedColumns.length > 0) {
-      // Cannot safely use SELECT * when there are blocked columns.
-      // Caller must provide an explicit column list.
+    if (basePolicy.blockedColumns.length > 0) {
       throw new Error(
-        `Table "${resolvedTable}" has blocked columns (${policy.blockedColumns.join(", ")}). ` +
+        `Table "${context.base.logicalName}" has blocked columns (${basePolicy.blockedColumns.join(", ")}). ` +
         `Provide an explicit "columns" list.`
       );
     }
-    if (policy.allowedColumns === "*") {
-      return "*";
-    }
-    return policy.allowedColumns.map(c => `\`${c}\``).join(", ");
-  }
 
-  for (const col of requestedColumns) {
-    assertSafeColumnName(col, resolvedTable);
-    assertColumnAllowed(col, policy, resolvedTable);
+    if (basePolicy.allowedColumns === "*") {
+      return context.hasJoins ? `\`${context.base.actualName}\`.*` : "*";
+    }
+
+    return basePolicy.allowedColumns
+      .map((column) => `\`${context.base.actualName}\`.\`${column}\``)
+      .join(", ");
   }
 
   return requestedColumns
-    .map(c => (c.includes(".") ? c : `\`${c}\``))
+    .map((column) => resolveColumnRef(column, context, "SELECT").sql)
     .join(", ");
 }
 
-// ─── WHERE clause builder ─────────────────────────────────────────────────────
-
 function buildWhereClause(
   conditions: WhereCondition[],
-  policy: TablePolicy,
-  resolvedTable: string
+  context: QueryContext
 ): { fragment: string; params: SqlParam[] } {
   if (conditions.length === 0) {
     return { fragment: "", params: [] };
@@ -183,133 +253,136 @@ function buildWhereClause(
   const params: SqlParam[] = [];
 
   for (const cond of conditions) {
-    assertSafeColumnName(cond.column, resolvedTable);
-    assertColumnAllowed(cond.column, policy, resolvedTable);
-
     if (!ALLOWED_OPERATORS.has(cond.operator)) {
       throw new Error(`Operator "${cond.operator}" is not allowed.`);
     }
 
-    const col = cond.column.includes(".") ? cond.column : `\`${cond.column}\``;
+    const ref = resolveColumnRef(cond.column, context, "WHERE");
 
     if (cond.operator === "IS NULL" || cond.operator === "IS NOT NULL") {
-      parts.push(`${col} ${cond.operator}`);
+      parts.push(`${ref.sql} ${cond.operator}`);
+      continue;
+    }
 
-    } else if (cond.operator === "IN" || cond.operator === "NOT IN") {
+    if (cond.operator === "IN" || cond.operator === "NOT IN") {
       const values = Array.isArray(cond.value) ? cond.value : [cond.value as SqlParam];
-      if (values.length === 0) {
+      if (values.length === 0 || values.some((value) => value === undefined)) {
         throw new Error("IN / NOT IN clause requires at least one value.");
       }
       const placeholders = values.map(() => "?").join(", ");
-      parts.push(`${col} ${cond.operator} (${placeholders})`);
+      parts.push(`${ref.sql} ${cond.operator} (${placeholders})`);
       params.push(...values);
-
-    } else {
-      if (cond.value === undefined) {
-        throw new Error(`Operator "${cond.operator}" requires a value.`);
-      }
-      parts.push(`${col} ${cond.operator} ?`);
-      params.push(cond.value as SqlParam);
+      continue;
     }
+
+    if (cond.value === undefined) {
+      throw new Error(`Operator "${cond.operator}" requires a value.`);
+    }
+
+    parts.push(`${ref.sql} ${cond.operator} ?`);
+    params.push(cond.value as SqlParam);
   }
 
   return { fragment: `WHERE ${parts.join(" AND ")}`, params };
 }
 
-// ─── JOIN builder ─────────────────────────────────────────────────────────────
+function buildJoinClauses(joins: JoinClause[], context: QueryContext): string {
+  if (joins.length === 0) {
+    return "";
+  }
 
-function buildJoinClauses(joins: JoinClause[]): string {
-  return joins
-    .map(join => {
-      const joinPolicy = resolveTablePolicy(join.table);
-      if (!joinPolicy) {
-        throw new Error(
-          `JOIN table "${join.table}" is not in the allowed table list.`
-        );
-      }
-      if (!JOIN_ON_REGEX.test(join.on.trim())) {
-        throw new Error(
-          `Invalid JOIN ON clause: "${join.on}". ` +
-          `Only "tableA.colA = tableB.colB" format is accepted.`
-        );
-      }
-      const joinType = join.type ?? "INNER";
-      const actualTable = resolveActualTableName(join.table);
-      return `${joinType} JOIN \`${actualTable}\` ON ${join.on.trim()}`;
-    })
-    .join(" ");
+  const parts: string[] = [];
+  const seenTables = new Map<string, ResolvedTableRef>();
+  registerTableRef(seenTables, context.base);
+
+  for (const join of joins) {
+    const joinRef = resolveTableRef(context.byName, join.table, "JOIN table");
+    registerTableRef(seenTables, joinRef);
+
+    const match = JOIN_ON_REGEX.exec(join.on.trim());
+    if (!match) {
+      throw new Error(
+        `Invalid JOIN ON clause: "${join.on}". Only "tableA.colA = tableB.colB" format is accepted.`
+      );
+    }
+
+    const [, leftTable, leftColumn, rightTable, rightColumn] = match;
+    const leftRef = resolveTableRef(seenTables, leftTable!, "JOIN ON");
+    const rightRef = resolveTableRef(seenTables, rightTable!, "JOIN ON");
+
+    assertColumnAllowed(leftColumn!, leftRef.policy, leftRef.logicalName);
+    assertColumnAllowed(rightColumn!, rightRef.policy, rightRef.logicalName);
+
+    if (leftRef.actualName !== joinRef.actualName && rightRef.actualName !== joinRef.actualName) {
+      throw new Error(
+        `JOIN ON clause for table "${join.table}" must reference the joined table on at least one side.`
+      );
+    }
+
+    const joinType = join.type ?? "INNER";
+    parts.push(
+      `${joinType} JOIN \`${joinRef.actualName}\` ON ` +
+      `\`${leftRef.actualName}\`.\`${leftColumn}\` = \`${rightRef.actualName}\`.\`${rightColumn}\``
+    );
+  }
+
+  return parts.join(" ");
 }
 
-// ─── ORDER BY builder ─────────────────────────────────────────────────────────
+function buildOrderByClause(orderBy: OrderByClause[], context: QueryContext): string {
+  if (orderBy.length === 0) {
+    return "";
+  }
 
-function buildOrderByClause(
-  orderBy: OrderByClause[],
-  policy: TablePolicy,
-  resolvedTable: string
-): string {
-  if (orderBy.length === 0) return "";
-
-  const parts = orderBy.map(o => {
-    assertSafeColumnName(o.column, resolvedTable);
-    assertColumnAllowed(o.column, policy, resolvedTable);
-    const dir = o.direction === "DESC" ? "DESC" : "ASC";
-    const col = o.column.includes(".") ? o.column : `\`${o.column}\``;
-    return `${col} ${dir}`;
+  const parts = orderBy.map((item) => {
+    const ref = resolveColumnRef(item.column, context, "ORDER BY");
+    const direction = item.direction === "DESC" ? "DESC" : "ASC";
+    return `${ref.sql} ${direction}`;
   });
 
   return `ORDER BY ${parts.join(", ")}`;
 }
 
-// ─── Public builders ──────────────────────────────────────────────────────────
-
-/** Builds a safe parameterized SELECT statement from structured input. */
 export function buildSelectQuery(input: StructuredQueryInput, maxRows: number): BuiltQuery {
-  const policy = resolveTablePolicy(input.table);
-  if (!policy) {
-    throw new Error(`Table or view "${input.table}" is not in the allowed list.`);
-  }
+  const context = buildQueryContext(input);
 
-  const resolvedTable = resolveActualTableName(input.table);
-  const selectCols = resolveSelectColumns(input.columns, policy, resolvedTable);
-
-  const { fragment: whereFragment, params: whereParams } = buildWhereClause(
-    input.where ?? [],
-    policy,
-    resolvedTable
-  );
-
-  const joinFragment = buildJoinClauses(input.joins ?? []);
-  const orderFragment = buildOrderByClause(input.orderBy ?? [], policy, resolvedTable);
+  const selectCols = resolveSelectColumns(input.columns, context);
+  const joinFragment = buildJoinClauses(input.joins ?? [], context);
+  const { fragment: whereFragment, params: whereParams } = buildWhereClause(input.where ?? [], context);
+  const orderFragment = buildOrderByClause(input.orderBy ?? [], context);
 
   const safeLimit = Math.max(1, Math.min(input.limit ?? maxRows, maxRows));
   const safeOffset = Math.max(0, input.offset ?? 0);
 
   const parts = [
     `SELECT ${selectCols}`,
-    `FROM \`${resolvedTable}\``,
+    `FROM \`${context.base.actualName}\``,
     joinFragment || null,
     whereFragment || null,
     orderFragment || null,
-    `LIMIT ?`,
-    safeOffset > 0 ? `OFFSET ?` : null
+    `LIMIT ${safeLimit}`,
+    safeOffset > 0 ? `OFFSET ${safeOffset}` : null
   ].filter(Boolean);
 
-  const params: SqlParam[] = [
-    ...whereParams,
-    safeLimit,
-    ...(safeOffset > 0 ? [safeOffset] : [])
+  const params: SqlParam[] = [...whereParams];
+
+  const involvedTables = [
+    context.base.actualName,
+    ...context.joins.map((join) => join.actualName)
   ];
 
   return {
     sql: parts.join(" "),
     params,
-    sensitive: policy.sensitive,
-    policy,
-    resolvedTable
+    sensitive: context.base.policy.sensitive,
+    policy: context.base.policy,
+    resolvedTable: context.base.actualName,
+    appliedLimit: safeLimit,
+    appliedOffset: safeOffset,
+    involvedTables: [...new Set(involvedTables)]
   };
 }
 
-/** Builds a safe parameterized INSERT / UPDATE / UPSERT statement from structured input. */
 export function buildWriteQuery(input: StructuredWriteInput): BuiltQuery {
   const policy = resolveTablePolicy(input.table);
   if (!policy) {
@@ -326,52 +399,63 @@ export function buildWriteQuery(input: StructuredWriteInput): BuiltQuery {
     throw new Error("Write operation requires at least one data column.");
   }
 
-  for (const col of columns) {
-    assertSafeColumnName(col, resolvedTable);
-    assertColumnAllowed(col, policy, resolvedTable);
+  for (const column of columns) {
+    assertSafeColumnName(column, resolvedTable);
+    assertColumnAllowed(column, policy, resolvedTable);
   }
 
   const params: SqlParam[] = [];
   let sql: string;
 
   if (input.operation === "INSERT") {
-    const colList = columns.map(c => `\`${c}\``).join(", ");
+    const colList = columns.map((column) => `\`${column}\``).join(", ");
     const placeholders = columns.map(() => "?").join(", ");
-    for (const col of columns) params.push(input.data[col] as SqlParam);
+    for (const column of columns) {
+      params.push(input.data[column] as SqlParam);
+    }
     sql = `INSERT INTO \`${resolvedTable}\` (${colList}) VALUES (${placeholders})`;
-
   } else if (input.operation === "UPDATE") {
     if (!input.where || input.where.length === 0) {
-      throw new Error(
-        "UPDATE requires at least one WHERE condition to prevent full-table updates."
-      );
+      throw new Error("UPDATE requires at least one WHERE condition to prevent full-table updates.");
     }
-    const setClauses = columns.map(c => `\`${c}\` = ?`).join(", ");
-    for (const col of columns) params.push(input.data[col] as SqlParam);
 
-    const { fragment: whereFragment, params: whereParams } = buildWhereClause(
-      input.where,
-      policy,
-      resolvedTable
-    );
+    const setClauses = columns.map((column) => `\`${column}\` = ?`).join(", ");
+    for (const column of columns) {
+      params.push(input.data[column] as SqlParam);
+    }
+
+    const baseContext: QueryContext = {
+      base: {
+        logicalName: normalizeIdentifier(input.table),
+        actualName: resolvedTable,
+        policy
+      },
+      joins: [],
+      hasJoins: false,
+      byName: new Map()
+    };
+    registerTableRef(baseContext.byName, baseContext.base);
+
+    const { fragment: whereFragment, params: whereParams } = buildWhereClause(input.where, baseContext);
     params.push(...whereParams);
     sql = `UPDATE \`${resolvedTable}\` SET ${setClauses} ${whereFragment}`;
-
   } else {
-    // UPSERT — INSERT ... ON DUPLICATE KEY UPDATE
-    const colList = columns.map(c => `\`${c}\``).join(", ");
+    const colList = columns.map((column) => `\`${column}\``).join(", ");
     const placeholders = columns.map(() => "?").join(", ");
-    for (const col of columns) params.push(input.data[col] as SqlParam);
+    for (const column of columns) {
+      params.push(input.data[column] as SqlParam);
+    }
 
     const keyColumns = new Set(input.upsertKey ?? []);
-    const updateCols = columns.filter(c => !keyColumns.has(c));
+    const updateCols = columns.filter((column) => !keyColumns.has(column));
     if (updateCols.length === 0) {
-      throw new Error(
-        "UPSERT requires at least one non-key column to update."
-      );
+      throw new Error("UPSERT requires at least one non-key column to update.");
     }
-    const onDup = updateCols.map(c => `\`${c}\` = VALUES(\`${c}\`)`).join(", ");
-    sql = `INSERT INTO \`${resolvedTable}\` (${colList}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${onDup}`;
+
+    const onDuplicate = updateCols.map((column) => `\`${column}\` = VALUES(\`${column}\`)`).join(", ");
+    sql =
+      `INSERT INTO \`${resolvedTable}\` (${colList}) VALUES (${placeholders}) ` +
+      `ON DUPLICATE KEY UPDATE ${onDuplicate}`;
   }
 
   return {
@@ -383,10 +467,6 @@ export function buildWriteQuery(input: StructuredWriteInput): BuiltQuery {
   };
 }
 
-/**
- * Builds a minimal SELECT for the before/after snapshot of a write operation.
- * Used internally by the write adapter.
- */
 export function buildSnapshotQuery(
   table: string,
   where: WhereCondition[],

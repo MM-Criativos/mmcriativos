@@ -13,7 +13,7 @@ import { ObsidianAdapter } from "./adapters/obsidianAdapter.js";
 import { FilesystemLocalAdapter } from "./adapters/filesystemLocalAdapter.js";
 import { ServerSshAdapter } from "./adapters/serverSshAdapter.js";
 import { VeeControlAdapter } from "./adapters/veeControlAdapter.js";
-import { resolveTablePolicy } from "./adapters/queryAllowlist.js";
+import { listQueryAllowlist, listWritePolicyGroups, resolveTablePolicy } from "./adapters/queryAllowlist.js";
 import type { WhereCondition } from "./adapters/structuredQueryBuilder.js";
 import {
   applyWorkflowOperations,
@@ -47,6 +47,8 @@ type WorkflowApprovalPayload = {
 
 const DB_TARGET_VALUES = ["mmcriativos", "mmcc"] as const;
 type DbTarget = (typeof DB_TARGET_VALUES)[number];
+const FS_ALLOWLIST_ENV_VALUES = ["production", "development", "documentation"] as const;
+type FsAllowlistEnv = (typeof FS_ALLOWLIST_ENV_VALUES)[number];
 
 const APP_NAME = "vee-mcp-server";
 const APP_VERSION = process.env.VEE_MCP_VERSION ?? "0.1.0";
@@ -97,16 +99,11 @@ const SERVER_SSH_ALLOWED_LOG_PATHS = (process.env.SERVER_SSH_ALLOWED_LOG_PATHS ?
   .map(s => s.trim())
   .filter(Boolean);
 const CLAUDE_MCP_PUBLIC_URL = (process.env.CLAUDE_MCP_PUBLIC_URL ?? "").trim();
-const FS_ALLOWED_ROOTS = (process.env.FS_ALLOWED_ROOTS ?? "")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+const FS_ALLOWLIST_ENV = normalizeFsAllowlistEnv(process.env.FS_ALLOWLIST_ENV) ?? "development";
+const FS_ALLOWED_ROOTS = buildFsAllowedRoots(FS_ALLOWLIST_ENV);
 const FS_MAX_FILE_BYTES = Number.parseInt(process.env.FS_MAX_FILE_BYTES ?? "262144", 10);
 const FS_WRITE_ENABLED = (process.env.FS_WRITE_ENABLED ?? "false").trim().toLowerCase() === "true";
-const FS_WRITE_ALLOWED_PATHS = (process.env.FS_WRITE_ALLOWED_PATHS ?? "")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+const FS_WRITE_ALLOWED_PATHS = buildFsWriteAllowedPaths(FS_ALLOWLIST_ENV);
 const DB_READONLY_HOST = (process.env.DB_READONLY_HOST ?? "").trim();
 const DB_READONLY_PORT = Number.parseInt(process.env.DB_READONLY_PORT ?? "3306", 10);
 const DB_READONLY_USER = (process.env.DB_READONLY_USER ?? "").trim();
@@ -175,7 +172,8 @@ const filesystemLocalAdapter = new FilesystemLocalAdapter({
   allowedRoots: FS_ALLOWED_ROOTS,
   maxFileBytes: Number.isNaN(FS_MAX_FILE_BYTES) ? 262144 : FS_MAX_FILE_BYTES,
   writeEnabled: FS_WRITE_ENABLED,
-  writeAllowedPaths: FS_WRITE_ALLOWED_PATHS
+  writeAllowedPaths: FS_WRITE_ALLOWED_PATHS,
+  allowlistEnvironment: FS_ALLOWLIST_ENV
 });
 
 const dbReadOnlyAdapters: Record<DbTarget, DatabaseReadOnlyAdapter> = {
@@ -237,6 +235,94 @@ function normalizeDbTarget(raw: unknown): DbTarget | undefined {
   }
   const value = raw.trim().toLowerCase();
   return (DB_TARGET_VALUES as readonly string[]).includes(value) ? (value as DbTarget) : undefined;
+}
+
+function normalizeFsAllowlistEnv(raw: unknown): FsAllowlistEnv | undefined {
+  if (typeof raw !== "string") {
+    return undefined;
+  }
+  const value = raw.trim().toLowerCase();
+  return (FS_ALLOWLIST_ENV_VALUES as readonly string[]).includes(value) ? (value as FsAllowlistEnv) : undefined;
+}
+
+function parseCsvEnvVar(name: string): string[] {
+  return (process.env[name] ?? "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function dedupeStrings(values: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const value of values) {
+    const key = value.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    unique.push(value);
+  }
+  return unique;
+}
+
+const MMCRIATIVOS_SAFE_EXECUTE_BASE = [
+  "projects",
+  "project_tasks",
+  "vee_project_events",
+  "vee_status_history",
+  "vee_blocks",
+  "vee_operational_decisions",
+  "vee_execution_notes"
+];
+
+const MMCRIATIVOS_APPROVAL_REQUIRED_BASE = [
+  "clients",
+  "contacts",
+  "tenants",
+  "users",
+  "messages",
+  "password_resets",
+  "personal_access_tokens",
+  "oauth_access_tokens",
+  "oauth_refresh_tokens",
+  "oauth_clients",
+  "api_credentials",
+  "integration_credentials",
+  "integrations",
+  "billing_subscriptions",
+  "billing_invoices",
+  "billing_transactions",
+  "subscriptions",
+  "invoices",
+  "payment_methods"
+];
+
+function buildFsAllowedRoots(fsEnv: FsAllowlistEnv): string[] {
+  const envSuffix = fsEnv.toUpperCase();
+  return dedupeStrings(
+    [
+      ...parseCsvEnvVar("FS_ALLOWED_ROOTS"),
+      ...parseCsvEnvVar("FS_ALLOWED_ROOTS_COMMON"),
+      ...parseCsvEnvVar(`FS_ALLOWED_ROOTS_${envSuffix}`),
+      ...parseCsvEnvVar("FS_WORKSPACE_ROOTS"),
+      ...parseCsvEnvVar("FS_DEV_REPO_ROOTS"),
+      ...parseCsvEnvVar("FS_CONFIG_READ_PATHS")
+    ].map(v => v.trim())
+  );
+}
+
+function buildFsWriteAllowedPaths(fsEnv: FsAllowlistEnv): string[] {
+  const envSuffix = fsEnv.toUpperCase();
+  return dedupeStrings(
+    [
+      ...parseCsvEnvVar("FS_WRITE_ALLOWED_PATHS"),
+      ...parseCsvEnvVar("FS_WRITE_ALLOWED_PATHS_COMMON"),
+      ...parseCsvEnvVar(`FS_WRITE_ALLOWED_PATHS_${envSuffix}`),
+      ...parseCsvEnvVar("FS_OPERATION_WRITE_PATHS"),
+      ...parseCsvEnvVar("FS_DOCS_WRITE_PATHS")
+    ].map(v => v.trim())
+  );
 }
 
 function getConfiguredReadTargets(): DbTarget[] {
@@ -352,15 +438,288 @@ const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_fs_search_text", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_fs_write_file", phase: "v0.2", permission: "safe_execute", status: "enabled" },
   { name: "vee_fs_list_allowed_paths", phase: "v0.2", permission: "read_only", status: "enabled" },
+  { name: "vee_db_list_allowlist", phase: "v0.3", permission: "read_only", status: "enabled" },
   { name: "vee_db_query", phase: "v0.3", permission: "read_only", status: "enabled" },
   { name: "vee_db_write", phase: "v0.3", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_record_event", phase: "v0.3", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_record_decision", phase: "v0.3", permission: "safe_execute", status: "enabled" },
-  { name: "vee_db_get_timeline", phase: "v0.3", permission: "read_only", status: "enabled" }
+  { name: "vee_db_record_block", phase: "v0.3", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_unblock_entity", phase: "v0.3", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_get_timeline", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_operational_timeline", phase: "v0.3", permission: "read_only", status: "enabled" }
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeWriteReason(raw: string): string {
+  const normalized = raw.replace(/\s+/g, " ").trim();
+  if (normalized.length < 15) {
+    throw new Error(
+      "Write reason is too short. Use at least 15 characters in the format \"context: detailed justification\"."
+    );
+  }
+  if (!/^[a-zA-Z][a-zA-Z0-9_/-]{2,40}:\s.+/.test(normalized)) {
+    throw new Error(
+      "Write reason must follow \"context: justification\" format (example: \"ops_fix: normalize stale execution rows\")."
+    );
+  }
+  return normalized;
+}
+
+function extractWriteDataPayload(input: {
+  data?: Record<string, unknown>;
+  values?: Record<string, unknown>;
+  set?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
+}): { data: Record<string, unknown>; source: string } {
+  if (input.data && Object.keys(input.data).length > 0) {
+    return { data: input.data, source: "data" };
+  }
+  if (input.values && Object.keys(input.values).length > 0) {
+    return { data: input.values, source: "values" };
+  }
+  if (input.set && Object.keys(input.set).length > 0) {
+    return { data: input.set, source: "set" };
+  }
+
+  const payload = input.payload;
+  if (payload) {
+    const payloadData = payload["data"];
+    const payloadValues = payload["values"];
+    const payloadSet = payload["set"];
+    if (isRecord(payloadData) && Object.keys(payloadData).length > 0) {
+      return { data: payloadData, source: "payload.data" };
+    }
+    if (isRecord(payloadValues) && Object.keys(payloadValues).length > 0) {
+      return { data: payloadValues, source: "payload.values" };
+    }
+    if (isRecord(payloadSet) && Object.keys(payloadSet).length > 0) {
+      return { data: payloadSet, source: "payload.set" };
+    }
+  }
+
+  throw new Error(
+    "Missing write payload. Provide one of: data, values, set, payload.data, payload.values, or payload.set."
+  );
+}
+
+type OperationalTimelineItem = {
+  kind: "event" | "decision" | "block" | "status_change" | "agent_action";
+  timestamp: string;
+  actor: string;
+  action: string;
+  entity_type: string;
+  entity_id: number | null;
+  project_id: number | null;
+  trace_id: string | null;
+  source_table: string;
+  raw: Record<string, unknown>;
+};
+
+function normalizeActorName(raw: string | undefined): string {
+  const normalized = (raw ?? "").trim();
+  return normalized.length > 0 ? normalized : "Vee";
+}
+
+function normalizeTraceId(raw: string | undefined): string {
+  const normalized = (raw ?? "").trim();
+  if (!normalized) {
+    return randomUUID();
+  }
+  if (!/^[a-zA-Z0-9._:-]{8,120}$/.test(normalized)) {
+    throw new Error("trace_id format is invalid. Use 8-120 chars: letters, numbers, . _ : -");
+  }
+  return normalized;
+}
+
+function normalizeEntityType(raw: string): string {
+  const normalized = raw.trim().toLowerCase();
+  if (!/^[a-z_][a-z0-9_:-]{1,80}$/.test(normalized)) {
+    throw new Error(`Invalid entity_type "${raw}". Use lowercase identifiers like project, task, session, incident.`);
+  }
+  return normalized;
+}
+
+function coercePositiveInt(value: unknown): number | null {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function parseJsonLike(value: unknown): Record<string, unknown> | null {
+  if (isRecord(value)) {
+    return value;
+  }
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed || (trimmed[0] !== "{" && trimmed[0] !== "[")) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(trimmed);
+    return isRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function firstDefinedString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value !== "string") {
+      continue;
+    }
+    const normalized = value.trim();
+    if (normalized.length > 0) {
+      return normalized;
+    }
+  }
+  return null;
+}
+
+function firstDefinedNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    const n = coercePositiveInt(value);
+    if (n !== null) {
+      return n;
+    }
+  }
+  return null;
+}
+
+function resolveTimelineEntityId(params: {
+  where?: WhereCondition[];
+  data: Record<string, unknown>;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+}): number | null {
+  const fromWhere = (params.where ?? []).find(
+    condition => condition.operator === "=" && typeof condition.column === "string" && condition.column.endsWith("id")
+  );
+
+  return firstDefinedNumber(
+    params.after?.["id"],
+    params.before?.["id"],
+    params.data["id"],
+    params.after?.["entity_id"],
+    params.before?.["entity_id"],
+    params.data["entity_id"],
+    fromWhere?.value
+  );
+}
+
+function resolveTimelineProjectId(params: {
+  project_id?: number | null;
+  data: Record<string, unknown>;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+}): number | null {
+  return firstDefinedNumber(
+    params.project_id,
+    params.after?.["project_id"],
+    params.before?.["project_id"],
+    params.data["project_id"]
+  );
+}
+
+function inferEntityTypeFromTable(table: string): string {
+  const normalized = table.trim().toLowerCase();
+  if (normalized.endsWith("ies")) {
+    return `${normalized.slice(0, -3)}y`;
+  }
+  if (normalized.endsWith("s")) {
+    return normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+function summarizeTimelineViews(items: OperationalTimelineItem[]): {
+  by_actor: Record<string, number>;
+  by_entity: Record<string, number>;
+  by_project: Record<string, number>;
+  by_kind: Record<string, number>;
+} {
+  const byActor: Record<string, number> = {};
+  const byEntity: Record<string, number> = {};
+  const byProject: Record<string, number> = {};
+  const byKind: Record<string, number> = {};
+
+  for (const item of items) {
+    byActor[item.actor] = (byActor[item.actor] ?? 0) + 1;
+    const entityKey = `${item.entity_type}:${item.entity_id ?? "n/a"}`;
+    byEntity[entityKey] = (byEntity[entityKey] ?? 0) + 1;
+    if (item.project_id !== null) {
+      const projectKey = String(item.project_id);
+      byProject[projectKey] = (byProject[projectKey] ?? 0) + 1;
+    }
+    byKind[item.kind] = (byKind[item.kind] ?? 0) + 1;
+  }
+
+  return { by_actor: byActor, by_entity: byEntity, by_project: byProject, by_kind: byKind };
+}
+
+function normalizeTimelineTimestamp(raw: unknown): string | null {
+  if (raw instanceof Date) {
+    return raw.toISOString();
+  }
+  if (typeof raw !== "string") {
+    return null;
+  }
+  const value = raw.trim();
+  if (!value) {
+    return null;
+  }
+  if (value.includes("T")) {
+    return value;
+  }
+  if (/^\d{4}-\d{2}-\d{2}\s/.test(value)) {
+    return value.replace(" ", "T");
+  }
+  return value;
+}
+
+function timestampToMs(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function extractCorrelationString(raw: Record<string, unknown>, key: string): string | null {
+  const payload = parseJsonLike(raw["payload"]);
+  const context = parseJsonLike(raw["context"]);
+  const requestPayload = parseJsonLike(raw["request_payload"]);
+  const responsePayload = parseJsonLike(raw["response_payload"]);
+  const meta = parseJsonLike(raw["meta"]);
+
+  return firstDefinedString(
+    raw[key],
+    payload?.[key],
+    context?.[key],
+    requestPayload?.[key],
+    responsePayload?.[key],
+    meta?.[key]
+  );
+}
+
+function extractCorrelationNumber(raw: Record<string, unknown>, key: string): number | null {
+  const payload = parseJsonLike(raw["payload"]);
+  const context = parseJsonLike(raw["context"]);
+  const requestPayload = parseJsonLike(raw["request_payload"]);
+  const responsePayload = parseJsonLike(raw["response_payload"]);
+  const meta = parseJsonLike(raw["meta"]);
+
+  return firstDefinedNumber(
+    raw[key],
+    payload?.[key],
+    context?.[key],
+    requestPayload?.[key],
+    responsePayload?.[key],
+    meta?.[key]
+  );
 }
 
 function toToolError(error: unknown, context: string): ToolResult {
@@ -2663,7 +3022,7 @@ function createServer(): McpServer {
     {
       title: "FS — List Allowed Paths",
       description:
-        "Returns the configured filesystem allowed roots and write paths. Use this to know which directories are accessible before calling other vee_fs_* tools.",
+        "Returns the active filesystem allowlist environment plus configured read roots and write paths. Use this to validate which directories are accessible before calling other vee_fs_* tools.",
       inputSchema: {}
     },
     async () =>
@@ -2848,13 +3207,83 @@ function createServer(): McpServer {
   // ─── DB generic tools (v0.3) ───────────────────────────────────────────────
 
   server.registerTool(
+    "vee_db_list_allowlist",
+    {
+      title: "DB — List Allowlist",
+      description:
+        "Lists the effective DB allowlist used by vee_db_query/vee_db_write, including tables, named views, blocked columns, and write modes. " +
+        "Includes entries from base code and optional env overlays (DB_ALLOWLIST_EXTRA_TABLE_POLICIES_JSON / DB_ALLOWLIST_EXTRA_NAMED_VIEWS_JSON).",
+      inputSchema: {}
+    },
+    async () =>
+      runAuditedTool({
+        toolName: "vee_db_list_allowlist",
+        permission: "read_only",
+        isWrite: false,
+        args: {},
+        errorContext: "Failed to list DB allowlist",
+        handler: async () => {
+          const entries = listQueryAllowlist();
+          const writeGroups = listWritePolicyGroups();
+          const tables = entries.filter(entry => entry.kind === "table");
+          const namedViews = entries.filter(entry => entry.kind === "named_view");
+          const blockedColumns = tables
+            .filter(entry => entry.blocked_columns.length > 0)
+            .map(entry => ({ table: entry.logical_name, blocked_columns: entry.blocked_columns }));
+          const mmccSafeExecuteConfigured = dedupeStrings([
+            ...parseCsvEnvVar("DB_SAFE_EXECUTE_TABLES_MMCC"),
+            ...parseCsvEnvVar("DB_SAFE_EXECUTE_TABLES")
+          ]);
+          const mmccApprovalRequiredConfigured = dedupeStrings([
+            ...parseCsvEnvVar("DB_APPROVAL_REQUIRED_TABLES_MMCC"),
+            ...parseCsvEnvVar("DB_APPROVAL_REQUIRED_TABLES")
+          ]);
+
+          const payload = {
+            totals: {
+              entries: entries.length,
+              tables: tables.length,
+              named_views: namedViews.length,
+              sensitive_tables: tables.filter(entry => entry.sensitive).length,
+              with_blocked_columns: blockedColumns.length
+            },
+            overlays: {
+              env_table_overrides: tables.filter(entry => entry.source === "env").length,
+              env_named_view_overrides: namedViews.filter(entry => entry.source === "env").length
+            },
+            policy_groups: {
+              safe_execute: writeGroups.safe_execute,
+              approval_required: writeGroups.approval_required,
+              read_only: writeGroups.read_only,
+              mm_criativos_baseline: {
+                safe_execute: MMCRIATIVOS_SAFE_EXECUTE_BASE,
+                approval_required: MMCRIATIVOS_APPROVAL_REQUIRED_BASE
+              },
+              mmcc_configured: {
+                safe_execute: mmccSafeExecuteConfigured,
+                approval_required: mmccApprovalRequiredConfigured
+              }
+            },
+            blocked_columns: blockedColumns,
+            entries
+          };
+
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
     "vee_db_query",
     {
       title: "DB — Structured Query",
       description:
         "Executes a structured SELECT against allowed tables or named views (project_timeline, active_projects, pending_work). " +
         "Supports WHERE filters, JOINs, ORDER BY, and pagination. No raw SQL — all inputs are validated. " +
-        "Tables with blocked columns require an explicit 'columns' list. Max 100 rows.",
+        "Tables with blocked columns require an explicit 'columns' list. Returns pagination/performance metadata and normalized row schema. Max 100 rows.",
       inputSchema: {
         db_target: dbTargetSchema,
         table: z
@@ -2866,7 +3295,7 @@ function createServer(): McpServer {
         columns: z
           .array(z.string().min(1))
           .optional()
-          .describe("Columns to return. Required for tables with blocked columns (contacts, users)."),
+          .describe("Columns to return. Required for tables with blocked columns."),
         where: z.array(whereConditionSchema).optional().describe("WHERE conditions (AND-joined)"),
         joins: z.array(joinClauseSchema).optional().describe("JOIN clauses"),
         order_by: z.array(orderBySchema).optional().describe("ORDER BY clauses"),
@@ -2918,20 +3347,37 @@ function createServer(): McpServer {
         "Executes a structured INSERT / UPDATE / UPSERT against allowlisted tables. " +
         "Safe tables (projects, project_tasks, vee_*, etc.) execute directly. " +
         "Protected tables (tenants, clients, contacts, users) require approval: call without approval_id to create one, then call again with the returned approval_id after it is approved. " +
+        "Accepts payload aliases (data, values, set, payload.data/values/set). " +
+        "Reason is mandatory in format \"context: detailed justification\". " +
         "UPDATE without WHERE is rejected. DELETE / DROP / TRUNCATE are never allowed.",
       inputSchema: {
         db_target: dbTargetSchema,
         operation: z.enum(["INSERT", "UPDATE", "UPSERT"]).describe("Write operation type"),
         table: z.string().min(1).describe("Target table name (must be in allowed list)"),
-        data: z.record(z.string(), z.unknown()).describe("Column-value pairs to write"),
+        data: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Column-value pairs to write (preferred payload field)"),
+        values: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Legacy alias for data (accepted for compatibility)"),
+        set: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Legacy alias for data (accepted for compatibility)"),
+        payload: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe("Optional envelope; accepts payload.data / payload.values / payload.set"),
         where: z
           .array(whereConditionSchema)
           .optional()
           .describe("WHERE conditions (required for UPDATE)"),
         reason: z
           .string()
-          .min(10)
-          .describe("Justification for this write (min 10 characters)"),
+          .min(15)
+          .describe("Mandatory justification in format \"context: detailed reason\" (min 15 characters)"),
         upsert_key: z
           .array(z.string())
           .optional()
@@ -2941,10 +3387,40 @@ function createServer(): McpServer {
           .optional()
           .describe(
             "For protected tables: provide the approval_id returned from the first call once it is approved"
-          )
+          ),
+        actor: z
+          .string()
+          .optional()
+          .describe("Who initiated this write (default: Vee). Used for timeline/audit attribution."),
+        trace_id: z
+          .string()
+          .optional()
+          .describe("Optional correlation ID to link write, decision, event, and audit."),
+        project_id: z.number().int().optional().describe("Optional project linkage for timeline."),
+        session_id: z.string().optional().describe("Optional session linkage for timeline."),
+        incident_id: z.string().optional().describe("Optional incident linkage for timeline."),
+        decision_id: z.string().optional().describe("Optional linked decision_id for traceability.")
       }
     },
-    async ({ db_target, operation, table, data, where, reason, upsert_key, approval_id }) =>
+    async ({
+      db_target,
+      operation,
+      table,
+      data,
+      values,
+      set,
+      payload,
+      where,
+      reason,
+      upsert_key,
+      approval_id,
+      actor,
+      trace_id,
+      project_id,
+      session_id,
+      incident_id,
+      decision_id
+    }) =>
       runAuditedTool({
         toolName: "vee_db_write",
         permission: "safe_execute",
@@ -2953,11 +3429,27 @@ function createServer(): McpServer {
           db_target: db_target ?? DB_DEFAULT_TARGET,
           operation,
           table,
-          columns: Object.keys(data),
-          reason: reason.slice(0, 120)
+          actor: normalizeActorName(actor),
+          trace_id: trace_id ?? null,
+          reason_preview: reason.slice(0, 160),
+          payload_shapes: {
+            has_data: !!data,
+            has_values: !!values,
+            has_set: !!set,
+            has_payload: !!payload
+          }
         },
         errorContext: `Failed to execute structured write on "${table}"`,
         handler: async () => {
+          const { data: writeData, source: payloadSource } = extractWriteDataPayload({
+            data,
+            values,
+            set,
+            payload
+          });
+          const normalizedReason = normalizeWriteReason(reason);
+          const normalizedActor = normalizeActorName(actor);
+          const normalizedTraceId = normalizeTraceId(trace_id);
           const policy = resolveTablePolicy(table);
           if (!policy) {
             throw new Error(
@@ -2975,23 +3467,42 @@ function createServer(): McpServer {
               const approval = await veeControlAdapter.createApproval({
                 action_name: `db_write:${operation.toLowerCase()}:${table}`,
                 tool_name: "vee_db_write",
-                summary: `${operation} on ${table}: ${reason}`,
+                summary: `${operation} on ${table}: ${normalizedReason}`,
                 request_payload: {
                   db_target: db_target ?? DB_DEFAULT_TARGET,
                   operation,
                   table,
-                  data,
+                  data: writeData,
+                  payload_source: payloadSource,
                   where,
-                  reason,
-                  upsert_key
+                  reason: normalizedReason,
+                  upsert_key,
+                  actor: normalizedActor,
+                  trace_id: normalizedTraceId,
+                  project_id: project_id ?? null,
+                  session_id: session_id ?? null,
+                  incident_id: incident_id ?? null,
+                  decision_id: decision_id ?? null
                 },
-                meta: { source: "vee-mcp-server", requested_at: new Date().toISOString() }
+                meta: {
+                  source: "vee-mcp-server",
+                  requested_at: new Date().toISOString(),
+                  actor: normalizedActor,
+                  trace_id: normalizedTraceId
+                }
               });
               return buildApprovalCreationResult({
                 approvalId: approval.approval_id,
                 status: approval.status,
                 message: `Write to protected table "${table}" requires approval. Approval created — share the approval_id with the approver.`,
-                extra: { db_target: db_target ?? DB_DEFAULT_TARGET, table, operation, reason }
+                extra: {
+                  db_target: db_target ?? DB_DEFAULT_TARGET,
+                  table,
+                  operation,
+                  reason: normalizedReason,
+                  actor: normalizedActor,
+                  trace_id: normalizedTraceId
+                }
               });
             }
 
@@ -3026,44 +3537,158 @@ function createServer(): McpServer {
             }
 
             const { adapter: approvedWriteAdapter } = resolveWriteAdapter(savedTarget);
+            const savedData = (saved["data"] as Record<string, unknown> | undefined) ?? {};
+            const savedWhere = saved["where"] as WhereCondition[] | undefined;
+            const savedActor = normalizeActorName(
+              typeof saved["actor"] === "string" ? saved["actor"] : normalizedActor
+            );
+            const savedTraceId = normalizeTraceId(
+              typeof saved["trace_id"] === "string" ? saved["trace_id"] : normalizedTraceId
+            );
             const writeResult = await approvedWriteAdapter.executeStructuredWrite({
               operation: saved["operation"] as "INSERT" | "UPDATE" | "UPSERT",
               table: saved["table"] as string,
-              data: saved["data"] as Record<string, unknown>,
-              where: saved["where"] as WhereCondition[] | undefined,
+              data: savedData,
+              where: savedWhere,
               reason: saved["reason"] as string,
               upsertKey: saved["upsert_key"] as string[] | undefined
             });
+
+            const timelineEntityId = resolveTimelineEntityId({
+              where: savedWhere,
+              data: savedData,
+              before: writeResult.before,
+              after: writeResult.after
+            });
+            const timelineProjectId = resolveTimelineProjectId({
+              project_id: coercePositiveInt(saved["project_id"]),
+              data: savedData,
+              before: writeResult.before,
+              after: writeResult.after
+            });
+            let timelineEventId: string | null = null;
+            if (timelineEntityId !== null) {
+              const timelineEvent = await approvedWriteAdapter.recordProjectEvent({
+                entityType: inferEntityTypeFromTable(table),
+                entityId: timelineEntityId,
+                actor: savedActor,
+                action: `db_write_${operation.toLowerCase()}`,
+                payload: {
+                  trace_id: savedTraceId,
+                  table,
+                  operation,
+                  write_mode: policy.writeMode,
+                  affected_rows: writeResult.affected_rows,
+                  reason: writeResult.reason,
+                  decision_id: saved["decision_id"] ?? null,
+                  before: writeResult.before,
+                  after: writeResult.after
+                },
+                context: {
+                  source: "vee_db_write",
+                  source_agent: savedActor,
+                  db_target: savedTarget,
+                  approval_id,
+                  project_id: timelineProjectId,
+                  session_id: saved["session_id"] ?? null,
+                  incident_id: saved["incident_id"] ?? null,
+                  decision_id: saved["decision_id"] ?? null
+                }
+              });
+              timelineEventId = (timelineEvent.after?.event_id as string | undefined) ?? null;
+            }
 
             await veeControlAdapter.markApprovalExecuted(approval_id, {
               db_target: savedTarget,
               table,
               operation,
-              affected_rows: writeResult.affected_rows
+              affected_rows: writeResult.affected_rows,
+              trace_id: savedTraceId
             });
 
-            const payload = { approval_id, db_target: savedTarget, ...writeResult, ok: true };
+            const resultPayload = {
+              approval_id,
+              db_target: savedTarget,
+              write_mode: policy.writeMode,
+              payload_source: saved["payload_source"] ?? "approval_payload.data",
+              actor: savedActor,
+              trace_id: savedTraceId,
+              timeline_event_id: timelineEventId,
+              ...writeResult,
+              ok: true
+            };
             return {
-              content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
-              structuredContent: payload
+              content: [{ type: "text", text: JSON.stringify(resultPayload, null, 2) }],
+              structuredContent: resultPayload
             };
           }
 
           // ── safe_execute: run directly ────────────────────────────────────
           const { target, adapter } = resolveWriteAdapter(db_target);
+          const safeWhere = where as WhereCondition[] | undefined;
           const writeResult = await adapter.executeStructuredWrite({
             operation,
             table,
-            data,
-            where: where as WhereCondition[] | undefined,
-            reason,
+            data: writeData,
+            where: safeWhere,
+            reason: normalizedReason,
             upsertKey: upsert_key
           });
+          const timelineEntityId = resolveTimelineEntityId({
+            where: safeWhere,
+            data: writeData,
+            before: writeResult.before,
+            after: writeResult.after
+          });
+          const timelineProjectId = resolveTimelineProjectId({
+            project_id: project_id ?? null,
+            data: writeData,
+            before: writeResult.before,
+            after: writeResult.after
+          });
+          let timelineEventId: string | null = null;
+          if (timelineEntityId !== null) {
+            const timelineEvent = await adapter.recordProjectEvent({
+              entityType: inferEntityTypeFromTable(table),
+              entityId: timelineEntityId,
+              actor: normalizedActor,
+              action: `db_write_${operation.toLowerCase()}`,
+              payload: {
+                trace_id: normalizedTraceId,
+                table,
+                operation,
+                write_mode: policy.writeMode,
+                affected_rows: writeResult.affected_rows,
+                reason: writeResult.reason,
+                decision_id: decision_id ?? null,
+                before: writeResult.before,
+                after: writeResult.after
+              },
+              context: {
+                source: "vee_db_write",
+                source_agent: normalizedActor,
+                db_target: target,
+                project_id: timelineProjectId,
+                session_id: session_id ?? null,
+                incident_id: incident_id ?? null,
+                decision_id: decision_id ?? null
+              }
+            });
+            timelineEventId = (timelineEvent.after?.event_id as string | undefined) ?? null;
+          }
 
-          const payload = { db_target: target, ...writeResult };
+          const resultPayload = {
+            db_target: target,
+            write_mode: policy.writeMode,
+            payload_source: payloadSource,
+            actor: normalizedActor,
+            trace_id: normalizedTraceId,
+            timeline_event_id: timelineEventId,
+            ...writeResult
+          };
           return {
-            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
-            structuredContent: payload
+            content: [{ type: "text", text: JSON.stringify(resultPayload, null, 2) }],
+            structuredContent: resultPayload
           };
         }
       })
@@ -3090,8 +3715,8 @@ function createServer(): McpServer {
           .describe("ID of the entity"),
         actor: z
           .string()
-          .min(1)
-          .describe("Who triggered this event (e.g. Vee, system, user name)"),
+          .optional()
+          .describe("Who triggered this event (default: Vee)"),
         action: z
           .string()
           .min(1)
@@ -3103,27 +3728,107 @@ function createServer(): McpServer {
         context: z
           .record(z.string(), z.unknown())
           .optional()
-          .describe("Surrounding context (e.g. { session_id, tool_name })")
+          .describe("Surrounding context (e.g. { session_id, tool_name })"),
+        trace_id: z
+          .string()
+          .optional()
+          .describe("Optional correlation ID to link event, decision, and db writes"),
+        project_id: z.number().int().optional().describe("Optional project linkage"),
+        session_id: z.string().optional().describe("Optional session linkage"),
+        incident_id: z.string().optional().describe("Optional incident linkage"),
+        decision_id: z.string().optional().describe("Optional linked decision ID"),
+        source_tool: z.string().optional().describe("Optional source tool name"),
+        source_agent: z.string().optional().describe("Optional source agent name")
       }
     },
-    async ({ db_target, entity_type, entity_id, actor, action, payload, context }) =>
+    async ({
+      db_target,
+      entity_type,
+      entity_id,
+      actor,
+      action,
+      payload,
+      context,
+      trace_id,
+      project_id,
+      session_id,
+      incident_id,
+      decision_id,
+      source_tool,
+      source_agent
+    }) =>
       runAuditedTool({
         toolName: "vee_db_record_event",
         permission: "safe_execute",
         isWrite: true,
-        args: { db_target: db_target ?? DB_DEFAULT_TARGET, entity_type, entity_id, actor, action },
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          entity_type,
+          entity_id,
+          actor: normalizeActorName(actor),
+          action,
+          trace_id: trace_id ?? null
+        },
         errorContext: "Failed to record project event",
         handler: async () => {
+          const normalizedActor = normalizeActorName(actor);
+          const normalizedTraceId = normalizeTraceId(trace_id);
+          const normalizedEntityType = normalizeEntityType(entity_type);
+          const normalizedAction = action.trim();
+          if (!normalizedAction) {
+            throw new Error("action is required.");
+          }
+
+          const eventPayload: Record<string, unknown> = {
+            ...(payload ?? {})
+          };
+          if (eventPayload["trace_id"] === undefined) {
+            eventPayload["trace_id"] = normalizedTraceId;
+          }
+          if (decision_id && eventPayload["decision_id"] === undefined) {
+            eventPayload["decision_id"] = decision_id;
+          }
+
+          const eventContext: Record<string, unknown> = {
+            ...(context ?? {})
+          };
+          if (eventContext["trace_id"] === undefined) {
+            eventContext["trace_id"] = normalizedTraceId;
+          }
+          if (eventContext["project_id"] === undefined && project_id !== undefined) {
+            eventContext["project_id"] = project_id;
+          }
+          if (eventContext["session_id"] === undefined && session_id !== undefined) {
+            eventContext["session_id"] = session_id;
+          }
+          if (eventContext["incident_id"] === undefined && incident_id !== undefined) {
+            eventContext["incident_id"] = incident_id;
+          }
+          if (eventContext["decision_id"] === undefined && decision_id !== undefined) {
+            eventContext["decision_id"] = decision_id;
+          }
+          if (eventContext["source_tool"] === undefined) {
+            eventContext["source_tool"] = source_tool ?? "vee_db_record_event";
+          }
+          if (eventContext["source_agent"] === undefined) {
+            eventContext["source_agent"] = source_agent ?? normalizedActor;
+          }
+
           const { target, adapter } = resolveWriteAdapter(db_target);
           const result = await adapter.recordProjectEvent({
-            entityType: entity_type,
+            entityType: normalizedEntityType,
             entityId: entity_id,
-            actor,
-            action,
-            payload: payload ?? null,
-            context: context ?? null
+            actor: normalizedActor,
+            action: normalizedAction,
+            payload: eventPayload,
+            context: eventContext
           });
-          const payloadResult = { db_target: target, ...result };
+          const payloadResult = {
+            db_target: target,
+            actor: normalizedActor,
+            trace_id: normalizedTraceId,
+            ...result
+          };
           return {
             content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
             structuredContent: payloadResult
@@ -3157,33 +3862,300 @@ function createServer(): McpServer {
           .describe("What was decided or will be done"),
         actor: z
           .string()
-          .min(1)
-          .describe("Who made this decision (e.g. Vee, user name)"),
+          .optional()
+          .describe("Who made this decision (default: Vee)"),
         project_id: z
           .number()
           .int()
           .optional()
-          .describe("Optional: associate with a project ID")
+          .describe("Optional: associate with a project ID"),
+        entity_type: z
+          .string()
+          .optional()
+          .describe("Optional entity type to attach a timeline event (default: project/decision)"),
+        entity_id: z.number().int().optional().describe("Optional entity id to attach timeline event"),
+        trace_id: z
+          .string()
+          .optional()
+          .describe("Optional correlation ID to link decision, event, and db writes"),
+        session_id: z.string().optional().describe("Optional session linkage"),
+        incident_id: z.string().optional().describe("Optional incident linkage"),
+        record_event: z
+          .boolean()
+          .optional()
+          .describe("If true (default), also appends a timeline event linked to this decision")
       }
     },
-    async ({ db_target, title, context, rationale, outcome, actor, project_id }) =>
+    async ({
+      db_target,
+      title,
+      context,
+      rationale,
+      outcome,
+      actor,
+      project_id,
+      entity_type,
+      entity_id,
+      trace_id,
+      session_id,
+      incident_id,
+      record_event
+    }) =>
       runAuditedTool({
         toolName: "vee_db_record_decision",
         permission: "safe_execute",
         isWrite: true,
-        args: { db_target: db_target ?? DB_DEFAULT_TARGET, title, actor, project_id },
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          title,
+          actor: normalizeActorName(actor),
+          project_id,
+          trace_id: trace_id ?? null
+        },
         errorContext: "Failed to record operational decision",
         handler: async () => {
+          const normalizedActor = normalizeActorName(actor);
+          const normalizedTraceId = normalizeTraceId(trace_id);
           const { target, adapter } = resolveWriteAdapter(db_target);
           const result = await adapter.recordOperationalDecision({
             title,
             context,
             rationale,
             outcome,
-            actor,
+            actor: normalizedActor,
             projectId: project_id ?? null
           });
-          const payloadResult = { db_target: target, ...result };
+          const decisionId = firstDefinedString(result.after?.decision_id) ?? null;
+          const decisionPk = firstDefinedNumber(result.after?.id);
+          const linkedEntityType = entity_type
+            ? normalizeEntityType(entity_type)
+            : project_id
+            ? "project"
+            : "decision";
+          const linkedEntityId = entity_id ?? project_id ?? decisionPk;
+          let timelineEventId: string | null = null;
+          if ((record_event ?? true) && linkedEntityId !== null) {
+            const timelineEvent = await adapter.recordProjectEvent({
+              entityType: linkedEntityType,
+              entityId: linkedEntityId,
+              actor: normalizedActor,
+              action: "operational_decision_recorded",
+              payload: {
+                trace_id: normalizedTraceId,
+                decision_id: decisionId,
+                title,
+                rationale,
+                outcome
+              },
+              context: {
+                source: "vee_db_record_decision",
+                source_agent: normalizedActor,
+                db_target: target,
+                project_id: project_id ?? null,
+                session_id: session_id ?? null,
+                incident_id: incident_id ?? null,
+                decision_id: decisionId
+              }
+            });
+            timelineEventId = (timelineEvent.after?.event_id as string | undefined) ?? null;
+          }
+
+          const payloadResult = {
+            db_target: target,
+            actor: normalizedActor,
+            trace_id: normalizedTraceId,
+            timeline_event_id: timelineEventId,
+            ...result
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
+            structuredContent: payloadResult
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_record_block",
+    {
+      title: "DB - Record Entity Block",
+      description:
+        "Creates a block entry in vee_blocks and appends a correlated timeline event for traceability.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        entity_type: z.string().min(1).describe("Entity type being blocked (e.g. project, task, incident)"),
+        entity_id: z.number().int().min(1).describe("Entity ID being blocked"),
+        reason: z.string().min(3).describe("Why this entity is blocked"),
+        blocked_by: z.string().optional().describe("Who blocked it (default: Vee)"),
+        trace_id: z.string().optional().describe("Optional correlation ID"),
+        project_id: z.number().int().optional().describe("Optional project linkage"),
+        session_id: z.string().optional().describe("Optional session linkage"),
+        incident_id: z.string().optional().describe("Optional incident linkage"),
+        decision_id: z.string().optional().describe("Optional linked decision ID")
+      }
+    },
+    async ({
+      db_target,
+      entity_type,
+      entity_id,
+      reason,
+      blocked_by,
+      trace_id,
+      project_id,
+      session_id,
+      incident_id,
+      decision_id
+    }) =>
+      runAuditedTool({
+        toolName: "vee_db_record_block",
+        permission: "safe_execute",
+        isWrite: true,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          entity_type,
+          entity_id,
+          blocked_by: normalizeActorName(blocked_by),
+          trace_id: trace_id ?? null
+        },
+        errorContext: "Failed to record entity block",
+        handler: async () => {
+          const normalizedActor = normalizeActorName(blocked_by);
+          const normalizedTraceId = normalizeTraceId(trace_id);
+          const normalizedEntityType = normalizeEntityType(entity_type);
+          const { target, adapter } = resolveWriteAdapter(db_target);
+
+          const blockResult = await adapter.recordEntityBlock({
+            entityType: normalizedEntityType,
+            entityId: entity_id,
+            reason: reason.trim(),
+            blockedBy: normalizedActor
+          });
+
+          const timelineEvent = await adapter.recordProjectEvent({
+            entityType: normalizedEntityType,
+            entityId: entity_id,
+            actor: normalizedActor,
+            action: "blocked",
+            payload: {
+              trace_id: normalizedTraceId,
+              reason: reason.trim(),
+              decision_id: decision_id ?? null,
+              block_id: blockResult.after?.id ?? null
+            },
+            context: {
+              source: "vee_db_record_block",
+              source_agent: normalizedActor,
+              db_target: target,
+              project_id: project_id ?? null,
+              session_id: session_id ?? null,
+              incident_id: incident_id ?? null,
+              decision_id: decision_id ?? null
+            }
+          });
+
+          const payloadResult = {
+            db_target: target,
+            actor: normalizedActor,
+            trace_id: normalizedTraceId,
+            timeline_event_id: (timelineEvent.after?.event_id as string | undefined) ?? null,
+            ...blockResult
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
+            structuredContent: payloadResult
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_unblock_entity",
+    {
+      title: "DB - Unblock Entity",
+      description:
+        "Marks active blocks as unblocked in vee_blocks and appends a correlated unblocked event.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        entity_type: z.string().min(1).describe("Entity type being unblocked"),
+        entity_id: z.number().int().min(1).describe("Entity ID being unblocked"),
+        unblock_reason: z.string().min(3).describe("Reason for unblocking"),
+        unblocked_by: z.string().optional().describe("Who unblocked (default: Vee)"),
+        trace_id: z.string().optional().describe("Optional correlation ID"),
+        project_id: z.number().int().optional().describe("Optional project linkage"),
+        session_id: z.string().optional().describe("Optional session linkage"),
+        incident_id: z.string().optional().describe("Optional incident linkage"),
+        decision_id: z.string().optional().describe("Optional linked decision ID")
+      }
+    },
+    async ({
+      db_target,
+      entity_type,
+      entity_id,
+      unblock_reason,
+      unblocked_by,
+      trace_id,
+      project_id,
+      session_id,
+      incident_id,
+      decision_id
+    }) =>
+      runAuditedTool({
+        toolName: "vee_db_unblock_entity",
+        permission: "safe_execute",
+        isWrite: true,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          entity_type,
+          entity_id,
+          unblocked_by: normalizeActorName(unblocked_by),
+          trace_id: trace_id ?? null
+        },
+        errorContext: "Failed to unblock entity",
+        handler: async () => {
+          const normalizedActor = normalizeActorName(unblocked_by);
+          const normalizedTraceId = normalizeTraceId(trace_id);
+          const normalizedEntityType = normalizeEntityType(entity_type);
+          const { target, adapter } = resolveWriteAdapter(db_target);
+
+          const unblockResult = await adapter.unblockEntity({
+            entityType: normalizedEntityType,
+            entityId: entity_id,
+            unblockReason: unblock_reason.trim(),
+            unblockedBy: normalizedActor
+          });
+
+          let timelineEventId: string | null = null;
+          if (unblockResult.affected_rows > 0) {
+            const timelineEvent = await adapter.recordProjectEvent({
+              entityType: normalizedEntityType,
+              entityId: entity_id,
+              actor: normalizedActor,
+              action: "unblocked",
+              payload: {
+                trace_id: normalizedTraceId,
+                reason: unblock_reason.trim(),
+                decision_id: decision_id ?? null
+              },
+              context: {
+                source: "vee_db_unblock_entity",
+                source_agent: normalizedActor,
+                db_target: target,
+                project_id: project_id ?? null,
+                session_id: session_id ?? null,
+                incident_id: incident_id ?? null,
+                decision_id: decision_id ?? null
+              }
+            });
+            timelineEventId = (timelineEvent.after?.event_id as string | undefined) ?? null;
+          }
+
+          const payloadResult = {
+            db_target: target,
+            actor: normalizedActor,
+            trace_id: normalizedTraceId,
+            timeline_event_id: timelineEventId,
+            ...unblockResult
+          };
           return {
             content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
             structuredContent: payloadResult
@@ -3209,28 +4181,69 @@ function createServer(): McpServer {
         entity_id: z.number().int().optional().describe("Filter by entity ID"),
         actor: z.string().optional().describe("Filter by actor name"),
         action: z.string().optional().describe("Filter by action (exact match)"),
+        project_id: z.number().int().optional().describe("Filter by context.project_id"),
+        session_id: z.string().optional().describe("Filter by context.session_id"),
+        incident_id: z.string().optional().describe("Filter by context.incident_id"),
+        decision_id: z.string().optional().describe("Filter by payload/context decision_id"),
+        trace_id: z.string().optional().describe("Filter by payload/context trace_id"),
+        from_timestamp: z.string().optional().describe("Optional lower timestamp bound (ISO date/time)"),
+        to_timestamp: z.string().optional().describe("Optional upper timestamp bound (ISO date/time)"),
         limit: z
           .number()
           .int()
           .min(1)
-          .max(100)
+          .max(200)
           .optional()
           .describe("Max events to return (default 50)")
       }
     },
-    async ({ db_target, entity_type, entity_id, actor, action, limit }) =>
+    async ({
+      db_target,
+      entity_type,
+      entity_id,
+      actor,
+      action,
+      project_id,
+      session_id,
+      incident_id,
+      decision_id,
+      trace_id,
+      from_timestamp,
+      to_timestamp,
+      limit
+    }) =>
       runAuditedTool({
         toolName: "vee_db_get_timeline",
         permission: "read_only",
         isWrite: false,
-        args: { db_target: db_target ?? DB_DEFAULT_TARGET, entity_type, entity_id, actor, action, limit },
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          entity_type,
+          entity_id,
+          actor,
+          action,
+          project_id,
+          session_id,
+          incident_id,
+          decision_id,
+          trace_id,
+          limit
+        },
         errorContext: "Failed to get entity timeline",
         handler: async () => {
           const where: WhereCondition[] = [];
-          if (entity_type) where.push({ column: "entity_type", operator: "=", value: entity_type });
+          const normalizedEntityType = entity_type ? normalizeEntityType(entity_type) : null;
+          if (normalizedEntityType) {
+            where.push({ column: "entity_type", operator: "=", value: normalizedEntityType });
+          }
           if (entity_id) where.push({ column: "entity_id", operator: "=", value: entity_id });
           if (actor) where.push({ column: "actor", operator: "=", value: actor });
           if (action) where.push({ column: "action", operator: "=", value: action });
+
+          const traceFilter = trace_id ? trace_id.trim() : null;
+          if (traceFilter && !/^[a-zA-Z0-9._:-]{8,120}$/.test(traceFilter)) {
+            throw new Error("trace_id format is invalid. Use 8-120 chars: letters, numbers, . _ : -");
+          }
 
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
           const result = await adapter.executeStructuredQuery(
@@ -3238,11 +4251,483 @@ function createServer(): McpServer {
               table: "vee_project_events",
               where,
               orderBy: [{ column: "created_at", direction: "DESC" }],
-              limit: limit ?? 50
+              limit: Math.min(200, (limit ?? 50) * 3)
             },
             `vee:${target}`
           );
-          const payloadResult = { db_target: target, ...result };
+
+          const fromMs = timestampToMs(normalizeTimelineTimestamp(from_timestamp) ?? from_timestamp ?? null);
+          const toMs = timestampToMs(normalizeTimelineTimestamp(to_timestamp) ?? to_timestamp ?? null);
+          if (from_timestamp && fromMs === null) {
+            throw new Error("from_timestamp must be a valid ISO date/time.");
+          }
+          if (to_timestamp && toMs === null) {
+            throw new Error("to_timestamp must be a valid ISO date/time.");
+          }
+
+          const filteredRows = result.rows.filter((row) => {
+            const eventProjectId = extractCorrelationNumber(row, "project_id");
+            const eventSessionId = extractCorrelationString(row, "session_id");
+            const eventIncidentId = extractCorrelationString(row, "incident_id");
+            const eventDecisionId = extractCorrelationString(row, "decision_id");
+            const eventTraceId = extractCorrelationString(row, "trace_id");
+            const eventTimestamp = timestampToMs(normalizeTimelineTimestamp(row["created_at"]));
+
+            if (project_id !== undefined && eventProjectId !== project_id) return false;
+            if (session_id && eventSessionId !== session_id) return false;
+            if (incident_id && eventIncidentId !== incident_id) return false;
+            if (decision_id && eventDecisionId !== decision_id) return false;
+            if (traceFilter && eventTraceId !== traceFilter) return false;
+            if (fromMs !== null && eventTimestamp !== null && eventTimestamp < fromMs) return false;
+            if (toMs !== null && eventTimestamp !== null && eventTimestamp > toMs) return false;
+            return true;
+          });
+
+          const selectedRows = filteredRows.slice(0, limit ?? 50);
+          const payloadResult = {
+            db_target: target,
+            table: result.table,
+            resolved_table: result.resolved_table,
+            total: selectedRows.length,
+            returned_rows: selectedRows.length,
+            rows: selectedRows,
+            views: {
+              available_named_views: ["timeline_events"],
+              filters_applied: {
+                entity_type: normalizedEntityType,
+                entity_id: entity_id ?? null,
+                actor: actor ?? null,
+                action: action ?? null,
+                project_id: project_id ?? null,
+                session_id: session_id ?? null,
+                incident_id: incident_id ?? null,
+                decision_id: decision_id ?? null,
+                trace_id: traceFilter
+              }
+            },
+            performance: result.performance,
+            pagination: {
+              limit: limit ?? 50,
+              source_rows: result.rows.length,
+              filtered_rows: filteredRows.length,
+              returned_rows: selectedRows.length
+            }
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
+            structuredContent: payloadResult
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_get_operational_timeline",
+    {
+      title: "DB - Get Operational Timeline",
+      description:
+        "Returns a unified timeline merging events, decisions, blocks, status changes, and agent actions.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        entity_type: z.string().optional().describe("Optional entity type filter"),
+        entity_id: z.number().int().optional().describe("Optional entity ID filter"),
+        project_id: z.number().int().optional().describe("Optional project filter"),
+        actor: z.string().optional().describe("Optional actor filter"),
+        action: z.string().optional().describe("Optional action filter"),
+        session_id: z.string().optional().describe("Optional session filter"),
+        incident_id: z.string().optional().describe("Optional incident filter"),
+        decision_id: z.string().optional().describe("Optional decision filter"),
+        trace_id: z.string().optional().describe("Optional correlation ID filter"),
+        from_timestamp: z.string().optional().describe("Optional lower timestamp bound (ISO date/time)"),
+        to_timestamp: z.string().optional().describe("Optional upper timestamp bound (ISO date/time)"),
+        include_agent_actions: z
+          .boolean()
+          .optional()
+          .describe("Include vee_mcp_calls as agent_action items (default true)"),
+        limit: z.number().int().min(1).max(200).optional().describe("Max items returned (default 100)")
+      }
+    },
+    async ({
+      db_target,
+      entity_type,
+      entity_id,
+      project_id,
+      actor,
+      action,
+      session_id,
+      incident_id,
+      decision_id,
+      trace_id,
+      from_timestamp,
+      to_timestamp,
+      include_agent_actions,
+      limit
+    }) =>
+      runAuditedTool({
+        toolName: "vee_db_get_operational_timeline",
+        permission: "read_only",
+        isWrite: false,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          entity_type,
+          entity_id,
+          project_id,
+          actor,
+          action,
+          session_id,
+          incident_id,
+          decision_id,
+          trace_id,
+          include_agent_actions,
+          limit
+        },
+        errorContext: "Failed to get operational timeline",
+        handler: async () => {
+          const normalizedEntityType = entity_type ? normalizeEntityType(entity_type) : null;
+          const traceFilter = trace_id ? trace_id.trim() : null;
+          if (traceFilter && !/^[a-zA-Z0-9._:-]{8,120}$/.test(traceFilter)) {
+            throw new Error("trace_id format is invalid. Use 8-120 chars: letters, numbers, . _ : -");
+          }
+
+          const fromMs = timestampToMs(normalizeTimelineTimestamp(from_timestamp) ?? from_timestamp ?? null);
+          const toMs = timestampToMs(normalizeTimelineTimestamp(to_timestamp) ?? to_timestamp ?? null);
+          if (from_timestamp && fromMs === null) {
+            throw new Error("from_timestamp must be a valid ISO date/time.");
+          }
+          if (to_timestamp && toMs === null) {
+            throw new Error("to_timestamp must be a valid ISO date/time.");
+          }
+
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const effectiveLimit = limit ?? 100;
+          const perTableLimit = Math.min(200, Math.max(effectiveLimit, 80));
+          const warnings: string[] = [];
+          const items: OperationalTimelineItem[] = [];
+
+          const pushItems = (list: OperationalTimelineItem[]) => {
+            for (const item of list) {
+              items.push(item);
+            }
+          };
+
+          try {
+            const where: WhereCondition[] = [];
+            if (normalizedEntityType) where.push({ column: "entity_type", operator: "=", value: normalizedEntityType });
+            if (entity_id !== undefined) where.push({ column: "entity_id", operator: "=", value: entity_id });
+            if (actor) where.push({ column: "actor", operator: "=", value: actor });
+            if (action) where.push({ column: "action", operator: "=", value: action });
+            if (from_timestamp) where.push({ column: "created_at", operator: ">=", value: from_timestamp });
+            if (to_timestamp) where.push({ column: "created_at", operator: "<=", value: to_timestamp });
+
+            const events = await adapter.executeStructuredQuery(
+              {
+                table: "timeline_events",
+                where,
+                orderBy: [{ column: "created_at", direction: "DESC" }],
+                limit: perTableLimit
+              },
+              `vee:${target}:timeline_events`
+            );
+
+            pushItems(
+              events.rows.flatMap((row) => {
+                const timestamp = normalizeTimelineTimestamp(row["created_at"]);
+                if (!timestamp) return [];
+                const entityTypeValue = firstDefinedString(row["entity_type"]) ?? "entity";
+                const entityIdValue = firstDefinedNumber(row["entity_id"], row["id"]);
+                return [
+                  {
+                    kind: "event",
+                    timestamp,
+                    actor: normalizeActorName(firstDefinedString(row["actor"]) ?? undefined),
+                    action: firstDefinedString(row["action"]) ?? "event",
+                    entity_type: entityTypeValue,
+                    entity_id: entityIdValue,
+                    project_id:
+                      extractCorrelationNumber(row, "project_id") ??
+                      (entityTypeValue === "project" ? entityIdValue : null),
+                    trace_id: extractCorrelationString(row, "trace_id"),
+                    source_table: "vee_project_events",
+                    raw: row
+                  }
+                ];
+              })
+            );
+          } catch (error) {
+            warnings.push(`timeline_events unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          }
+
+          try {
+            const where: WhereCondition[] = [];
+            if (project_id !== undefined) where.push({ column: "project_id", operator: "=", value: project_id });
+            if (actor) where.push({ column: "actor", operator: "=", value: actor });
+            if (from_timestamp) where.push({ column: "created_at", operator: ">=", value: from_timestamp });
+            if (to_timestamp) where.push({ column: "created_at", operator: "<=", value: to_timestamp });
+
+            const decisions = await adapter.executeStructuredQuery(
+              {
+                table: "timeline_decisions",
+                where,
+                orderBy: [{ column: "created_at", direction: "DESC" }],
+                limit: perTableLimit
+              },
+              `vee:${target}:timeline_decisions`
+            );
+
+            pushItems(
+              decisions.rows.flatMap((row) => {
+                const timestamp = normalizeTimelineTimestamp(row["created_at"]);
+                if (!timestamp) return [];
+                return [
+                  {
+                    kind: "decision",
+                    timestamp,
+                    actor: normalizeActorName(firstDefinedString(row["actor"]) ?? undefined),
+                    action: "operational_decision_recorded",
+                    entity_type: "decision",
+                    entity_id: firstDefinedNumber(row["id"], row["entity_id"]),
+                    project_id: firstDefinedNumber(row["project_id"]),
+                    trace_id: extractCorrelationString(row, "trace_id"),
+                    source_table: "vee_operational_decisions",
+                    raw: row
+                  }
+                ];
+              })
+            );
+          } catch (error) {
+            warnings.push(`timeline_decisions unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          }
+
+          try {
+            const where: WhereCondition[] = [];
+            if (normalizedEntityType) where.push({ column: "entity_type", operator: "=", value: normalizedEntityType });
+            if (entity_id !== undefined) where.push({ column: "entity_id", operator: "=", value: entity_id });
+            if (actor) where.push({ column: "blocked_by", operator: "=", value: actor });
+
+            const blocks = await adapter.executeStructuredQuery(
+              {
+                table: "timeline_blocks",
+                where,
+                orderBy: [{ column: "blocked_at", direction: "DESC" }],
+                limit: perTableLimit
+              },
+              `vee:${target}:timeline_blocks`
+            );
+
+            pushItems(
+              blocks.rows.flatMap((row) => {
+                const entityTypeValue = firstDefinedString(row["entity_type"]) ?? "entity";
+                const entityIdValue = firstDefinedNumber(row["entity_id"], row["id"]);
+                const projectValue = extractCorrelationNumber(row, "project_id");
+                const traceValue = extractCorrelationString(row, "trace_id");
+                const blockedAt = normalizeTimelineTimestamp(row["blocked_at"] ?? row["created_at"]);
+                const unblockedAt = normalizeTimelineTimestamp(row["unblocked_at"]);
+                const output: OperationalTimelineItem[] = [];
+
+                if (blockedAt) {
+                  output.push({
+                    kind: "block",
+                    timestamp: blockedAt,
+                    actor: normalizeActorName(firstDefinedString(row["blocked_by"]) ?? undefined),
+                    action: "blocked",
+                    entity_type: entityTypeValue,
+                    entity_id: entityIdValue,
+                    project_id: projectValue,
+                    trace_id: traceValue,
+                    source_table: "vee_blocks",
+                    raw: row
+                  });
+                }
+
+                if (unblockedAt) {
+                  output.push({
+                    kind: "block",
+                    timestamp: unblockedAt,
+                    actor: normalizeActorName(
+                      firstDefinedString(row["unblocked_by"], row["blocked_by"]) ?? undefined
+                    ),
+                    action: "unblocked",
+                    entity_type: entityTypeValue,
+                    entity_id: entityIdValue,
+                    project_id: projectValue,
+                    trace_id: traceValue,
+                    source_table: "vee_blocks",
+                    raw: row
+                  });
+                }
+
+                return output;
+              })
+            );
+          } catch (error) {
+            warnings.push(`timeline_blocks unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          }
+
+          try {
+            const where: WhereCondition[] = [];
+            if (normalizedEntityType) where.push({ column: "entity_type", operator: "=", value: normalizedEntityType });
+            if (entity_id !== undefined) where.push({ column: "entity_id", operator: "=", value: entity_id });
+            if (actor) where.push({ column: "changed_by", operator: "=", value: actor });
+            if (from_timestamp) where.push({ column: "created_at", operator: ">=", value: from_timestamp });
+            if (to_timestamp) where.push({ column: "created_at", operator: "<=", value: to_timestamp });
+
+            const statusRows = await adapter.executeStructuredQuery(
+              {
+                table: "timeline_status_changes",
+                where,
+                orderBy: [{ column: "created_at", direction: "DESC" }],
+                limit: perTableLimit
+              },
+              `vee:${target}:timeline_status_changes`
+            );
+
+            pushItems(
+              statusRows.rows.flatMap((row) => {
+                const timestamp = normalizeTimelineTimestamp(row["created_at"]);
+                if (!timestamp) return [];
+                const oldStatus = firstDefinedString(row["old_status"]) ?? "unknown";
+                const newStatus = firstDefinedString(row["new_status"]) ?? "unknown";
+                return [
+                  {
+                    kind: "status_change",
+                    timestamp,
+                    actor: normalizeActorName(firstDefinedString(row["changed_by"]) ?? undefined),
+                    action: `status_changed:${oldStatus}->${newStatus}`,
+                    entity_type: firstDefinedString(row["entity_type"]) ?? "entity",
+                    entity_id: firstDefinedNumber(row["entity_id"], row["id"]),
+                    project_id: extractCorrelationNumber(row, "project_id"),
+                    trace_id: extractCorrelationString(row, "trace_id"),
+                    source_table: "vee_status_history",
+                    raw: row
+                  }
+                ];
+              })
+            );
+          } catch (error) {
+            warnings.push(`timeline_status_changes unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          }
+
+          if (include_agent_actions ?? true) {
+            try {
+              const where: WhereCondition[] = [];
+              if (action) where.push({ column: "tool_name", operator: "=", value: action });
+              if (from_timestamp) where.push({ column: "created_at", operator: ">=", value: from_timestamp });
+              if (to_timestamp) where.push({ column: "created_at", operator: "<=", value: to_timestamp });
+
+              const calls = await adapter.executeStructuredQuery(
+                {
+                  table: "timeline_agent_actions",
+                  where,
+                  orderBy: [{ column: "created_at", direction: "DESC" }],
+                  limit: perTableLimit
+                },
+                `vee:${target}:timeline_agent_actions`
+              );
+
+              pushItems(
+                calls.rows.flatMap((row) => {
+                  const timestamp = normalizeTimelineTimestamp(row["created_at"]);
+                  if (!timestamp) return [];
+                  const requestPayload = parseJsonLike(row["request_payload"]);
+                  const responsePayload = parseJsonLike(row["response_payload"]);
+                  const actorFromPayload = firstDefinedString(
+                    requestPayload?.["actor"],
+                    requestPayload?.["source_agent"],
+                    responsePayload?.["actor"]
+                  );
+
+                  return [
+                    {
+                      kind: "agent_action",
+                      timestamp,
+                      actor: normalizeActorName(actorFromPayload ?? undefined),
+                      action: firstDefinedString(row["tool_name"]) ?? "agent_action",
+                      entity_type: "agent_call",
+                      entity_id: firstDefinedNumber(row["id"]),
+                      project_id: firstDefinedNumber(
+                        requestPayload?.["project_id"],
+                        responsePayload?.["project_id"],
+                        extractCorrelationNumber(row, "project_id")
+                      ),
+                      trace_id: firstDefinedString(
+                        requestPayload?.["trace_id"],
+                        responsePayload?.["trace_id"],
+                        extractCorrelationString(row, "trace_id")
+                      ),
+                      source_table: "vee_mcp_calls",
+                      raw: row
+                    }
+                  ];
+                })
+              );
+            } catch (error) {
+              warnings.push(
+                `timeline_agent_actions unavailable: ${error instanceof Error ? error.message : String(error)}`
+              );
+            }
+          }
+
+          const filtered = items.filter((item) => {
+            if (normalizedEntityType && item.entity_type !== normalizedEntityType) return false;
+            if (entity_id !== undefined && item.entity_id !== entity_id) return false;
+            if (project_id !== undefined && item.project_id !== project_id) return false;
+            if (actor && item.actor.toLowerCase() !== actor.toLowerCase()) return false;
+            if (action && item.action.toLowerCase() !== action.toLowerCase()) return false;
+            if (traceFilter && item.trace_id !== traceFilter) return false;
+
+            const itemSessionId = extractCorrelationString(item.raw, "session_id");
+            const itemIncidentId = extractCorrelationString(item.raw, "incident_id");
+            const itemDecisionId = extractCorrelationString(item.raw, "decision_id");
+            if (session_id && itemSessionId !== session_id) return false;
+            if (incident_id && itemIncidentId !== incident_id) return false;
+            if (decision_id && itemDecisionId !== decision_id) return false;
+
+            const itemMs = timestampToMs(item.timestamp);
+            if (fromMs !== null && itemMs !== null && itemMs < fromMs) return false;
+            if (toMs !== null && itemMs !== null && itemMs > toMs) return false;
+
+            return true;
+          });
+
+          filtered.sort((a, b) => {
+            const leftMs = timestampToMs(a.timestamp);
+            const rightMs = timestampToMs(b.timestamp);
+            if (leftMs !== null && rightMs !== null) {
+              return rightMs - leftMs;
+            }
+            return b.timestamp.localeCompare(a.timestamp);
+          });
+
+          const selected = filtered.slice(0, effectiveLimit);
+          const sourceCounts: Record<string, number> = {};
+          for (const item of selected) {
+            sourceCounts[item.source_table] = (sourceCounts[item.source_table] ?? 0) + 1;
+          }
+
+          const payloadResult = {
+            db_target: target,
+            total: selected.length,
+            rows: selected,
+            summary: summarizeTimelineViews(selected),
+            source_counts: sourceCounts,
+            views: {
+              available_named_views: [
+                "timeline_events",
+                "timeline_decisions",
+                "timeline_blocks",
+                "timeline_status_changes",
+                "timeline_agent_actions"
+              ],
+              include_agent_actions: include_agent_actions ?? true
+            },
+            warnings,
+            pagination: {
+              limit: effectiveLimit,
+              merged_rows: items.length,
+              filtered_rows: filtered.length,
+              returned_rows: selected.length
+            }
+          };
           return {
             content: [{ type: "text", text: JSON.stringify(payloadResult, null, 2) }],
             structuredContent: payloadResult
@@ -3325,8 +4810,8 @@ app.listen(PORT, HOST, () => {
   const claudeMode = CLAUDE_MCP_PUBLIC_URL ? "claude endpoint configured" : "claude endpoint auto";
   const fsMode =
     FS_ALLOWED_ROOTS.length > 0
-      ? `fs enabled (roots: ${FS_ALLOWED_ROOTS.join(", ")}${FS_WRITE_ENABLED ? ", writes ON" : ""})`
-      : "fs disabled (FS_ALLOWED_ROOTS not set)";
+      ? `fs enabled (env: ${FS_ALLOWLIST_ENV}, roots: ${FS_ALLOWED_ROOTS.join(", ")}${FS_WRITE_ENABLED ? ", writes ON" : ""})`
+      : `fs disabled (env: ${FS_ALLOWLIST_ENV}, FS_ALLOWED_ROOTS not set)`;
 
   console.log(`[Vee MCP] listening on http://${HOST}:${PORT}`);
   console.log(`[Vee MCP] /mcp (${authMode})`);
@@ -3341,6 +4826,6 @@ app.listen(PORT, HOST, () => {
   console.log(`[Vee MCP] ${claudeMode}`);
   console.log(`[Vee MCP] ${fsMode}`);
   console.log(
-    "[Vee MCP] enabled tools: vee.health, vee.list_capabilities, vee.n8n.list_workflows, vee.n8n.get_workflow, vee.n8n.preview_workflow_diff, vee.n8n.list_recent_executions, vee.n8n.get_execution, vee.n8n.retry_execution, vee.n8n.stop_execution, vee.n8n.update_workflow, vee.n8n.patch_workflow_nodes, vee.n8n.rollback_workflow, vee.obsidian.health, vee.obsidian.search, vee.obsidian.read_note, vee.obsidian.create_note, vee.obsidian.append_to_note, vee.obsidian.update_note_section, vee.obsidian.append_to_daily_log, vee.obsidian.create_task_note, vee.server.status, vee.server.list_containers, vee.server.get_container_logs, vee.server.disk_usage, vee.server.memory_usage, vee.server.list_containers_detailed, vee.server.inspect_container, vee.server.restart_container, vee.server.tail_log, vee.server.service_status, vee.server.health_check, vee.server.list_allowed_paths, vee.claude.connection_info, vee.db.get_tenant_by_slug, vee.db.get_client_by_phone, vee.db.get_recent_ai_messages, vee.db.get_context_state, vee.db.get_booking_session, vee.db.get_recent_appointments, vee.db.get_project_summary, vee.db.get_pending_tasks, vee.db.get_user_preferences, vee.db.get_agent_execution_history, vee.db.update_project_status, vee.db.create_internal_task, vee.db.save_execution_note, vee.db.update_context_state, vee.db.register_incident, vee.db.attach_task_to_project, vee.db.mark_task_as_blocked, vee.db.mark_task_as_done, vee.fs.list_allowed_paths, vee.fs.list_directory, vee.fs.read_file, vee.fs.search_text, vee.fs.write_file, vee.db.query, vee.db.write, vee.db.record_event, vee.db.record_decision, vee.db.get_timeline"
+    "[Vee MCP] enabled tools: vee.health, vee.list_capabilities, vee.n8n.list_workflows, vee.n8n.get_workflow, vee.n8n.preview_workflow_diff, vee.n8n.list_recent_executions, vee.n8n.get_execution, vee.n8n.retry_execution, vee.n8n.stop_execution, vee.n8n.update_workflow, vee.n8n.patch_workflow_nodes, vee.n8n.rollback_workflow, vee.obsidian.health, vee.obsidian.search, vee.obsidian.read_note, vee.obsidian.create_note, vee.obsidian.append_to_note, vee.obsidian.update_note_section, vee.obsidian.append_to_daily_log, vee.obsidian.create_task_note, vee.server.status, vee.server.list_containers, vee.server.get_container_logs, vee.server.disk_usage, vee.server.memory_usage, vee.server.list_containers_detailed, vee.server.inspect_container, vee.server.restart_container, vee.server.tail_log, vee.server.service_status, vee.server.health_check, vee.server.list_allowed_paths, vee.claude.connection_info, vee.db.get_tenant_by_slug, vee.db.get_client_by_phone, vee.db.get_recent_ai_messages, vee.db.get_context_state, vee.db.get_booking_session, vee.db.get_recent_appointments, vee.db.get_project_summary, vee.db.get_pending_tasks, vee.db.get_user_preferences, vee.db.get_agent_execution_history, vee.db.update_project_status, vee.db.create_internal_task, vee.db.save_execution_note, vee.db.update_context_state, vee.db.register_incident, vee.db.attach_task_to_project, vee.db.mark_task_as_blocked, vee.db.mark_task_as_done, vee.fs.list_allowed_paths, vee.fs.list_directory, vee.fs.read_file, vee.fs.search_text, vee.fs.write_file, vee.db.list_allowlist, vee.db.query, vee.db.write, vee.db.record_event, vee.db.record_decision, vee.db.get_timeline"
   );
 });

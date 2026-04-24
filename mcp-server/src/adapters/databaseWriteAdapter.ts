@@ -4,7 +4,8 @@ import type { FieldPacket, RowDataPacket } from "mysql2/promise";
 import {
   buildWriteQuery,
   buildSnapshotQuery,
-  type StructuredWriteInput
+  type StructuredWriteInput,
+  type WhereCondition
 } from "./structuredQueryBuilder.js";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -128,7 +129,32 @@ export type DbStructuredWriteResult = DbWriteResult<Record<string, unknown>> & {
   resolved_table: string;
   operation: "INSERT" | "UPDATE" | "UPSERT";
   reason: string;
+  normalized_data_keys: string[];
+  required_fields_checked: string[];
+  auto_filled_fields: string[];
 };
+
+type AutoFillStrategy = "uuid" | "now";
+
+const DEFAULT_AUTO_FILL_FIELDS: Record<string, Record<string, AutoFillStrategy>> = {
+  vee_operational_decisions: { decision_id: "uuid" },
+  vee_project_events: { event_id: "uuid" },
+  vee_execution_notes: { note_id: "uuid" },
+  vee_incidents: { incident_id: "uuid" }
+};
+
+const DEFAULT_REQUIRED_FIELDS: Record<string, string[]> = {
+  vee_execution_notes: ["note_type", "title", "content"],
+  vee_project_events: ["entity_type", "entity_id", "actor", "action"],
+  vee_status_history: ["entity_type", "entity_id", "new_status", "changed_by"],
+  vee_operational_decisions: ["title", "context", "rationale", "outcome", "actor"],
+  vee_blocks: ["entity_type", "entity_id", "reason", "blocked_by"]
+};
+
+const UPSERT_IDENTITY_FALLBACK_KEYS = ["id", "decision_id", "event_id", "note_id", "incident_id", "slug"];
+
+const CONFIG_REQUIRED_FIELDS = parseRequiredFieldsByTableFromEnv();
+const CONFIG_AUTO_FILL_FIELDS = parseAutoFillFieldsByTableFromEnv();
 
 // ─── Adapter ──────────────────────────────────────────────────────────────────
 
@@ -207,6 +233,125 @@ export class DatabaseWriteAdapter {
   private safeNum(v: unknown): number | null {
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
+  }
+
+  private normalizeStructuredWriteInput(input: StructuredWriteInput): {
+    prepared: StructuredWriteInput;
+    normalized_data_keys: string[];
+    required_fields_checked: string[];
+    auto_filled_fields: string[];
+    identity_where: WhereCondition[] | null;
+  } {
+    const normalizedReason = input.reason.replace(/\s+/g, " ").trim();
+    const tableKey = normalizeIdentifier(input.table) ?? input.table.trim().toLowerCase();
+
+    const normalizedData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(input.data)) {
+      normalizedData[key] = this.normalizeWriteValue(value);
+    }
+
+    const autoFilledFields: string[] = [];
+    const autoFillConfig = getAutoFillStrategiesForTable(tableKey);
+    for (const [field, strategy] of Object.entries(autoFillConfig)) {
+      const current = normalizedData[field];
+      if (current !== undefined && current !== null && current !== "") {
+        continue;
+      }
+      normalizedData[field] = strategy === "uuid" ? randomUUID() : new Date().toISOString().slice(0, 19).replace("T", " ");
+      autoFilledFields.push(field);
+    }
+
+    const requiredFieldsChecked = input.operation === "UPDATE" ? [] : getRequiredFieldsForTable(tableKey);
+    const missingRequired = requiredFieldsChecked.filter((field) => {
+      const value = normalizedData[field];
+      return value === undefined || value === null || value === "";
+    });
+    if (missingRequired.length > 0) {
+      throw new Error(
+        `Missing required fields for "${input.table}" ${input.operation}: ${missingRequired.join(", ")}`
+      );
+    }
+
+    const normalizedDataKeys = Object.keys(normalizedData).sort((a, b) => a.localeCompare(b));
+    const identityWhere = this.buildIdentityWhereForData(normalizedData, input.upsertKey);
+
+    return {
+      prepared: {
+        ...input,
+        reason: normalizedReason,
+        data: normalizedData
+      },
+      normalized_data_keys: normalizedDataKeys,
+      required_fields_checked: requiredFieldsChecked,
+      auto_filled_fields: autoFilledFields,
+      identity_where: identityWhere
+    };
+  }
+
+  private normalizeWriteValue(value: unknown): string | number | boolean | null {
+    if (value === undefined || value === null) {
+      return null;
+    }
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      return value;
+    }
+    if (typeof value === "bigint") {
+      return value.toString();
+    }
+    if (value instanceof Date) {
+      return value.toISOString().slice(0, 19).replace("T", " ");
+    }
+    if (Array.isArray(value) || typeof value === "object") {
+      return JSON.stringify(value);
+    }
+    throw new Error(`Unsupported value type for structured write: ${typeof value}`);
+  }
+
+  private buildIdentityWhereForData(
+    data: Record<string, unknown>,
+    upsertKey?: string[]
+  ): WhereCondition[] | null {
+    const selectedKeys: string[] = [];
+    const explicitKeys = (upsertKey ?? []).filter((key) => key.trim().length > 0);
+
+    if (
+      explicitKeys.length > 0 &&
+      explicitKeys.every((key) => {
+        const value = data[key];
+        return value !== undefined && value !== null && value !== "";
+      })
+    ) {
+      selectedKeys.push(...explicitKeys);
+    } else {
+      for (const key of UPSERT_IDENTITY_FALLBACK_KEYS) {
+        const value = data[key];
+        if (value === undefined || value === null || value === "") {
+          continue;
+        }
+        selectedKeys.push(key);
+        break;
+      }
+    }
+
+    if (selectedKeys.length === 0) {
+      return null;
+    }
+
+    return selectedKeys.map((key) => ({
+      column: key,
+      operator: "=",
+      value: data[key] as string | number | boolean | null
+    }));
+  }
+
+  private async readSnapshot(
+    table: string,
+    where: WhereCondition[],
+    columns: string[]
+  ): Promise<Record<string, unknown> | null> {
+    const snapshotColumns = [...new Set(columns.filter((column) => column.trim().length > 0))];
+    const snap = buildSnapshotQuery(table, where, snapshotColumns.length > 0 ? snapshotColumns : undefined);
+    return this.queryOne<Record<string, unknown>>(snap.sql, snap.params);
   }
 
   // ─── 1. update_project_status ─────────────────────────────────────────────
@@ -560,40 +705,54 @@ export class DatabaseWriteAdapter {
   ): Promise<DbStructuredWriteResult> {
     this.assertEnabled();
 
-    const built = buildWriteQuery(input);
+    const normalized = this.normalizeStructuredWriteInput(input);
+    const preparedInput = normalized.prepared;
+    const built = buildWriteQuery(preparedInput);
     // buildWriteQuery throws on any policy violation before any DB call.
 
-    // Capture before-state for UPDATE (snapshot via WHERE conditions)
+    const snapshotColumns = [...new Set([
+      ...normalized.normalized_data_keys,
+      ...(preparedInput.upsertKey ?? [])
+    ])];
+
     let before: Record<string, unknown> | null = null;
-    if (input.operation === "UPDATE" && input.where && input.where.length > 0) {
-      const snap = buildSnapshotQuery(input.table, input.where, Object.keys(input.data));
-      before = await this.queryOne<Record<string, unknown>>(snap.sql, snap.params);
+    if (preparedInput.operation === "UPDATE" && preparedInput.where && preparedInput.where.length > 0) {
+      before = await this.readSnapshot(preparedInput.table, preparedInput.where, normalized.normalized_data_keys);
+    } else if (preparedInput.operation === "UPSERT" && normalized.identity_where) {
+      before = await this.readSnapshot(preparedInput.table, normalized.identity_where, snapshotColumns);
     }
 
     const result = await this.execute(built.sql, built.params);
 
-    // Capture after-state
     let after: Record<string, unknown> | null = null;
-    if (input.operation === "INSERT" && result.insertId) {
-      after = await this.queryOne<Record<string, unknown>>(
-        `SELECT * FROM \`${built.resolvedTable}\` WHERE id = ? LIMIT 1`,
-        [result.insertId]
-      );
-    } else if (input.operation === "UPDATE" && input.where && input.where.length > 0) {
-      const snap = buildSnapshotQuery(input.table, input.where, Object.keys(input.data));
-      after = await this.queryOne<Record<string, unknown>>(snap.sql, snap.params);
+    if (preparedInput.operation === "INSERT") {
+      if (result.insertId) {
+        after = await this.readSnapshot(
+          preparedInput.table,
+          [{ column: "id", operator: "=", value: result.insertId }],
+          [...new Set(["id", ...normalized.normalized_data_keys])]
+        );
+      } else if (normalized.identity_where) {
+        after = await this.readSnapshot(preparedInput.table, normalized.identity_where, snapshotColumns);
+      }
+    } else if (preparedInput.operation === "UPDATE" && preparedInput.where && preparedInput.where.length > 0) {
+      after = await this.readSnapshot(preparedInput.table, preparedInput.where, normalized.normalized_data_keys);
+    } else if (preparedInput.operation === "UPSERT" && normalized.identity_where) {
+      after = await this.readSnapshot(preparedInput.table, normalized.identity_where, snapshotColumns);
     }
-    // UPSERT: after = null (insertId not reliable with ON DUPLICATE KEY UPDATE)
 
     return {
       ok: result.affectedRows > 0,
       affected_rows: result.affectedRows,
       before,
       after,
-      table: input.table,
+      table: preparedInput.table,
       resolved_table: built.resolvedTable,
-      operation: input.operation,
-      reason: input.reason
+      operation: preparedInput.operation,
+      reason: preparedInput.reason,
+      normalized_data_keys: normalized.normalized_data_keys,
+      required_fields_checked: normalized.required_fields_checked,
+      auto_filled_fields: normalized.auto_filled_fields
     };
   }
 
@@ -761,5 +920,110 @@ export class DatabaseWriteAdapter {
         : null,
       after
     };
+  }
+}
+
+function getRequiredFieldsForTable(table: string): string[] {
+  const base = DEFAULT_REQUIRED_FIELDS[table] ?? [];
+  const extra = CONFIG_REQUIRED_FIELDS[table] ?? [];
+  return [...new Set([...base, ...extra])];
+}
+
+function getAutoFillStrategiesForTable(table: string): Record<string, AutoFillStrategy> {
+  const merged: Record<string, AutoFillStrategy> = {};
+  const base = DEFAULT_AUTO_FILL_FIELDS[table] ?? {};
+  const extra = CONFIG_AUTO_FILL_FIELDS[table] ?? {};
+  for (const [field, strategy] of Object.entries(base)) {
+    merged[field] = strategy;
+  }
+  for (const [field, strategy] of Object.entries(extra)) {
+    merged[field] = strategy;
+  }
+  return merged;
+}
+
+function parseRequiredFieldsByTableFromEnv(): Record<string, string[]> {
+  const raw = parseJsonEnv("DB_WRITE_REQUIRED_FIELDS_JSON") ?? parseJsonEnv("DB_REQUIRED_FIELDS_JSON");
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+
+  const parsed: Record<string, string[]> = {};
+  for (const [rawTable, rawFields] of Object.entries(raw)) {
+    const table = normalizeIdentifier(rawTable);
+    if (!table || !Array.isArray(rawFields)) {
+      continue;
+    }
+
+    const fields: string[] = [];
+    const seen = new Set<string>();
+    for (const field of rawFields) {
+      const normalizedField = normalizeIdentifier(field);
+      if (!normalizedField || seen.has(normalizedField)) {
+        continue;
+      }
+      seen.add(normalizedField);
+      fields.push(normalizedField);
+    }
+    parsed[table] = fields;
+  }
+
+  return parsed;
+}
+
+function parseAutoFillFieldsByTableFromEnv(): Record<string, Record<string, AutoFillStrategy>> {
+  const raw = parseJsonEnv("DB_WRITE_AUTO_FILL_FIELDS_JSON");
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+
+  const parsed: Record<string, Record<string, AutoFillStrategy>> = {};
+  for (const [rawTable, rawConfig] of Object.entries(raw)) {
+    const table = normalizeIdentifier(rawTable);
+    if (!table || !rawConfig || typeof rawConfig !== "object" || Array.isArray(rawConfig)) {
+      continue;
+    }
+
+    const config: Record<string, AutoFillStrategy> = {};
+    for (const [rawField, rawStrategy] of Object.entries(rawConfig)) {
+      const field = normalizeIdentifier(rawField);
+      if (!field || typeof rawStrategy !== "string") {
+        continue;
+      }
+      const strategy = rawStrategy.trim().toLowerCase();
+      if (strategy !== "uuid" && strategy !== "now") {
+        continue;
+      }
+      config[field] = strategy;
+    }
+
+    if (Object.keys(config).length > 0) {
+      parsed[table] = config;
+    }
+  }
+
+  return parsed;
+}
+
+function normalizeIdentifier(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (!/^[a-z_][a-z0-9_]*$/i.test(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
+function parseJsonEnv(name: string): unknown {
+  const raw = (process.env[name] ?? "").trim();
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
 }

@@ -6,6 +6,7 @@ export type FilesystemLocalAdapterConfig = {
   maxFileBytes: number;
   writeEnabled: boolean;
   writeAllowedPaths: string[];
+  allowlistEnvironment?: string;
 };
 
 export type FsEntry = {
@@ -45,6 +46,7 @@ export class FilesystemLocalAdapter {
   private readonly maxFileBytes: number;
   private readonly writeEnabled: boolean;
   private readonly writeAllowedPaths: string[];
+  private readonly allowlistEnvironment: string;
 
   constructor(config: FilesystemLocalAdapterConfig) {
     this.allowedRoots = config.allowedRoots
@@ -55,10 +57,17 @@ export class FilesystemLocalAdapter {
     this.writeAllowedPaths = config.writeAllowedPaths
       .map(root => normalizeAbsolutePath(root))
       .filter(Boolean);
+    this.allowlistEnvironment = config.allowlistEnvironment?.trim() || "development";
   }
 
-  listAllowedPaths(): { roots: string[]; write_enabled: boolean; write_paths: string[] } {
+  listAllowedPaths(): {
+    allowlist_environment: string;
+    roots: string[];
+    write_enabled: boolean;
+    write_paths: string[];
+  } {
     return {
+      allowlist_environment: this.allowlistEnvironment,
       roots: this.allowedRoots,
       write_enabled: this.writeEnabled,
       write_paths: this.writeAllowedPaths

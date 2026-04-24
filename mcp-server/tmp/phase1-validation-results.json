@@ -1,0 +1,167 @@
+{
+  "generated_at": "2026-04-24T03:09:34.612Z",
+  "mcp_url": "http://127.0.0.1:3341/mcp",
+  "trace_id": "phase1-1777000174612-jz5zxl",
+  "entity_id": 1700000001,
+  "checklist": [
+    {
+      "id": "1",
+      "title": "Testar o workspace local completo do projeto",
+      "status": "pass",
+      "details": {
+        "root_entries": 41,
+        "search_matches": 0
+      }
+    },
+    {
+      "id": "2",
+      "title": "Testar leitura de arquivos de configuração reais",
+      "status": "pass",
+      "details": {
+        "config_bytes": 6850,
+        "docs_bytes": 2233
+      }
+    },
+    {
+      "id": "3",
+      "title": "Testar escrita em path de operação/documentação real",
+      "status": "pass",
+      "details": {
+        "operation_path": "C:\\laragon\\www\\mmcriativos\\storage\\app\\vee\\phase1-validation-1777000179674.txt",
+        "documentation_path": "C:\\laragon\\www\\mmcriativos\\docs\\operations\\phase1-validation-smoke-1777000179674.md"
+      }
+    },
+    {
+      "id": "4",
+      "title": "Testar query em pelo menos 3 tabelas diferentes da allowlist",
+      "status": "pass",
+      "details": {
+        "tables": [
+          {
+            "table": "projects",
+            "rows": 2
+          },
+          {
+            "table": "project_tasks",
+            "rows": 3
+          },
+          {
+            "table": "vee_project_events",
+            "rows": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "5",
+      "title": "Testar vee_db_write em mais de uma tabela operacional",
+      "status": "pass",
+      "details": {
+        "write_1_table": "vee_execution_notes",
+        "write_2_table": "vee_project_events"
+      }
+    },
+    {
+      "id": "6",
+      "title": "Testar comportamento com erro de schema/campo obrigatório",
+      "status": "pass",
+      "details": {
+        "expected_error_received": true,
+        "error_excerpt": "Missing required fields for \"vee_execution_notes\" INSERT: content"
+      }
+    },
+    {
+      "id": "7",
+      "title": "Testar logs e rastreabilidade de ações executadas",
+      "status": "pass",
+      "details": {
+        "timeline_rows": 1,
+        "operational_timeline_rows": 7,
+        "agent_history_entries": 9
+      }
+    },
+    {
+      "id": "8",
+      "title": "Documentar a allowlist final e os roots autorizados",
+      "status": "pass",
+      "details": {
+        "documented_table_count": 36,
+        "documented_named_view_count": 8,
+        "documented_root_count": 5
+      }
+    }
+  ],
+  "artifacts": {
+    "operation_file": "C:\\laragon\\www\\mmcriativos\\storage\\app\\vee\\phase1-validation-1777000179674.txt",
+    "documentation_file": "C:\\laragon\\www\\mmcriativos\\docs\\operations\\phase1-validation-smoke-1777000179674.md",
+    "db_write_tables": [
+      "vee_execution_notes",
+      "vee_project_events"
+    ],
+    "timeline_event_id_from_write": "a19bdd55-25d3-4a04-b258-ae3d5b16d7de"
+  },
+  "allowlist": {
+    "table_count": 36,
+    "named_view_count": 8,
+    "safe_execute": [
+      "agent_context_states",
+      "appointments",
+      "booking_sessions",
+      "project_tasks",
+      "projects",
+      "user_preferences",
+      "vee_blocks",
+      "vee_execution_notes",
+      "vee_incidents",
+      "vee_operational_decisions",
+      "vee_project_events",
+      "vee_status_history"
+    ],
+    "approval_required": [
+      "api_credentials",
+      "billing_invoices",
+      "billing_subscriptions",
+      "billing_transactions",
+      "clients",
+      "contacts",
+      "integration_credentials",
+      "integrations",
+      "invoices",
+      "messages",
+      "oauth_access_tokens",
+      "oauth_auth_codes",
+      "oauth_clients",
+      "oauth_refresh_tokens",
+      "password_resets",
+      "payment_methods",
+      "personal_access_tokens",
+      "services",
+      "subscriptions",
+      "tenants",
+      "users"
+    ],
+    "read_only": [
+      "ai_messages",
+      "vee_action_approvals",
+      "vee_mcp_calls"
+    ]
+  },
+  "filesystem": {
+    "allowlist_environment": "development",
+    "roots": [
+      "C:/laragon/www/mmcriativos",
+      "C:/laragon/www/mmcriativos/config",
+      "C:/laragon/www/mmcriativos/docs",
+      "C:/laragon/www/mmcriativos/routes",
+      "C:/laragon/www/mmcriativos/deploy"
+    ],
+    "write_enabled": true,
+    "write_paths": [
+      "C:/laragon/www/mmcriativos/storage/app/vee",
+      "C:/laragon/www/mmcriativos/docs/operations"
+    ]
+  },
+  "finished_at": "2026-04-24T03:09:45.710Z",
+  "failed": 0,
+  "passed": 8
+}
