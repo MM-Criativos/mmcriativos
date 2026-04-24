@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-04-24T16:19:50.624Z",
+  "generated_at": "2026-04-24T16:51:57.286Z",
   "mcp_url": "https://mcp.mmcriativos.cloud/mcp",
-  "trace_id": "fs-fix-1777047590614-hc4htp",
+  "trace_id": "fs-fix-1777049517278-2dugcj",
   "checks": [
     {
       "id": "1",
@@ -9,17 +9,20 @@
       "status": "pass",
       "details": {
         "roots": [
-          "/obsidian"
+          "/obsidian",
+          "/opt/obsidian/mm-brain"
         ],
         "write_paths": [
           "/obsidian/Sessoes",
-          "/obsidian/MMCloud/testes"
+          "/obsidian/MMCloud/testes",
+          "/opt/obsidian/mm-brain/Sessoes",
+          "/opt/obsidian/mm-brain/MMCloud/testes"
         ]
       }
     },
     {
       "id": "2",
-      "title": "List directory real",
+      "title": "List directory real no path legado",
       "status": "pass",
       "details": {
         "total": 12
@@ -27,7 +30,7 @@
     },
     {
       "id": "3",
-      "title": "Read file real",
+      "title": "Read file real no path legado",
       "status": "pass",
       "details": {
         "total_bytes": 838
@@ -35,7 +38,7 @@
     },
     {
       "id": "4",
-      "title": "Search text real",
+      "title": "Search text real no path legado",
       "status": "pass",
       "details": {
         "total_matches": 20
@@ -43,10 +46,10 @@
     },
     {
       "id": "5",
-      "title": "Write file em path permitido",
+      "title": "Write file em path permitido legado",
       "status": "pass",
       "details": {
-        "path": "/obsidian/Sessoes/fs-fix-validation-1777047591463.md"
+        "path": "/opt/obsidian/mm-brain/Sessoes/fs-fix-validation-1777049519563.md"
       }
     }
   ],
@@ -56,6 +59,6 @@
     "failed": 0
   },
   "artifacts": {
-    "written_file": "/obsidian/Sessoes/fs-fix-validation-1777047591463.md"
+    "written_file": "/opt/obsidian/mm-brain/Sessoes/fs-fix-validation-1777049519563.md"
   }
 }

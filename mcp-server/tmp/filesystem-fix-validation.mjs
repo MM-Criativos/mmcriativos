@@ -76,6 +76,10 @@ async function main() {
       const roots = Array.isArray(allowed.structured?.roots) ? allowed.structured.roots : [];
       assert(roots.length > 0, "No roots returned.");
       assert(roots.includes("/obsidian"), `Expected /obsidian in roots. Received: ${JSON.stringify(roots)}`);
+      assert(
+        roots.includes("/opt/obsidian/mm-brain"),
+        `Expected /opt/obsidian/mm-brain in roots. Received: ${JSON.stringify(roots)}`
+      );
 
       return {
         roots,
@@ -83,23 +87,26 @@ async function main() {
       };
     });
 
-    await check("2", "List directory real", async () => {
-      const listed = await call("vee_fs_list_directory", { path: "/obsidian", max_entries: 80 });
+    await check("2", "List directory real no path legado", async () => {
+      const listed = await call("vee_fs_list_directory", { path: "/opt/obsidian/mm-brain", max_entries: 80 });
       assert(!listed.isError, "vee_fs_list_directory failed.");
-      assert((listed.structured?.total ?? 0) > 0, "No directory entries found for /obsidian.");
+      assert((listed.structured?.total ?? 0) > 0, "No directory entries found for /opt/obsidian/mm-brain.");
       return { total: listed.structured?.total ?? 0 };
     });
 
-    await check("3", "Read file real", async () => {
-      const read = await call("vee_fs_read_file", { path: "/obsidian/MMCloud/agentes.md", max_bytes: 12000 });
+    await check("3", "Read file real no path legado", async () => {
+      const read = await call("vee_fs_read_file", {
+        path: "/opt/obsidian/mm-brain/MMCloud/agentes.md",
+        max_bytes: 12000
+      });
       assert(!read.isError, "vee_fs_read_file failed.");
       assert(typeof read.structured?.content === "string", "No content returned from read_file.");
       return { total_bytes: read.structured?.total_bytes ?? null };
     });
 
-    await check("4", "Search text real", async () => {
+    await check("4", "Search text real no path legado", async () => {
       const search = await call("vee_fs_search_text", {
-        path: "/obsidian",
+        path: "/opt/obsidian/mm-brain",
         pattern: "2026",
         case_insensitive: true,
         max_matches: 20
@@ -114,8 +121,8 @@ async function main() {
       };
     });
 
-    await check("5", "Write file em path permitido", async () => {
-      const writePath = `/obsidian/Sessoes/fs-fix-validation-${Date.now()}.md`;
+    await check("5", "Write file em path permitido legado", async () => {
+      const writePath = `/opt/obsidian/mm-brain/Sessoes/fs-fix-validation-${Date.now()}.md`;
       const write = await call("vee_fs_write_file", {
         path: writePath,
         content: `# Filesystem Fix Validation\n\ntrace_id: ${TRACE_ID}\n`
