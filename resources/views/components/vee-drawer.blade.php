@@ -289,7 +289,7 @@
                                     <template x-if="msg.role === 'user'">
                                         <div class="vee-msg-user">
                                             <div class="vee-msg-user__bubble">
-                                                <template x-if="editingMessageId === msg.id">
+                                                <template x-if="editingMessageId !== null && msg.id !== null && Number(editingMessageId) === Number(msg.id)">
                                                     <div class="vee-msg-edit-wrap">
                                                         <textarea
                                                             x-model="editingMessageText"
@@ -319,7 +319,7 @@
                                                         </div>
                                                     </div>
                                                 </template>
-                                                <template x-if="editingMessageId !== msg.id">
+                                                <template x-if="editingMessageId === null || msg.id === null || Number(editingMessageId) !== Number(msg.id)">
                                                     <div>
                                                         <p x-text="msg.content" class="vee-msg-user__text"></p>
                                                         <div class="vee-msg-user__actions" x-show="msg.can_edit">
@@ -327,9 +327,11 @@
                                                                 type="button"
                                                                 class="vee-msg-user__edit-btn"
                                                                 @click="startMessageEdit(msg)"
+                                                                title="Editar mensagem"
+                                                                aria-label="Editar mensagem"
                                                                 :disabled="isStreaming"
                                                             >
-                                                                Editar
+                                                                <i data-lucide="pencil" class="vee-icon-btn"></i>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -967,6 +969,7 @@ document.addEventListener('alpine:init', () => {
                 localStorage.setItem('vee-last-session', id);
                 this.$nextTick(() => {
                     this.decorateMessageHtml();
+                    this.refreshLucide();
                     this.scrollToBottom();
                 });
             } catch {}
@@ -1162,6 +1165,7 @@ document.addEventListener('alpine:init', () => {
                                 }
                                 this.$nextTick(() => {
                                     this.decorateMessageHtml();
+                                    this.refreshLucide();
                                     this.scrollToBottom();
                                 });
                                 break;
@@ -1172,6 +1176,7 @@ document.addEventListener('alpine:init', () => {
                                 });
                                 this.$nextTick(() => {
                                     this.decorateMessageHtml();
+                                    this.refreshLucide();
                                     this.scrollToBottom();
                                 });
                                 break;
@@ -1293,17 +1298,47 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        setCopyButtonState(button, label) {
+        refreshLucide() {
+            if (!window.lucide || typeof window.lucide.createIcons !== 'function') {
+                return;
+            }
+            window.lucide.createIcons();
+        },
+
+        setCopyButtonState(button, state) {
             if (!button) return;
-            const defaultLabel = button.dataset.defaultLabel || 'Copiar';
+            const iconByState = {
+                default: 'copy',
+                copied: 'check',
+                error: 'alert-circle',
+            };
+            const ariaByState = {
+                default: 'Copiar bloco',
+                copied: 'Copiado',
+                error: 'Falha ao copiar',
+            };
+
+            const nextState = Object.prototype.hasOwnProperty.call(iconByState, state) ? state : 'default';
+            const icon = iconByState[nextState];
+            const ariaLabel = ariaByState[nextState];
+
             const previousTimer = Number(button.dataset.resetTimer || 0);
             if (previousTimer) {
                 window.clearTimeout(previousTimer);
             }
-            button.textContent = label;
-            const timer = window.setTimeout(() => {
-                button.textContent = defaultLabel;
+
+            button.innerHTML = `<i data-lucide="${icon}" class="vee-icon-btn"></i>`;
+            button.setAttribute('aria-label', ariaLabel);
+            button.setAttribute('title', ariaLabel);
+            this.refreshLucide();
+
+            if (nextState === 'default') {
                 button.dataset.resetTimer = '';
+                return;
+            }
+
+            const timer = window.setTimeout(() => {
+                this.setCopyButtonState(button, 'default');
             }, 1400);
             button.dataset.resetTimer = String(timer);
         },
@@ -1328,15 +1363,14 @@ document.addEventListener('alpine:init', () => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'vee-md-copy-btn';
-                btn.dataset.defaultLabel = 'Copiar';
-                btn.textContent = 'Copiar';
+                this.setCopyButtonState(btn, 'default');
                 btn.addEventListener('click', async (event) => {
                     event.preventDefault();
                     event.stopPropagation();
                     const codeEl = pre.querySelector('code');
                     const codeText = String(codeEl?.textContent || pre.textContent || '').trimEnd();
                     const copied = await this.copyText(codeText);
-                    this.setCopyButtonState(btn, copied ? 'Copiado' : 'Falhou');
+                    this.setCopyButtonState(btn, copied ? 'copied' : 'error');
                 });
                 wrapper.appendChild(btn);
             });

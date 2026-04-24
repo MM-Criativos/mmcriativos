@@ -677,9 +677,12 @@
     border-radius: var(--vee-radius-sm);
     background: rgba(0, 0, 0, .16);
     color: #fff;
-    font-size: 11px;
-    line-height: 1;
-    padding: 6px 8px;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     cursor: pointer;
 }
 .vee-msg-user__edit-btn:hover {
@@ -733,6 +736,10 @@
 .vee-msg-edit-btn:disabled {
     opacity: .55;
     cursor: not-allowed;
+}
+.vee-icon-btn {
+    width: 14px;
+    height: 14px;
 }
 
 /* Assistant row */
@@ -1535,9 +1542,12 @@
     border-radius: 6px;
     background: rgba(255,255,255,.08);
     color: #f3f6fc;
-    font-size: 11px;
-    line-height: 1;
-    padding: 5px 8px;
+    width: 30px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
 }
 .vee-md-copy-btn:hover {
