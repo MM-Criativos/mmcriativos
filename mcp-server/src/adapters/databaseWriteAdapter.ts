@@ -347,10 +347,16 @@ export class DatabaseWriteAdapter {
   private async readSnapshot(
     table: string,
     where: WhereCondition[],
-    columns: string[]
+    columns: string[],
+    dbTarget?: "mmcriativos" | "mmcc"
   ): Promise<Record<string, unknown> | null> {
     const snapshotColumns = [...new Set(columns.filter((column) => column.trim().length > 0))];
-    const snap = buildSnapshotQuery(table, where, snapshotColumns.length > 0 ? snapshotColumns : undefined);
+    const snap = buildSnapshotQuery(
+      table,
+      where,
+      snapshotColumns.length > 0 ? snapshotColumns : undefined,
+      dbTarget
+    );
     return this.queryOne<Record<string, unknown>>(snap.sql, snap.params);
   }
 
@@ -717,9 +723,19 @@ export class DatabaseWriteAdapter {
 
     let before: Record<string, unknown> | null = null;
     if (preparedInput.operation === "UPDATE" && preparedInput.where && preparedInput.where.length > 0) {
-      before = await this.readSnapshot(preparedInput.table, preparedInput.where, normalized.normalized_data_keys);
+      before = await this.readSnapshot(
+        preparedInput.table,
+        preparedInput.where,
+        normalized.normalized_data_keys,
+        preparedInput.dbTarget
+      );
     } else if (preparedInput.operation === "UPSERT" && normalized.identity_where) {
-      before = await this.readSnapshot(preparedInput.table, normalized.identity_where, snapshotColumns);
+      before = await this.readSnapshot(
+        preparedInput.table,
+        normalized.identity_where,
+        snapshotColumns,
+        preparedInput.dbTarget
+      );
     }
 
     const result = await this.execute(built.sql, built.params);
@@ -730,15 +746,31 @@ export class DatabaseWriteAdapter {
         after = await this.readSnapshot(
           preparedInput.table,
           [{ column: "id", operator: "=", value: result.insertId }],
-          [...new Set(["id", ...normalized.normalized_data_keys])]
+          [...new Set(["id", ...normalized.normalized_data_keys])],
+          preparedInput.dbTarget
         );
       } else if (normalized.identity_where) {
-        after = await this.readSnapshot(preparedInput.table, normalized.identity_where, snapshotColumns);
+        after = await this.readSnapshot(
+          preparedInput.table,
+          normalized.identity_where,
+          snapshotColumns,
+          preparedInput.dbTarget
+        );
       }
     } else if (preparedInput.operation === "UPDATE" && preparedInput.where && preparedInput.where.length > 0) {
-      after = await this.readSnapshot(preparedInput.table, preparedInput.where, normalized.normalized_data_keys);
+      after = await this.readSnapshot(
+        preparedInput.table,
+        preparedInput.where,
+        normalized.normalized_data_keys,
+        preparedInput.dbTarget
+      );
     } else if (preparedInput.operation === "UPSERT" && normalized.identity_where) {
-      after = await this.readSnapshot(preparedInput.table, normalized.identity_where, snapshotColumns);
+      after = await this.readSnapshot(
+        preparedInput.table,
+        normalized.identity_where,
+        snapshotColumns,
+        preparedInput.dbTarget
+      );
     }
 
     return {

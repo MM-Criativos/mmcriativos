@@ -4,6 +4,8 @@
 import {
   resolveTablePolicy,
   resolveActualTableName,
+  normalizeDbTarget,
+  type DbTarget,
   type TablePolicy
 } from "./queryAllowlist.js";
 
@@ -41,6 +43,7 @@ export type OrderByClause = {
 };
 
 export type StructuredQueryInput = {
+  dbTarget?: DbTarget;
   table: string;
   columns?: string[];
   where?: WhereCondition[];
@@ -51,6 +54,7 @@ export type StructuredQueryInput = {
 };
 
 export type StructuredWriteInput = {
+  dbTarget?: DbTarget;
   operation: "INSERT" | "UPDATE" | "UPSERT";
   table: string;
   data: Record<string, unknown>;
@@ -177,14 +181,15 @@ function resolveColumnRef(column: string, context: QueryContext, clause: string)
 }
 
 function buildQueryContext(input: StructuredQueryInput): QueryContext {
-  const basePolicy = resolveTablePolicy(input.table);
+  const dbTarget = normalizeDbTarget(input.dbTarget);
+  const basePolicy = resolveTablePolicy(input.table, dbTarget);
   if (!basePolicy) {
     throw new Error(`Table or view "${input.table}" is not in the allowed list.`);
   }
 
   const base: ResolvedTableRef = {
     logicalName: normalizeIdentifier(input.table),
-    actualName: resolveActualTableName(input.table),
+    actualName: resolveActualTableName(input.table, dbTarget),
     policy: basePolicy
   };
 
@@ -193,14 +198,14 @@ function buildQueryContext(input: StructuredQueryInput): QueryContext {
 
   const joins: ResolvedTableRef[] = [];
   for (const join of input.joins ?? []) {
-    const joinPolicy = resolveTablePolicy(join.table);
+    const joinPolicy = resolveTablePolicy(join.table, dbTarget);
     if (!joinPolicy) {
       throw new Error(`JOIN table "${join.table}" is not in the allowed table list.`);
     }
 
     const joinRef: ResolvedTableRef = {
       logicalName: normalizeIdentifier(join.table),
-      actualName: resolveActualTableName(join.table),
+      actualName: resolveActualTableName(join.table, dbTarget),
       policy: joinPolicy
     };
 
@@ -384,7 +389,8 @@ export function buildSelectQuery(input: StructuredQueryInput, maxRows: number): 
 }
 
 export function buildWriteQuery(input: StructuredWriteInput): BuiltQuery {
-  const policy = resolveTablePolicy(input.table);
+  const dbTarget = normalizeDbTarget(input.dbTarget);
+  const policy = resolveTablePolicy(input.table, dbTarget);
   if (!policy) {
     throw new Error(`Table "${input.table}" is not in the allowed list.`);
   }
@@ -392,7 +398,7 @@ export function buildWriteQuery(input: StructuredWriteInput): BuiltQuery {
     throw new Error(`Table "${input.table}" is read-only and does not allow writes.`);
   }
 
-  const resolvedTable = resolveActualTableName(input.table);
+  const resolvedTable = resolveActualTableName(input.table, dbTarget);
   const columns = Object.keys(input.data);
 
   if (columns.length === 0) {
@@ -470,8 +476,9 @@ export function buildWriteQuery(input: StructuredWriteInput): BuiltQuery {
 export function buildSnapshotQuery(
   table: string,
   where: WhereCondition[],
-  columns?: string[]
+  columns?: string[],
+  dbTarget?: DbTarget
 ): { sql: string; params: SqlParam[] } {
-  const built = buildSelectQuery({ table, where, columns, limit: 1 }, 1);
+  const built = buildSelectQuery({ dbTarget, table, where, columns, limit: 1 }, 1);
   return { sql: built.sql, params: built.params };
 }

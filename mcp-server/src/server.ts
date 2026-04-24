@@ -314,6 +314,32 @@ const MMCRIATIVOS_APPROVAL_REQUIRED_BASE = [
   "payment_methods"
 ];
 
+const MMCC_SAFE_EXECUTE_BASE = [
+  "ai_messages",
+  "ai_context_states",
+  "ai_memory_snapshots",
+  "ai_usage_events",
+  "agent_executions",
+  "booking_sessions",
+  "appointments",
+  "appointment_notes",
+  "appointment_confirmation_reminder_dispatches",
+  "customer_appointment_reminder_dispatches",
+  "professional_daily_schedule_dispatches",
+  "vee_project_events",
+  "vee_status_history",
+  "vee_blocks",
+  "vee_operational_decisions",
+  "vee_execution_notes"
+];
+
+const MMCC_APPROVAL_REQUIRED_BASE = [
+  "tenants",
+  "customers",
+  "users",
+  "messages"
+];
+
 function buildFsAllowedRoots(fsEnv: FsAllowlistEnv): string[] {
   const envSuffix = fsEnv.toUpperCase();
   return dedupeStrings(
@@ -1285,8 +1311,8 @@ function cleanupCoverageJobs(): void {
   }
 }
 
-function getCoverageQueue(includeNamedViews: boolean, tableFilter?: string[]): AllowlistEntry[] {
-  const entries = listQueryAllowlist().filter(entry => includeNamedViews || entry.kind === "table");
+function getCoverageQueue(dbTarget: DbTarget, includeNamedViews: boolean, tableFilter?: string[]): AllowlistEntry[] {
+  const entries = listQueryAllowlist(dbTarget).filter(entry => includeNamedViews || entry.kind === "table");
   if (!tableFilter || tableFilter.length === 0) {
     return entries;
   }
@@ -1298,9 +1324,9 @@ function getCoverageQueue(includeNamedViews: boolean, tableFilter?: string[]): A
   );
 }
 
-function resolveAllowlistEntryOrThrow(name: string): AllowlistEntry {
+function resolveAllowlistEntryOrThrow(name: string, dbTarget: DbTarget): AllowlistEntry {
   const normalized = normalizeAllowlistName(name);
-  const entry = listQueryAllowlist().find(
+  const entry = listQueryAllowlist(dbTarget).find(
     item =>
       normalizeAllowlistName(item.logical_name) === normalized ||
       normalizeAllowlistName(item.resolved_name) === normalized
@@ -1440,6 +1466,7 @@ async function validateTableBehaviorInternal(params: {
     try {
       const readResult = await adapter.executeStructuredQuery(
         {
+          dbTarget: target,
           table: entry.logical_name,
           columns: readableColumns.slice(0, Math.min(readableColumns.length, 3)),
           limit: 1,
@@ -1463,6 +1490,7 @@ async function validateTableBehaviorInternal(params: {
       try {
         await adapter.executeStructuredQuery(
           {
+            dbTarget: target,
             table: entry.logical_name,
             columns: [probeColumn],
             where: [{ column: probeColumn, operator: "IS NOT NULL" }],
@@ -1487,6 +1515,7 @@ async function validateTableBehaviorInternal(params: {
     try {
       await adapter.executeStructuredQuery(
         {
+          dbTarget: target,
           table: entry.logical_name,
           columns: [blockedColumn],
           limit: 1
@@ -1502,7 +1531,7 @@ async function validateTableBehaviorInternal(params: {
     }
   }
 
-  const policy = resolveTablePolicy(entry.logical_name);
+  const policy = resolveTablePolicy(entry.logical_name, target);
   if (!policy) {
     writePolicy = "fail";
     warnings.push("Table policy not found while validating write permissions.");
@@ -1523,6 +1552,7 @@ async function validateTableBehaviorInternal(params: {
 
       try {
         buildWriteQuery({
+          dbTarget: target,
           operation: "UPDATE",
           table: entry.logical_name,
           data: { [writeCandidate]: sampleValue },
@@ -1531,6 +1561,7 @@ async function validateTableBehaviorInternal(params: {
         });
 
         buildWriteQuery({
+          dbTarget: target,
           operation: "UPSERT",
           table: entry.logical_name,
           data: upsertData,
@@ -1553,6 +1584,7 @@ async function validateTableBehaviorInternal(params: {
   try {
     await adapter.executeStructuredQuery(
       {
+        dbTarget: target,
         table: entry.logical_name,
         columns: ["__vee_invalid_column__"],
         limit: 1
@@ -1645,7 +1677,7 @@ async function validateNamedViewInternal(params: {
   let errorMessage: string | null = null;
   try {
     const result = await adapter.executeStructuredQuery(
-      { table: entry.logical_name, limit: 1 },
+      { dbTarget: target, table: entry.logical_name, limit: 1 },
       `vee:${target}:view-probe:${entry.logical_name}`,
       { auditMode }
     );
@@ -3916,18 +3948,21 @@ function createServer(): McpServer {
       description:
         "Lists the effective DB allowlist used by vee_db_query/vee_db_write, including tables, named views, blocked columns, and write modes. " +
         "Includes entries from base code and optional env overlays (DB_ALLOWLIST_EXTRA_TABLE_POLICIES_JSON / DB_ALLOWLIST_EXTRA_NAMED_VIEWS_JSON).",
-      inputSchema: {}
+      inputSchema: {
+        db_target: dbTargetSchema
+      }
     },
-    async () =>
+    async ({ db_target }) =>
       runAuditedTool({
         toolName: "vee_db_list_allowlist",
         permission: "read_only",
         isWrite: false,
-        args: {},
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET },
         errorContext: "Failed to list DB allowlist",
         handler: async () => {
-          const entries = listQueryAllowlist();
-          const writeGroups = listWritePolicyGroups();
+          const target = db_target ?? DB_DEFAULT_TARGET;
+          const entries = listQueryAllowlist(target);
+          const writeGroups = listWritePolicyGroups(target);
           const tables = entries.filter(entry => entry.kind === "table");
           const namedViews = entries.filter(entry => entry.kind === "named_view");
           const blockedColumns = tables
@@ -3943,6 +3978,7 @@ function createServer(): McpServer {
           ]);
 
           const payload = {
+            db_target: target,
             totals: {
               entries: entries.length,
               tables: tables.length,
@@ -3961,6 +3997,10 @@ function createServer(): McpServer {
               mm_criativos_baseline: {
                 safe_execute: MMCRIATIVOS_SAFE_EXECUTE_BASE,
                 approval_required: MMCRIATIVOS_APPROVAL_REQUIRED_BASE
+              },
+              mmcc_baseline: {
+                safe_execute: MMCC_SAFE_EXECUTE_BASE,
+                approval_required: MMCC_APPROVAL_REQUIRED_BASE
               },
               mmcc_configured: {
                 safe_execute: mmccSafeExecuteConfigured,
@@ -3999,8 +4039,8 @@ function createServer(): McpServer {
         args: { db_target: db_target ?? DB_DEFAULT_TARGET, object_name, audit_mode: audit_mode ?? true },
         errorContext: `Failed to inspect schema object "${object_name}"`,
         handler: async () => {
-          const entry = resolveAllowlistEntryOrThrow(object_name);
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const entry = resolveAllowlistEntryOrThrow(object_name, target);
           const inspection = await adapter.inspectSchemaObject(
             entry.resolved_name,
             `vee:${target}:schema-inspect:${entry.logical_name}`,
@@ -4039,8 +4079,8 @@ function createServer(): McpServer {
         args: { db_target: db_target ?? DB_DEFAULT_TARGET, object_name, audit_mode: audit_mode ?? true },
         errorContext: `Failed to list indexes for "${object_name}"`,
         handler: async () => {
-          const entry = resolveAllowlistEntryOrThrow(object_name);
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const entry = resolveAllowlistEntryOrThrow(object_name, target);
           const indexes = await adapter.listSchemaObjectIndexes(
             entry.resolved_name,
             `vee:${target}:schema-index:${entry.logical_name}`,
@@ -4078,8 +4118,8 @@ function createServer(): McpServer {
         args: { db_target: db_target ?? DB_DEFAULT_TARGET, object_name, audit_mode: audit_mode ?? true },
         errorContext: `Failed to list relations for "${object_name}"`,
         handler: async () => {
-          const entry = resolveAllowlistEntryOrThrow(object_name);
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const entry = resolveAllowlistEntryOrThrow(object_name, target);
           const relations = await adapter.listSchemaObjectRelations(
             entry.resolved_name,
             `vee:${target}:schema-rel:${entry.logical_name}`,
@@ -4125,17 +4165,17 @@ function createServer(): McpServer {
         errorContext: "Failed to list allowlist schema metadata",
         handler: async () => {
           const includeViews = include_named_views ?? true;
-          const queue = getCoverageQueue(includeViews, table_filter);
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const queue = getCoverageQueue(target, includeViews, table_filter);
           const metadata = await adapter.listSchemaObjectsMetadata(
-            queue.map(entry => resolveActualTableName(entry.resolved_name)),
+            queue.map(entry => resolveActualTableName(entry.resolved_name, target)),
             `vee:${target}:allowlist-schema`,
             { auditMode: audit_mode ?? true }
           );
           const metadataByObject = new Map(metadata.map(item => [item.object_name, item]));
           const entries = queue.map(entry => ({
             ...entry,
-            schema: metadataByObject.get(resolveActualTableName(entry.resolved_name)) ?? null
+            schema: metadataByObject.get(resolveActualTableName(entry.resolved_name, target)) ?? null
           }));
           const payload = {
             db_target: target,
@@ -4181,12 +4221,12 @@ function createServer(): McpServer {
         },
         errorContext: "Failed to discover table relationships",
         handler: async () => {
-          const requestedEntries = (tables && tables.length > 0
-            ? tables.map(name => resolveAllowlistEntryOrThrow(name))
-            : getCoverageQueue(false)
-          ).filter(entry => entry.kind === "table");
-          const objectNames = [...new Set(requestedEntries.map(entry => resolveActualTableName(entry.resolved_name)))];
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const requestedEntries = (tables && tables.length > 0
+            ? tables.map(name => resolveAllowlistEntryOrThrow(name, target))
+            : getCoverageQueue(target, false)
+          ).filter(entry => entry.kind === "table");
+          const objectNames = [...new Set(requestedEntries.map(entry => resolveActualTableName(entry.resolved_name, target)))];
           const relationships = await adapter.discoverRelationships(
             objectNames,
             `vee:${target}:rel-discovery`,
@@ -4241,9 +4281,9 @@ function createServer(): McpServer {
         },
         errorContext: `Failed to run assisted join between "${left_table}" and "${right_table}"`,
         handler: async () => {
-          const leftEntry = resolveAllowlistEntryOrThrow(left_table);
-          const rightEntry = resolveAllowlistEntryOrThrow(right_table);
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const leftEntry = resolveAllowlistEntryOrThrow(left_table, target);
+          const rightEntry = resolveAllowlistEntryOrThrow(right_table, target);
           let joinLeftColumn = left_column?.trim().toLowerCase();
           let joinRightColumn = right_column?.trim().toLowerCase();
           let relationshipHint: Record<string, unknown> | null = null;
@@ -4251,15 +4291,15 @@ function createServer(): McpServer {
           if (!joinLeftColumn || !joinRightColumn) {
             const discovered = await adapter.discoverRelationships(
               [
-                resolveActualTableName(leftEntry.resolved_name),
-                resolveActualTableName(rightEntry.resolved_name)
+                resolveActualTableName(leftEntry.resolved_name, target),
+                resolveActualTableName(rightEntry.resolved_name, target)
               ],
               `vee:${target}:join-hint:${leftEntry.logical_name}:${rightEntry.logical_name}`,
               { includeHeuristics: true, auditMode: audit_mode ?? true }
             );
 
-            const leftResolved = resolveActualTableName(leftEntry.resolved_name);
-            const rightResolved = resolveActualTableName(rightEntry.resolved_name);
+            const leftResolved = resolveActualTableName(leftEntry.resolved_name, target);
+            const rightResolved = resolveActualTableName(rightEntry.resolved_name, target);
             const direct = discovered.find(
               rel => rel.source_table === leftResolved && rel.target_table === rightResolved
             );
@@ -4287,6 +4327,7 @@ function createServer(): McpServer {
           const onClause = `${leftEntry.logical_name}.${joinLeftColumn} = ${rightEntry.logical_name}.${joinRightColumn}`;
           const result = await adapter.executeStructuredQuery(
             {
+              dbTarget: target,
               table: leftEntry.logical_name,
               columns: [
                 `${leftEntry.logical_name}.${joinLeftColumn}`,
@@ -4344,11 +4385,11 @@ function createServer(): McpServer {
         args: { db_target: db_target ?? DB_DEFAULT_TARGET, views, audit_mode: audit_mode ?? true },
         errorContext: "Failed to validate named views",
         handler: async () => {
-          const selected = (views && views.length > 0
-            ? views.map(name => resolveAllowlistEntryOrThrow(name))
-            : getCoverageQueue(true)
-          ).filter(entry => entry.kind === "named_view");
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const selected = (views && views.length > 0
+            ? views.map(name => resolveAllowlistEntryOrThrow(name, target))
+            : getCoverageQueue(target, true)
+          ).filter(entry => entry.kind === "named_view");
           const results: CoverageEntryResult[] = [];
           for (const entry of selected) {
             const result = await validateNamedViewInternal({
@@ -4393,11 +4434,11 @@ function createServer(): McpServer {
         args: { db_target: db_target ?? DB_DEFAULT_TARGET, table, audit_mode: audit_mode ?? true },
         errorContext: `Failed to validate table behavior for "${table}"`,
         handler: async () => {
-          const entry = resolveAllowlistEntryOrThrow(table);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const entry = resolveAllowlistEntryOrThrow(table, target);
           if (entry.kind !== "table") {
             throw new Error(`"${table}" resolves to a named view. Use vee_db_validate_named_views for views.`);
           }
-          const { target, adapter } = resolveReadOnlyAdapter(db_target);
           const result = await validateTableBehaviorInternal({
             adapter,
             target,
@@ -4458,12 +4499,11 @@ function createServer(): McpServer {
         handler: async () => {
           cleanupCoverageJobs();
           const includeViews = include_named_views ?? false;
-          const queue = getCoverageQueue(includeViews, table_filter);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const queue = getCoverageQueue(target, includeViews, table_filter);
           if (queue.length === 0) {
             throw new Error("Coverage queue is empty after filters.");
           }
-
-          const { target, adapter } = resolveReadOnlyAdapter(db_target);
           const job = createCoverageJob({
             dbTarget: target,
             includeNamedViews: includeViews,
@@ -4632,11 +4672,11 @@ function createServer(): McpServer {
             reportPayload = toCoverageJobPayload(job);
           } else {
             const includeViews = include_named_views ?? false;
-            const queue = getCoverageQueue(includeViews, table_filter);
+            const { target, adapter } = resolveReadOnlyAdapter(db_target);
+            const queue = getCoverageQueue(target, includeViews, table_filter);
             if (queue.length === 0) {
               throw new Error("Coverage queue is empty after filters.");
             }
-            const { target, adapter } = resolveReadOnlyAdapter(db_target);
             const tempJob = createCoverageJob({
               dbTarget: target,
               includeNamedViews: includeViews,
@@ -4747,10 +4787,10 @@ function createServer(): McpServer {
         errorContext: `Failed to update allowlist inventory document "${output_path}"`,
         handler: async () => {
           const includeViews = include_named_views ?? true;
-          const queue = getCoverageQueue(includeViews);
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const queue = getCoverageQueue(target, includeViews);
           const metadata = await adapter.listSchemaObjectsMetadata(
-            queue.map(entry => resolveActualTableName(entry.resolved_name)),
+            queue.map(entry => resolveActualTableName(entry.resolved_name, target)),
             `vee:${target}:inventory-doc`,
             { auditMode: audit_mode ?? true }
           );
@@ -4766,7 +4806,7 @@ function createServer(): McpServer {
           lines.push("| --- | --- | --- | --- | --- | --- | --- |");
 
           for (const entry of queue) {
-            const schema = metadataByObject.get(resolveActualTableName(entry.resolved_name));
+            const schema = metadataByObject.get(resolveActualTableName(entry.resolved_name, target));
             lines.push(
               `| ${entry.logical_name} | ${entry.resolved_name} | ${entry.kind} | ${schema?.object_type ?? "-"} | ${schema?.exists ? "yes" : "no"} | ${entry.write_mode} | ${(entry.blocked_columns ?? []).join(", ")} |`
             );
@@ -4780,7 +4820,7 @@ function createServer(): McpServer {
             JSON.stringify(
               queue.map(entry => ({
                 ...entry,
-                schema: metadataByObject.get(resolveActualTableName(entry.resolved_name)) ?? null
+                schema: metadataByObject.get(resolveActualTableName(entry.resolved_name, target)) ?? null
               })),
               null,
               2
@@ -4833,8 +4873,8 @@ function createServer(): McpServer {
         },
         errorContext: `Failed to append schema observation for "${object_name}"`,
         handler: async () => {
-          const entry = resolveAllowlistEntryOrThrow(object_name);
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const entry = resolveAllowlistEntryOrThrow(object_name, target);
           const inspection = await adapter.inspectSchemaObject(
             entry.resolved_name,
             `vee:${target}:obs:${entry.logical_name}`,
@@ -4913,6 +4953,7 @@ function createServer(): McpServer {
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
           const result = await adapter.executeStructuredQuery(
             {
+              dbTarget: target,
               table,
               columns,
               where: where as Parameters<DatabaseReadOnlyAdapter["executeStructuredQuery"]>[0]["where"],
@@ -5034,6 +5075,7 @@ function createServer(): McpServer {
         },
         errorContext: `Failed to execute structured write on "${table}"`,
         handler: async () => {
+          const requestedTarget = db_target ?? DB_DEFAULT_TARGET;
           const { data: writeData, source: payloadSource } = extractWriteDataPayload({
             data,
             values,
@@ -5043,7 +5085,7 @@ function createServer(): McpServer {
           const normalizedReason = normalizeWriteReason(reason);
           const normalizedActor = normalizeActorName(actor);
           const normalizedTraceId = normalizeTraceId(trace_id);
-          const policy = resolveTablePolicy(table);
+          const policy = resolveTablePolicy(table, requestedTarget);
           if (!policy) {
             throw new Error(
               `Table "${table}" is not in the allowed list. Use vee_db_query to see available tables.`
@@ -5062,7 +5104,7 @@ function createServer(): McpServer {
                 tool_name: "vee_db_write",
                 summary: `${operation} on ${table}: ${normalizedReason}`,
                 request_payload: {
-                  db_target: db_target ?? DB_DEFAULT_TARGET,
+                  db_target: requestedTarget,
                   operation,
                   table,
                   data: writeData,
@@ -5089,7 +5131,7 @@ function createServer(): McpServer {
                 status: approval.status,
                 message: `Write to protected table "${table}" requires approval. Approval created — share the approval_id with the approver.`,
                 extra: {
-                  db_target: db_target ?? DB_DEFAULT_TARGET,
+                  db_target: requestedTarget,
                   table,
                   operation,
                   reason: normalizedReason,
@@ -5139,6 +5181,7 @@ function createServer(): McpServer {
               typeof saved["trace_id"] === "string" ? saved["trace_id"] : normalizedTraceId
             );
             const writeResult = await approvedWriteAdapter.executeStructuredWrite({
+              dbTarget: savedTarget,
               operation: saved["operation"] as "INSERT" | "UPDATE" | "UPSERT",
               table: saved["table"] as string,
               data: savedData,
@@ -5220,6 +5263,7 @@ function createServer(): McpServer {
           const { target, adapter } = resolveWriteAdapter(db_target);
           const safeWhere = where as WhereCondition[] | undefined;
           const writeResult = await adapter.executeStructuredWrite({
+            dbTarget: target,
             operation,
             table,
             data: writeData,
@@ -5841,6 +5885,7 @@ function createServer(): McpServer {
           const { target, adapter } = resolveReadOnlyAdapter(db_target);
           const result = await adapter.executeStructuredQuery(
             {
+              dbTarget: target,
               table: "vee_project_events",
               where,
               orderBy: [{ column: "created_at", direction: "DESC" }],
@@ -6014,6 +6059,7 @@ function createServer(): McpServer {
 
             const events = await adapter.executeStructuredQuery(
               {
+                dbTarget: target,
                 table: "timeline_events",
                 where,
                 orderBy: [{ column: "created_at", direction: "DESC" }],
@@ -6059,6 +6105,7 @@ function createServer(): McpServer {
 
             const decisions = await adapter.executeStructuredQuery(
               {
+                dbTarget: target,
                 table: "timeline_decisions",
                 where,
                 orderBy: [{ column: "created_at", direction: "DESC" }],
@@ -6099,6 +6146,7 @@ function createServer(): McpServer {
 
             const blocks = await adapter.executeStructuredQuery(
               {
+                dbTarget: target,
                 table: "timeline_blocks",
                 where,
                 orderBy: [{ column: "blocked_at", direction: "DESC" }],
@@ -6166,6 +6214,7 @@ function createServer(): McpServer {
 
             const statusRows = await adapter.executeStructuredQuery(
               {
+                dbTarget: target,
                 table: "timeline_status_changes",
                 where,
                 orderBy: [{ column: "created_at", direction: "DESC" }],
@@ -6209,6 +6258,7 @@ function createServer(): McpServer {
 
               const calls = await adapter.executeStructuredQuery(
                 {
+                  dbTarget: target,
                   table: "timeline_agent_actions",
                   where,
                   orderBy: [{ column: "created_at", direction: "DESC" }],

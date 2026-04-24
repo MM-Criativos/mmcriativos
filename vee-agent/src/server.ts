@@ -1,6 +1,14 @@
 import "dotenv/config";
 import express, { type NextFunction, type Request, type Response } from "express";
-import { PORT, HOST, AUTH_TOKEN, MODEL_CHAT, MODEL_COWORK, MCP_SERVER_URL } from "./config.js";
+import {
+  PORT,
+  HOST,
+  AUTH_TOKEN,
+  MODEL_CHAT,
+  MODEL_COWORK,
+  MCP_SERVER_URL,
+  VEE_CONTROL_BASE_URL
+} from "./config.js";
 import { ensureTables } from "./db.js";
 import { handleStream } from "./routes/stream.js";
 import {
@@ -12,6 +20,12 @@ import {
   handleEditSessionMessage
 } from "./routes/sessions.js";
 import { handleLogFeed } from "./routes/log.js";
+import {
+  handleApproveApproval,
+  handleGetApproval,
+  handleListApprovals,
+  handleRejectApproval
+} from "./routes/approvals.js";
 
 const app = express();
 app.use(express.json({ limit: "10mb" }));
@@ -61,6 +75,7 @@ app.get("/health", (_req, res) => {
     model_chat: MODEL_CHAT,
     model_cowork: MODEL_COWORK,
     mcp_server: MCP_SERVER_URL,
+    vee_control: VEE_CONTROL_BASE_URL ? "configured" : "missing",
     auth: AUTH_TOKEN ? "protected" : "open"
   });
 });
@@ -124,6 +139,36 @@ app.delete("/sessions/:id", withAuth, (req, res) => {
 
 app.get("/log/feed", withAuth, handleLogFeed);
 
+// ─── Approvals proxy (safe UI integration) ────────────────────────────────────
+
+app.get("/approvals", withAuth, (req, res) => {
+  handleListApprovals(req, res).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  });
+});
+
+app.get("/approvals/:id", withAuth, (req, res) => {
+  handleGetApproval(req, res).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  });
+});
+
+app.post("/approvals/:id/approve", withAuth, (req, res) => {
+  handleApproveApproval(req, res).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  });
+});
+
+app.post("/approvals/:id/reject", withAuth, (req, res) => {
+  handleRejectApproval(req, res).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  });
+});
+
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 
 async function boot(): Promise<void> {
@@ -135,7 +180,7 @@ async function boot(): Promise<void> {
       console.log(`[Vee Agent] model_chat: ${MODEL_CHAT}`);
       console.log(`[Vee Agent] model_cowork: ${MODEL_COWORK}`);
       console.log(`[Vee Agent] mcp_server: ${MCP_SERVER_URL}`);
-      console.log("[Vee Agent] endpoints: POST /stream, GET /sessions, GET /log/feed");
+      console.log("[Vee Agent] endpoints: POST /stream, GET /sessions, GET /log/feed, GET /approvals");
       resolve();
     });
   });

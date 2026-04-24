@@ -2,6 +2,7 @@
 // Every table/view exposed through generic DB tools must be allowlisted here
 // or through DB_ALLOWLIST_EXTRA_* environment variables.
 
+export type DbTarget = "mmcriativos" | "mmcc";
 export type WriteMode = "safe_execute" | "approval_required" | "read_only";
 
 export type TablePolicy = {
@@ -31,8 +32,18 @@ export type WritePolicyGroups = {
   read_only: string[];
 };
 
+type TargetAllowlist = {
+  tablePolicies: Record<string, TablePolicy>;
+  namedViews: Record<string, string>;
+  tablePolicySources: Map<string, AllowlistSource>;
+  namedViewSources: Map<string, AllowlistSource>;
+  logicalViewByResolved: Map<string, string>;
+};
+
+const DB_TARGETS: readonly DbTarget[] = ["mmcriativos", "mmcc"];
 const IDENTIFIER_REGEX = /^[a-z_][a-z0-9_]*$/i;
 const WRITE_MODES: WriteMode[] = ["safe_execute", "approval_required", "read_only"];
+const DEFAULT_TARGET: DbTarget = "mmcriativos";
 const DEFAULT_SENSITIVE_BLOCKED_COLUMNS = [
   "password",
   "remember_token",
@@ -52,7 +63,7 @@ const DEFAULT_SENSITIVE_BLOCKED_COLUMNS = [
   "cpf"
 ];
 
-const BASE_TABLE_POLICIES: Record<string, TablePolicy> = {
+const BASE_TABLE_POLICIES_MMCRIATIVOS: Record<string, TablePolicy> = {
   tenants: {
     table: "tenants",
     allowedColumns: ["id", "slug", "name", "status", "plan", "created_at", "updated_at"],
@@ -200,7 +211,6 @@ const BASE_TABLE_POLICIES: Record<string, TablePolicy> = {
     sensitive: true,
     writeMode: "approval_required"
   },
-
   projects: {
     table: "projects",
     allowedColumns: "*",
@@ -243,7 +253,6 @@ const BASE_TABLE_POLICIES: Record<string, TablePolicy> = {
     sensitive: false,
     writeMode: "safe_execute"
   },
-
   ai_messages: {
     table: "ai_messages",
     allowedColumns: ["id", "session_id", "role", "content", "created_at", "tenant_id"],
@@ -265,7 +274,6 @@ const BASE_TABLE_POLICIES: Record<string, TablePolicy> = {
     sensitive: false,
     writeMode: "read_only"
   },
-
   vee_execution_notes: {
     table: "vee_execution_notes",
     allowedColumns: "*",
@@ -280,7 +288,170 @@ const BASE_TABLE_POLICIES: Record<string, TablePolicy> = {
     sensitive: false,
     writeMode: "safe_execute"
   },
+  vee_project_events: {
+    table: "vee_project_events",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  vee_status_history: {
+    table: "vee_status_history",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  vee_operational_decisions: {
+    table: "vee_operational_decisions",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  vee_blocks: {
+    table: "vee_blocks",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  }
+};
 
+const BASE_TABLE_POLICIES_MMCC: Record<string, TablePolicy> = {
+  tenants: {
+    table: "tenants",
+    allowedColumns: ["id", "slug", "name", "status", "plan", "created_at", "updated_at"],
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "approval_required"
+  },
+  customers: {
+    table: "customers",
+    allowedColumns: "*",
+    blockedColumns: ["phone", "email", "cpf"],
+    sensitive: true,
+    writeMode: "approval_required"
+  },
+  users: {
+    table: "users",
+    allowedColumns: ["id", "name", "role", "is_active", "created_at", "updated_at"],
+    blockedColumns: ["password", "remember_token", "two_factor_secret", "two_factor_recovery_codes"],
+    sensitive: true,
+    writeMode: "approval_required"
+  },
+  messages: {
+    table: "messages",
+    allowedColumns: "*",
+    blockedColumns: [...DEFAULT_SENSITIVE_BLOCKED_COLUMNS],
+    sensitive: true,
+    writeMode: "approval_required"
+  },
+  ai_messages: {
+    table: "ai_messages",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  ai_context_states: {
+    table: "ai_context_states",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  ai_memory_snapshots: {
+    table: "ai_memory_snapshots",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  ai_usage_events: {
+    table: "ai_usage_events",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  agent_executions: {
+    table: "agent_executions",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  booking_sessions: {
+    table: "booking_sessions",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  appointments: {
+    table: "appointments",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  appointment_notes: {
+    table: "appointment_notes",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  appointment_confirmation_reminder_dispatches: {
+    table: "appointment_confirmation_reminder_dispatches",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  customer_appointment_reminder_dispatches: {
+    table: "customer_appointment_reminder_dispatches",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  professional_daily_schedule_dispatches: {
+    table: "professional_daily_schedule_dispatches",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  vee_mcp_calls: {
+    table: "vee_mcp_calls",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "read_only"
+  },
+  vee_action_approvals: {
+    table: "vee_action_approvals",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "read_only"
+  },
+  vee_execution_notes: {
+    table: "vee_execution_notes",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
+  vee_incidents: {
+    table: "vee_incidents",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "safe_execute"
+  },
   vee_project_events: {
     table: "vee_project_events",
     allowedColumns: "*",
@@ -313,6 +484,7 @@ const BASE_TABLE_POLICIES: Record<string, TablePolicy> = {
 
 const BASE_NAMED_VIEWS: Record<string, string> = {
   project_timeline: "v_project_timeline",
+  v_project_timeline: "v_project_timeline",
   active_projects: "v_active_projects",
   pending_work: "v_pending_work",
   timeline_events: "vee_project_events",
@@ -322,25 +494,50 @@ const BASE_NAMED_VIEWS: Record<string, string> = {
   timeline_agent_actions: "vee_mcp_calls"
 };
 
-const tablePolicySources = new Map<string, AllowlistSource>();
-const namedViewSources = new Map<string, AllowlistSource>();
+const BASE_TABLE_POLICIES_BY_TARGET: Record<DbTarget, Record<string, TablePolicy>> = {
+  mmcriativos: BASE_TABLE_POLICIES_MMCRIATIVOS,
+  mmcc: BASE_TABLE_POLICIES_MMCC
+};
 
-export const TABLE_POLICIES: Record<string, TablePolicy> = buildTablePolicies();
-export const NAMED_VIEWS: Record<string, string> = buildNamedViews();
+const TARGET_ALLOWLISTS: Record<DbTarget, TargetAllowlist> = {
+  mmcriativos: buildTargetAllowlist("mmcriativos"),
+  mmcc: buildTargetAllowlist("mmcc")
+};
 
-export function resolveTablePolicy(tableOrView: string): TablePolicy | null {
+export function normalizeDbTarget(value: unknown): DbTarget {
+  if (typeof value !== "string") {
+    return DEFAULT_TARGET;
+  }
+  const normalized = value.trim().toLowerCase();
+  return DB_TARGETS.includes(normalized as DbTarget) ? (normalized as DbTarget) : DEFAULT_TARGET;
+}
+
+export function resolveTablePolicy(tableOrView: string, dbTarget?: DbTarget): TablePolicy | null {
+  const target = normalizeDbTarget(dbTarget);
+  const allowlist = TARGET_ALLOWLISTS[target];
   const key = normalizeIdentifier(tableOrView);
   if (!key) {
     return null;
   }
 
-  if (key in TABLE_POLICIES) {
-    return TABLE_POLICIES[key] ?? null;
+  if (key in allowlist.tablePolicies) {
+    return allowlist.tablePolicies[key] ?? null;
   }
 
-  if (key in NAMED_VIEWS) {
+  if (key in allowlist.namedViews) {
     return {
-      table: NAMED_VIEWS[key]!,
+      table: allowlist.namedViews[key]!,
+      allowedColumns: "*",
+      blockedColumns: [],
+      sensitive: false,
+      writeMode: "read_only"
+    };
+  }
+
+  const logicalName = allowlist.logicalViewByResolved.get(key);
+  if (logicalName) {
+    return {
+      table: allowlist.namedViews[logicalName]!,
       allowedColumns: "*",
       blockedColumns: [],
       sensitive: false,
@@ -351,32 +548,41 @@ export function resolveTablePolicy(tableOrView: string): TablePolicy | null {
   return null;
 }
 
-export function resolveActualTableName(tableOrView: string): string {
+export function resolveActualTableName(tableOrView: string, dbTarget?: DbTarget): string {
+  const target = normalizeDbTarget(dbTarget);
+  const allowlist = TARGET_ALLOWLISTS[target];
   const key = normalizeIdentifier(tableOrView);
   if (!key) {
     return tableOrView;
   }
 
-  if (key in NAMED_VIEWS) {
-    return NAMED_VIEWS[key]!;
+  if (key in allowlist.namedViews) {
+    return allowlist.namedViews[key]!;
   }
 
-  if (key in TABLE_POLICIES) {
-    return TABLE_POLICIES[key]!.table;
+  if (key in allowlist.tablePolicies) {
+    return allowlist.tablePolicies[key]!.table;
+  }
+
+  const logicalName = allowlist.logicalViewByResolved.get(key);
+  if (logicalName) {
+    return allowlist.namedViews[logicalName] ?? tableOrView;
   }
 
   return tableOrView;
 }
 
-export function listQueryAllowlist(): QueryAllowlistEntry[] {
+export function listQueryAllowlist(dbTarget?: DbTarget): QueryAllowlistEntry[] {
+  const target = normalizeDbTarget(dbTarget);
+  const allowlist = TARGET_ALLOWLISTS[target];
   const entries: QueryAllowlistEntry[] = [];
 
-  for (const [logicalName, policy] of Object.entries(TABLE_POLICIES)) {
+  for (const [logicalName, policy] of Object.entries(allowlist.tablePolicies)) {
     entries.push({
       logical_name: logicalName,
       resolved_name: policy.table,
       kind: "table",
-      source: tablePolicySources.get(logicalName) ?? "base",
+      source: allowlist.tablePolicySources.get(logicalName) ?? "base",
       allowed_columns: policy.allowedColumns,
       blocked_columns: policy.blockedColumns,
       sensitive: policy.sensitive,
@@ -384,12 +590,12 @@ export function listQueryAllowlist(): QueryAllowlistEntry[] {
     });
   }
 
-  for (const [logicalName, actualName] of Object.entries(NAMED_VIEWS)) {
+  for (const [logicalName, actualName] of Object.entries(allowlist.namedViews)) {
     entries.push({
       logical_name: logicalName,
       resolved_name: actualName,
       kind: "named_view",
-      source: namedViewSources.get(logicalName) ?? "base",
+      source: allowlist.namedViewSources.get(logicalName) ?? "base",
       allowed_columns: "*",
       blocked_columns: [],
       sensitive: false,
@@ -405,14 +611,16 @@ export function listQueryAllowlist(): QueryAllowlistEntry[] {
   });
 }
 
-export function listWritePolicyGroups(): WritePolicyGroups {
+export function listWritePolicyGroups(dbTarget?: DbTarget): WritePolicyGroups {
+  const target = normalizeDbTarget(dbTarget);
+  const allowlist = TARGET_ALLOWLISTS[target];
   const groups: WritePolicyGroups = {
     safe_execute: [],
     approval_required: [],
     read_only: []
   };
 
-  for (const [logicalName, policy] of Object.entries(TABLE_POLICIES)) {
+  for (const [logicalName, policy] of Object.entries(allowlist.tablePolicies)) {
     if (policy.writeMode === "safe_execute") {
       groups.safe_execute.push(logicalName);
     } else if (policy.writeMode === "approval_required") {
@@ -429,10 +637,13 @@ export function listWritePolicyGroups(): WritePolicyGroups {
   return groups;
 }
 
-function buildTablePolicies(): Record<string, TablePolicy> {
-  const merged = new Map<string, TablePolicy>();
+function buildTargetAllowlist(dbTarget: DbTarget): TargetAllowlist {
+  const tablePolicySources = new Map<string, AllowlistSource>();
+  const namedViewSources = new Map<string, AllowlistSource>();
+  const mergedTablePolicies = new Map<string, TablePolicy>();
+  const mergedNamedViews = new Map<string, string>();
 
-  for (const [rawName, rawPolicy] of Object.entries(BASE_TABLE_POLICIES)) {
+  for (const [rawName, rawPolicy] of Object.entries(BASE_TABLE_POLICIES_BY_TARGET[dbTarget])) {
     const name = normalizeIdentifier(rawName);
     if (!name) {
       continue;
@@ -441,23 +652,9 @@ function buildTablePolicies(): Record<string, TablePolicy> {
     if (!normalized) {
       continue;
     }
-    merged.set(name, normalized);
+    mergedTablePolicies.set(name, normalized);
     tablePolicySources.set(name, "base");
   }
-
-  const extras = parseExtraTablePolicies();
-  for (const [name, policy] of extras) {
-    merged.set(name, policy);
-    tablePolicySources.set(name, "env");
-  }
-
-  applyWriteModeOverrides(merged);
-
-  return Object.fromEntries([...merged.entries()].sort((a, b) => a[0].localeCompare(b[0])));
-}
-
-function buildNamedViews(): Record<string, string> {
-  const merged = new Map<string, string>();
 
   for (const [rawName, rawActual] of Object.entries(BASE_NAMED_VIEWS)) {
     const name = normalizeIdentifier(rawName);
@@ -465,22 +662,45 @@ function buildNamedViews(): Record<string, string> {
     if (!name || !actual) {
       continue;
     }
-    merged.set(name, actual);
+    mergedNamedViews.set(name, actual);
     namedViewSources.set(name, "base");
   }
 
-  const extras = parseExtraNamedViews();
-  for (const [name, actual] of extras) {
-    merged.set(name, actual);
+  const extraTablePolicies = parseExtraTablePolicies(dbTarget);
+  for (const [name, policy] of extraTablePolicies.entries()) {
+    mergedTablePolicies.set(name, policy);
+    tablePolicySources.set(name, "env");
+  }
+
+  const extraNamedViews = parseExtraNamedViews(dbTarget);
+  for (const [name, actual] of extraNamedViews.entries()) {
+    mergedNamedViews.set(name, actual);
     namedViewSources.set(name, "env");
   }
 
-  return Object.fromEntries([...merged.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+  applyWriteModeOverrides(mergedTablePolicies, tablePolicySources, dbTarget);
+
+  const tablePolicies = Object.fromEntries(
+    [...mergedTablePolicies.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+  );
+  const namedViews = Object.fromEntries(
+    [...mergedNamedViews.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+  );
+
+  const logicalViewByResolved = new Map<string, string>();
+  for (const [logicalName, actualName] of Object.entries(namedViews)) {
+    logicalViewByResolved.set(actualName, logicalName);
+  }
+
+  return { tablePolicies, namedViews, tablePolicySources, namedViewSources, logicalViewByResolved };
 }
 
-function parseExtraTablePolicies(): Map<string, TablePolicy> {
-  const raw = parseJsonEnv("DB_ALLOWLIST_EXTRA_TABLE_POLICIES_JSON")
-    ?? parseJsonEnv("DB_QUERY_EXTRA_TABLE_POLICIES_JSON");
+function parseExtraTablePolicies(dbTarget: DbTarget): Map<string, TablePolicy> {
+  const raw =
+    parseJsonEnv(`DB_ALLOWLIST_EXTRA_TABLE_POLICIES_${dbTarget.toUpperCase()}_JSON`) ??
+    parseJsonEnv("DB_ALLOWLIST_EXTRA_TABLE_POLICIES_JSON") ??
+    parseJsonEnv(`DB_QUERY_EXTRA_TABLE_POLICIES_${dbTarget.toUpperCase()}_JSON`) ??
+    parseJsonEnv("DB_QUERY_EXTRA_TABLE_POLICIES_JSON");
 
   const parsed = new Map<string, TablePolicy>();
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -502,9 +722,12 @@ function parseExtraTablePolicies(): Map<string, TablePolicy> {
   return parsed;
 }
 
-function parseExtraNamedViews(): Map<string, string> {
-  const raw = parseJsonEnv("DB_ALLOWLIST_EXTRA_NAMED_VIEWS_JSON")
-    ?? parseJsonEnv("DB_QUERY_EXTRA_NAMED_VIEWS_JSON");
+function parseExtraNamedViews(dbTarget: DbTarget): Map<string, string> {
+  const raw =
+    parseJsonEnv(`DB_ALLOWLIST_EXTRA_NAMED_VIEWS_${dbTarget.toUpperCase()}_JSON`) ??
+    parseJsonEnv("DB_ALLOWLIST_EXTRA_NAMED_VIEWS_JSON") ??
+    parseJsonEnv(`DB_QUERY_EXTRA_NAMED_VIEWS_${dbTarget.toUpperCase()}_JSON`) ??
+    parseJsonEnv("DB_QUERY_EXTRA_NAMED_VIEWS_JSON");
 
   const parsed = new Map<string, string>();
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -523,20 +746,22 @@ function parseExtraNamedViews(): Map<string, string> {
   return parsed;
 }
 
-function applyWriteModeOverrides(merged: Map<string, TablePolicy>): void {
+function applyWriteModeOverrides(
+  merged: Map<string, TablePolicy>,
+  sourceMap: Map<string, AllowlistSource>,
+  dbTarget: DbTarget
+): void {
+  const suffix = dbTarget.toUpperCase();
   const safeExecuteTables = parseCsvIdentifiersFromEnv([
-    "DB_SAFE_EXECUTE_TABLES_MMCRIATIVOS",
-    "DB_SAFE_EXECUTE_TABLES_MMCC",
+    `DB_SAFE_EXECUTE_TABLES_${suffix}`,
     "DB_SAFE_EXECUTE_TABLES"
   ]);
   const approvalRequiredTables = parseCsvIdentifiersFromEnv([
-    "DB_APPROVAL_REQUIRED_TABLES_MMCRIATIVOS",
-    "DB_APPROVAL_REQUIRED_TABLES_MMCC",
+    `DB_APPROVAL_REQUIRED_TABLES_${suffix}`,
     "DB_APPROVAL_REQUIRED_TABLES"
   ]);
   const readOnlyTables = parseCsvIdentifiersFromEnv([
-    "DB_READ_ONLY_TABLES_MMCRIATIVOS",
-    "DB_READ_ONLY_TABLES_MMCC",
+    `DB_READ_ONLY_TABLES_${suffix}`,
     "DB_READ_ONLY_TABLES"
   ]);
 
@@ -544,17 +769,16 @@ function applyWriteModeOverrides(merged: Map<string, TablePolicy>): void {
     const existing = merged.get(table);
     if (existing) {
       merged.set(table, { ...existing, writeMode: "safe_execute" });
-      tablePolicySources.set(table, "env");
-      continue;
+    } else {
+      merged.set(table, {
+        table,
+        allowedColumns: "*",
+        blockedColumns: [],
+        sensitive: false,
+        writeMode: "safe_execute"
+      });
     }
-    merged.set(table, {
-      table,
-      allowedColumns: "*",
-      blockedColumns: [],
-      sensitive: false,
-      writeMode: "safe_execute"
-    });
-    tablePolicySources.set(table, "env");
+    sourceMap.set(table, "env");
   }
 
   for (const table of approvalRequiredTables) {
@@ -569,34 +793,32 @@ function applyWriteModeOverrides(merged: Map<string, TablePolicy>): void {
             ? existing.blockedColumns
             : [...DEFAULT_SENSITIVE_BLOCKED_COLUMNS]
       });
-      tablePolicySources.set(table, "env");
-      continue;
+    } else {
+      merged.set(table, {
+        table,
+        allowedColumns: "*",
+        blockedColumns: [...DEFAULT_SENSITIVE_BLOCKED_COLUMNS],
+        sensitive: true,
+        writeMode: "approval_required"
+      });
     }
-    merged.set(table, {
-      table,
-      allowedColumns: "*",
-      blockedColumns: [...DEFAULT_SENSITIVE_BLOCKED_COLUMNS],
-      sensitive: true,
-      writeMode: "approval_required"
-    });
-    tablePolicySources.set(table, "env");
+    sourceMap.set(table, "env");
   }
 
   for (const table of readOnlyTables) {
     const existing = merged.get(table);
     if (existing) {
       merged.set(table, { ...existing, writeMode: "read_only" });
-      tablePolicySources.set(table, "env");
-      continue;
+    } else {
+      merged.set(table, {
+        table,
+        allowedColumns: "*",
+        blockedColumns: [],
+        sensitive: false,
+        writeMode: "read_only"
+      });
     }
-    merged.set(table, {
-      table,
-      allowedColumns: "*",
-      blockedColumns: [],
-      sensitive: false,
-      writeMode: "read_only"
-    });
-    tablePolicySources.set(table, "env");
+    sourceMap.set(table, "env");
   }
 }
 
@@ -629,7 +851,6 @@ function normalizeTablePolicy(logicalName: string, raw: unknown): TablePolicy | 
   }
 
   const data = raw as Record<string, unknown>;
-
   const table = normalizeIdentifier(data["table"]);
   const allowedColumns = normalizeAllowedColumns(data["allowedColumns"]);
   const blockedColumns = normalizeColumnArray(data["blockedColumns"]);
@@ -653,9 +874,7 @@ function normalizeAllowedColumns(value: unknown): string[] | "*" | null {
   if (value === "*") {
     return "*";
   }
-
-  const normalized = normalizeColumnArray(value);
-  return normalized;
+  return normalizeColumnArray(value);
 }
 
 function normalizeColumnArray(value: unknown): string[] | null {
@@ -685,7 +904,6 @@ function normalizeWriteMode(value: unknown): WriteMode | null {
   if (typeof value !== "string") {
     return null;
   }
-
   const normalized = value.trim().toLowerCase();
   return WRITE_MODES.includes(normalized as WriteMode) ? (normalized as WriteMode) : null;
 }
@@ -694,12 +912,10 @@ function normalizeIdentifier(value: unknown): string | null {
   if (typeof value !== "string") {
     return null;
   }
-
   const normalized = value.trim().toLowerCase();
   if (!IDENTIFIER_REGEX.test(normalized)) {
     return null;
   }
-
   return normalized;
 }
 
@@ -708,7 +924,6 @@ function parseJsonEnv(name: string): unknown {
   if (!raw) {
     return null;
   }
-
   try {
     return JSON.parse(raw);
   } catch {

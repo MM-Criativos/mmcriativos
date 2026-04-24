@@ -11,6 +11,39 @@ use Illuminate\Validation\Rule;
 
 class VeeActionApprovalController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::in(['pending', 'approved', 'rejected', 'executed'])],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:200'],
+            'action_name' => ['nullable', 'string', 'max:120'],
+            'tool_name' => ['nullable', 'string', 'max:160'],
+        ]);
+
+        $limit = (int) ($validated['limit'] ?? 50);
+        $query = VeeActionApproval::query()
+            ->orderByDesc('created_at')
+            ->limit($limit);
+
+        if (! empty($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+        if (! empty($validated['action_name'])) {
+            $query->where('action_name', 'like', '%' . $validated['action_name'] . '%');
+        }
+        if (! empty($validated['tool_name'])) {
+            $query->where('tool_name', 'like', '%' . $validated['tool_name'] . '%');
+        }
+
+        $approvals = $query->get();
+
+        return response()->json([
+            'ok' => true,
+            'total' => $approvals->count(),
+            'approvals' => $approvals,
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([

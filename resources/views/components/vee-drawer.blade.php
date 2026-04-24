@@ -62,6 +62,14 @@
                     class="vee-nav-btn">
                     <i data-lucide="calendar-check"></i>
                 </button>
+                <button @click="switchToApprovals()" title="Approvals"
+                    :class="tab==='approvals' ? 'vee-nav-btn--active' : 'vee-nav-btn--inactive'"
+                    class="vee-nav-btn vee-nav-btn--with-dot">
+                    <i data-lucide="shield-alert"></i>
+                    <span x-show="pendingApprovalsTotal > 0"
+                          x-text="pendingApprovalsTotal > 9 ? '9+' : String(pendingApprovalsTotal)"
+                          class="vee-nav-pending-dot"></span>
+                </button>
                 <button @click="switchToLogs()" title="Logs"
                     :class="tab==='logs' ? 'vee-nav-btn--active' : 'vee-nav-btn--inactive'"
                     class="vee-nav-btn">
@@ -368,6 +376,72 @@
                                                                 <template x-if="tool.status === 'error' && tool.error">
                                                                     <p x-text="tool.error" class="vee-tool-row__error"></p>
                                                                 </template>
+                                                                <template x-if="tool.approval">
+                                                                    <div class="vee-approval-card" style="margin-top:8px;">
+                                                                        <div class="vee-approval-card__head">
+                                                                            <div class="vee-approval-card__title-wrap">
+                                                                                <div class="vee-approval-card__title"
+                                                                                     x-text="tool.approval.action_name || tool.approval.tool_name || tool.name || 'Acao protegida'"></div>
+                                                                                <div class="vee-approval-card__meta">
+                                                                                    <span class="vee-approval-card__id"
+                                                                                          x-text="`id: ${tool.approval.approval_id || 'n/a'}`"></span>
+                                                                                    <span class="vee-approval-card__tool"
+                                                                                          x-text="`tool: ${tool.approval.tool_name || tool.name || 'n/a'}`"></span>
+                                                                                    <span class="vee-approval-card__time"
+                                                                                          x-text="formatTime(tool.approval.created_at)"></span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <span class="vee-approval-card__status"
+                                                                                  :class="approvalStatusBadgeClass(tool.approval.status)"
+                                                                                  x-text="approvalStatusLabel(tool.approval.status)"></span>
+                                                                        </div>
+
+                                                                        <template x-if="tool.approval.summary">
+                                                                            <p class="vee-approval-card__summary" x-text="tool.approval.summary"></p>
+                                                                        </template>
+
+                                                                        <template x-if="tool.approval.request_payload">
+                                                                            <pre class="vee-approval-card__payload"
+                                                                                 x-text="truncate(tool.approval.request_payload, 420)"></pre>
+                                                                        </template>
+
+                                                                        <template x-if="String(tool.approval.status || '').toLowerCase() === 'pending'">
+                                                                            <div class="vee-approval-card__actions">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    placeholder="Motivo da rejeicao (opcional)"
+                                                                                    class="vee-approval-card__reason"
+                                                                                    x-model="approvalRejectReasonById[tool.approval.approval_id]"
+                                                                                />
+                                                                                <button
+                                                                                    @click="approvePendingApproval(tool.approval.approval_id)"
+                                                                                    :disabled="isApprovalBusy(tool.approval.approval_id)"
+                                                                                    class="vee-approval-btn vee-approval-btn--approve"
+                                                                                    x-text="isApprovalBusy(tool.approval.approval_id) ? 'Enviando...' : 'Aprovar'"
+                                                                                ></button>
+                                                                                <button
+                                                                                    @click="rejectPendingApproval(tool.approval.approval_id)"
+                                                                                    :disabled="isApprovalBusy(tool.approval.approval_id)"
+                                                                                    class="vee-approval-btn vee-approval-btn--reject"
+                                                                                    x-text="isApprovalBusy(tool.approval.approval_id) ? 'Enviando...' : 'Rejeitar'"
+                                                                                ></button>
+                                                                            </div>
+                                                                        </template>
+
+                                                                        <template x-if="String(tool.approval.status || '').toLowerCase() === 'approved'">
+                                                                            <p class="vee-approval-card__summary">Aprovacao enviada. Aguardando execucao da acao.</p>
+                                                                        </template>
+
+                                                                        <template x-if="String(tool.approval.status || '').toLowerCase() === 'rejected'">
+                                                                            <p class="vee-approval-card__summary"
+                                                                               x-text="tool.approval.rejection_reason ? `Solicitacao rejeitada: ${tool.approval.rejection_reason}` : 'Solicitacao rejeitada.'"></p>
+                                                                        </template>
+
+                                                                        <template x-if="String(tool.approval.status || '').toLowerCase() === 'executed'">
+                                                                            <p class="vee-approval-card__summary">Acao executada apos aprovacao.</p>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
                                                             </div>
                                                         </template>
                                                     </div>
@@ -636,6 +710,95 @@
                     </div>
                 </div>
 
+                {{-- ===== TAB: APPROVALS ===== --}}
+                <div x-show="tab==='approvals'" style="display:flex;flex-direction:column;height:100%;display:none;">
+                    <div class="vee-approvals-toolbar">
+                        <div class="vee-approvals-toolbar__stats">
+                            <span class="vee-badge vee-badge--accent" x-text="`${pendingApprovalsTotal} pendentes`"></span>
+                            <span class="vee-badge vee-badge--muted" x-text="`${approvals.length} exibidas`"></span>
+                        </div>
+                        <div class="vee-spacer"></div>
+                        <div class="vee-approvals-toolbar__filters">
+                            <template x-for="filter in approvalFilters" :key="filter.key">
+                                <button @click="setApprovalFilter(filter.key)"
+                                    :style="approvalStatusFilter===filter.key ? 'background:rgba(255,136,0,.12);border-color:#ff8800;color:#ff8800;' : 'background:transparent;border-color:#2e2e2e;color:#999;'"
+                                    class="vee-filter-btn"
+                                    x-text="filter.label"></button>
+                            </template>
+                        </div>
+                        <button @click="refreshApprovals()" class="vee-approvals-refresh-btn">Atualizar</button>
+                    </div>
+
+                    <template x-if="approvalsError">
+                        <div class="vee-approvals-error" x-text="approvalsError"></div>
+                    </template>
+
+                    <div class="vee-approvals-list">
+                        <template x-if="approvalsLoading && approvals.length === 0">
+                            <div class="vee-approvals-empty">Carregando approvals...</div>
+                        </template>
+                        <template x-if="!approvalsLoading && approvals.length === 0">
+                            <div class="vee-approvals-empty">Nenhuma acao encontrada para o filtro atual.</div>
+                        </template>
+
+                        <template x-for="approval in approvals" :key="approval.approval_id">
+                            <div class="vee-approval-card">
+                                <div class="vee-approval-card__head">
+                                    <div class="vee-approval-card__title-wrap">
+                                        <div class="vee-approval-card__title"
+                                             x-text="approval.action_name || approval.tool_name || 'Acao protegida'"></div>
+                                        <div class="vee-approval-card__meta">
+                                            <span class="vee-approval-card__id"
+                                                  x-text="`id: ${approval.approval_id || 'n/a'}`"></span>
+                                            <span class="vee-approval-card__tool"
+                                                  x-text="`tool: ${approval.tool_name || 'n/a'}`"></span>
+                                            <span class="vee-approval-card__time"
+                                                  x-text="formatTime(approval.created_at)"></span>
+                                        </div>
+                                    </div>
+                                    <span class="vee-approval-card__status"
+                                          :class="approvalStatusBadgeClass(approval.status)"
+                                          x-text="approvalStatusLabel(approval.status)"></span>
+                                </div>
+
+                                <template x-if="approval.summary">
+                                    <p class="vee-approval-card__summary" x-text="approval.summary"></p>
+                                </template>
+
+                                <template x-if="approval.request_payload">
+                                    <pre class="vee-approval-card__payload"
+                                         x-text="truncate(approval.request_payload, 560)"></pre>
+                                </template>
+
+                                <template x-if="approval.status === 'pending'">
+                                    <div class="vee-approval-card__actions">
+                                        <input
+                                            type="text"
+                                            placeholder="Motivo da rejeicao (opcional)"
+                                            class="vee-approval-card__reason"
+                                            x-model="approvalRejectReasonById[approval.approval_id]"
+                                        />
+                                        <button
+                                            @click="approvePendingApproval(approval.approval_id)"
+                                            :disabled="isApprovalBusy(approval.approval_id)"
+                                            class="vee-approval-btn vee-approval-btn--approve"
+                                        >
+                                            Aprovar
+                                        </button>
+                                        <button
+                                            @click="rejectPendingApproval(approval.approval_id)"
+                                            :disabled="isApprovalBusy(approval.approval_id)"
+                                            class="vee-approval-btn vee-approval-btn--reject"
+                                        >
+                                            Rejeitar
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
                 {{-- ===== TAB: LOGS ===== --}}
                 <div x-show="tab==='logs'" style="display:flex;flex-direction:column;height:100%;display:none;">
 
@@ -742,13 +905,29 @@ document.addEventListener('alpine:init', () => {
             { key:'ssh',  label:'SSH'   },
             { key:'db',   label:'DB'    },
         ],
+        approvals: [],
+        approvalsLoading: false,
+        approvalsError: '',
+        approvalStatusFilter: 'pending',
+        approvalFilters: [
+            { key:'pending', label:'Pendentes' },
+            { key:'all', label:'Todos' },
+            { key:'approved', label:'Aprovadas' },
+            { key:'rejected', label:'Rejeitadas' },
+            { key:'executed', label:'Executadas' },
+        ],
+        approvalRejectReasonById: {},
+        approvalBusyById: {},
+        approvalSeenIds: {},
+        pendingApprovalsTotal: 0,
+        approvalsPollTimer: null,
 
         // ---- config ----
         agentUrl: window.VEE_AGENT_URL   || '',
         agentToken: window.VEE_AGENT_TOKEN || '',
 
         // ---- static demo data ----
-        tabLabels: { plan:'Planejamento', orch:'Orquestramento', cowork:'Cowork', logs:'Logs' },
+        tabLabels: { plan:'Planejamento', orch:'Orquestramento', cowork:'Cowork', approvals:'Approvals', logs:'Logs' },
 
         orchAgents: [
             { id:0, name:'Code Analyst', env:'local',      status:'done',    task:'Deps mapeadas ✓' },
@@ -828,6 +1007,14 @@ document.addEventListener('alpine:init', () => {
             this.$watch('tab', val => {
                 const s = JSON.parse(localStorage.getItem('vee-ui-state') || '{}');
                 localStorage.setItem('vee-ui-state', JSON.stringify({ ...s, tab: val }));
+                if (val === 'logs') this.startLogFeed();
+                if (val !== 'logs') this.stopLogFeed();
+                if (val === 'approvals') {
+                    this.loadApprovals();
+                    this.startApprovalsPoll();
+                } else {
+                    this.stopApprovalsPoll();
+                }
             });
             this.$watch('orchView', val => {
                 const s = JSON.parse(localStorage.getItem('vee-ui-state') || '{}');
@@ -840,6 +1027,7 @@ document.addEventListener('alpine:init', () => {
 
             // Pré-carrega sessões em background para o sidebar já estar pronto quando o drawer abrir
             if (this.agentUrl) this.loadSessions();
+            this.loadApprovals({ silent: true });
         },
 
         openDrawer() {
@@ -853,6 +1041,13 @@ document.addEventListener('alpine:init', () => {
                     }
                 }
             });
+            if (this.tab === 'approvals') {
+                this.loadApprovals();
+                this.startApprovalsPoll();
+            }
+            if (this.tab === 'logs') {
+                this.startLogFeed();
+            }
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
         },
 
@@ -865,11 +1060,19 @@ document.addEventListener('alpine:init', () => {
             this.callOpen = false;
             this.open = false;
             document.body.classList.remove('overflow-hidden');
+            this.stopLogFeed();
+            this.stopApprovalsPoll();
         },
 
         switchToLogs() {
             this.tab = 'logs';
             this.startLogFeed();
+        },
+
+        switchToApprovals() {
+            this.tab = 'approvals';
+            this.loadApprovals();
+            this.startApprovalsPoll();
         },
 
         toggleCall() {
@@ -891,6 +1094,169 @@ document.addEventListener('alpine:init', () => {
                 ...this.sessions.filter(s => this.starredSessions.includes(s.id)),
                 ...this.sessions.filter(s => !this.starredSessions.includes(s.id)),
             ];
+        },
+
+        setApprovalFilter(status) {
+            this.approvalStatusFilter = status;
+            this.loadApprovals();
+        },
+
+        async refreshApprovals() {
+            await this.loadApprovals();
+        },
+
+        startApprovalsPoll() {
+            this.stopApprovalsPoll();
+            this.approvalsPollTimer = window.setInterval(() => {
+                this.loadApprovals({ silent: true });
+            }, 12000);
+        },
+
+        stopApprovalsPoll() {
+            if (this.approvalsPollTimer) {
+                window.clearInterval(this.approvalsPollTimer);
+                this.approvalsPollTimer = null;
+            }
+        },
+
+        isApprovalBusy(approvalId) {
+            const id = String(approvalId || '');
+            return Boolean(this.approvalBusyById[id]);
+        },
+
+        setApprovalBusy(approvalId, busy) {
+            const id = String(approvalId || '');
+            if (!id) return;
+            this.approvalBusyById = {
+                ...this.approvalBusyById,
+                [id]: Boolean(busy),
+            };
+        },
+
+        async fetchApprovalsByStatus(status, limit = 120, options = {}) {
+            const params = new URLSearchParams();
+            params.set('limit', String(limit));
+            if (status && status !== 'all') {
+                params.set('status', status);
+            }
+            const actionName = String(options?.actionName || '').trim();
+            const toolName = String(options?.toolName || '').trim();
+            if (actionName) {
+                params.set('action_name', actionName);
+            }
+            if (toolName) {
+                params.set('tool_name', toolName);
+            }
+            const res = await fetch(`${this.agentUrl}/approvals?${params.toString()}`, {
+                headers: this.authHeaders(),
+            });
+            if (!res.ok) {
+                throw new Error(`Falha ao carregar approvals (${res.status})`);
+            }
+            const data = await res.json();
+            return {
+                total: Number(data.total || 0),
+                approvals: Array.isArray(data.approvals) ? data.approvals : [],
+            };
+        },
+
+        async loadApprovals(options = {}) {
+            if (!this.agentUrl) {
+                this.approvalsError = 'VEE_AGENT_URL nao configurada.';
+                return;
+            }
+
+            const silent = Boolean(options.silent);
+            if (!silent) this.approvalsLoading = true;
+            this.approvalsError = '';
+
+            try {
+                const [selected, pending] = await Promise.all([
+                    this.fetchApprovalsByStatus(this.approvalStatusFilter),
+                    this.approvalStatusFilter === 'pending'
+                        ? Promise.resolve(null)
+                        : this.fetchApprovalsByStatus('pending', 200),
+                ]);
+
+                this.approvals = selected.approvals;
+                this.pendingApprovalsTotal = this.approvalStatusFilter === 'pending'
+                    ? selected.total
+                    : Number(pending?.total || 0);
+                const mergedApprovals = [
+                    ...(Array.isArray(selected.approvals) ? selected.approvals : []),
+                    ...(Array.isArray(pending?.approvals) ? pending.approvals : []),
+                ];
+                this.syncInlineApprovalsFromList(mergedApprovals);
+            } catch (err) {
+                this.approvalsError = err?.message || 'Falha ao carregar approvals.';
+            } finally {
+                this.approvalsLoading = false;
+            }
+        },
+
+        async approvePendingApproval(approvalId) {
+            const id = String(approvalId || '').trim();
+            if (!id || this.isApprovalBusy(id)) return;
+
+            this.setApprovalBusy(id, true);
+            this.approvalsError = '';
+            try {
+                const res = await fetch(`${this.agentUrl}/approvals/${encodeURIComponent(id)}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+                    body: JSON.stringify({ approved_by: 'vee-drawer-ui' }),
+                });
+                if (!res.ok) {
+                    throw new Error(`Falha ao aprovar (${res.status})`);
+                }
+                const data = await res.json().catch(() => ({}));
+                this.applyApprovalRecordToMessages({
+                    approval_id: id,
+                    status: String(data?.status || 'approved').toLowerCase(),
+                });
+                await this.loadApprovals({ silent: true });
+            } catch (err) {
+                this.approvalsError = err?.message || 'Falha ao aprovar acao.';
+            } finally {
+                this.setApprovalBusy(id, false);
+            }
+        },
+
+        async rejectPendingApproval(approvalId) {
+            const id = String(approvalId || '').trim();
+            if (!id || this.isApprovalBusy(id)) return;
+
+            const reason = String(this.approvalRejectReasonById[id] || '').trim();
+            this.setApprovalBusy(id, true);
+            this.approvalsError = '';
+            try {
+                const res = await fetch(`${this.agentUrl}/approvals/${encodeURIComponent(id)}/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
+                    body: JSON.stringify({
+                        rejected_by: 'vee-drawer-ui',
+                        reason: reason || null,
+                    }),
+                });
+                if (!res.ok) {
+                    throw new Error(`Falha ao rejeitar (${res.status})`);
+                }
+                const data = await res.json().catch(() => ({}));
+                this.approvalRejectReasonById = {
+                    ...this.approvalRejectReasonById,
+                    [id]: '',
+                };
+                this.applyApprovalRecordToMessages({
+                    approval_id: id,
+                    status: String(data?.status || 'rejected').toLowerCase(),
+                    rejection_reason: reason || null,
+                });
+                await this.loadApprovals({ silent: true });
+            } catch (err) {
+                this.approvalsError = err?.message || 'Falha ao rejeitar acao.';
+            } finally {
+                this.setApprovalBusy(id, false);
+            }
         },
 
         // ---- call simulation ----
@@ -1172,7 +1538,7 @@ document.addEventListener('alpine:init', () => {
                             case 'tool_start':
                                 this.messages[assistantIdx].toolActivities.push({
                                     call_id:evt.call_id, name:evt.name, args:evt.args,
-                                    status:'running', result:null, error:null, duration_ms:null,
+                                    status:'running', result:null, error:null, duration_ms:null, started_at:new Date().toISOString(), approval:null,
                                 });
                                 this.$nextTick(() => {
                                     this.decorateMessageHtml();
@@ -1182,7 +1548,12 @@ document.addEventListener('alpine:init', () => {
                                 break;
                             case 'tool_result': {
                                 const t = this.messages[assistantIdx].toolActivities.find(x => x.call_id === evt.call_id);
-                                if (t) { t.status='done'; t.result=evt.result; t.duration_ms=evt.duration_ms; }
+                                if (t) {
+                                    t.status='done';
+                                    t.result=evt.result;
+                                    t.duration_ms=evt.duration_ms;
+                                    await this.attachPendingApprovalToTool(t, evt);
+                                }
                                 break;
                             }
                             case 'tool_error': {
@@ -1264,6 +1635,187 @@ document.addEventListener('alpine:init', () => {
             if (l.includes('success') || l.includes('tool_result')) return '#22c55e';
             if (l.includes('tool_start')) return '#ff8800';
             return '#555';
+        },
+
+        approvalStatusLabel(status) {
+            const value = String(status || '').toLowerCase();
+            if (value === 'pending') return 'pendente';
+            if (value === 'approved') return 'aprovada';
+            if (value === 'rejected') return 'rejeitada';
+            if (value === 'executed') return 'executada';
+            return value || 'desconhecido';
+        },
+
+        approvalStatusBadgeClass(status) {
+            const value = String(status || '').toLowerCase();
+            if (value === 'pending') return 'vee-approval-card__status--pending';
+            if (value === 'approved') return 'vee-approval-card__status--approved';
+            if (value === 'rejected') return 'vee-approval-card__status--rejected';
+            if (value === 'executed') return 'vee-approval-card__status--executed';
+            return 'vee-approval-card__status--unknown';
+        },
+
+        normalizeApprovalRecord(approval) {
+            if (!approval || typeof approval !== 'object') return null;
+            const approvalId = String(approval.approval_id || '').trim();
+            if (!approvalId) return null;
+
+            return {
+                approval_id: approvalId,
+                action_name: String(approval.action_name || '').trim(),
+                tool_name: String(approval.tool_name || '').trim(),
+                status: String(approval.status || 'pending').toLowerCase(),
+                summary: typeof approval.summary === 'string' ? approval.summary : '',
+                request_payload: approval.request_payload ?? null,
+                rejection_reason: typeof approval.rejection_reason === 'string' ? approval.rejection_reason : '',
+                created_at: approval.created_at || null,
+            };
+        },
+
+        extractApprovalIdFromText(rawText) {
+            const text = String(rawText || '');
+            if (!text) return '';
+            const match = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
+            return match ? String(match[0]).toLowerCase() : '';
+        },
+
+        extractApprovalId(source) {
+            if (!source) return '';
+            if (typeof source === 'string') {
+                return this.extractApprovalIdFromText(source);
+            }
+            if (typeof source !== 'object') return '';
+
+            const directCandidates = [source.approval_id, source.approvalId];
+            for (const candidate of directCandidates) {
+                const id = this.extractApprovalIdFromText(candidate);
+                if (id) return id;
+            }
+
+            if (source.approval && typeof source.approval === 'object') {
+                const nestedId = this.extractApprovalId(source.approval);
+                if (nestedId) return nestedId;
+            }
+
+            if (typeof source.result === 'string') {
+                const fromResult = this.extractApprovalIdFromText(source.result);
+                if (fromResult) return fromResult;
+            }
+
+            try {
+                return this.extractApprovalIdFromText(JSON.stringify(source));
+            } catch {
+                return '';
+            }
+        },
+
+        bindApprovalToToolActivity(tool, approval) {
+            const normalized = this.normalizeApprovalRecord(approval);
+            if (!normalized || !tool) return false;
+
+            this.approvalSeenIds = {
+                ...this.approvalSeenIds,
+                [normalized.approval_id]: true,
+            };
+
+            const previous = this.normalizeApprovalRecord(tool.approval) || {};
+            tool.approval = { ...previous, ...normalized };
+            return true;
+        },
+
+        syncInlineApprovalsFromList(approvals = []) {
+            if (!Array.isArray(approvals) || approvals.length === 0) return;
+            approvals.forEach((approval) => {
+                this.applyApprovalRecordToMessages(approval);
+            });
+        },
+
+        applyApprovalRecordToMessages(approval) {
+            const normalized = this.normalizeApprovalRecord(approval);
+            if (!normalized) return false;
+
+            this.approvalSeenIds = {
+                ...this.approvalSeenIds,
+                [normalized.approval_id]: true,
+            };
+
+            let updated = false;
+            this.messages.forEach((msg) => {
+                if (!msg || !Array.isArray(msg.toolActivities)) return;
+                msg.toolActivities.forEach((tool) => {
+                    const existingId = String(tool?.approval?.approval_id || '').trim();
+                    if (existingId !== normalized.approval_id) return;
+                    const previous = this.normalizeApprovalRecord(tool.approval) || {};
+                    tool.approval = { ...previous, ...normalized };
+                    updated = true;
+                });
+            });
+
+            return updated;
+        },
+
+        async fetchApprovalById(approvalId) {
+            const id = String(approvalId || '').trim();
+            if (!id || !this.agentUrl) return null;
+
+            const res = await fetch(`${this.agentUrl}/approvals/${encodeURIComponent(id)}`, {
+                headers: this.authHeaders(),
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data?.approval || null;
+        },
+
+        async attachPendingApprovalToTool(tool, evt = null) {
+            if (!tool || !this.agentUrl) return;
+            if (tool.approval && tool.approval.approval_id) return;
+
+            try {
+                const directApprovalId = this.extractApprovalId(evt?.result);
+                if (directApprovalId) {
+                    const approval = await this.fetchApprovalById(directApprovalId);
+                    if (approval && this.bindApprovalToToolActivity(tool, approval)) {
+                        this.pendingApprovalsTotal = Math.max(1, Number(this.pendingApprovalsTotal || 0));
+                        this.$nextTick(() => {
+                            this.refreshLucide();
+                            this.scrollToBottom();
+                        });
+                        return;
+                    }
+                }
+
+                const toolName = String(tool.name || '').trim();
+                if (!toolName) return;
+
+                const pending = await this.fetchApprovalsByStatus('pending', 30, { toolName });
+                const startedAtMs = Date.parse(String(tool.started_at || ''));
+                const nowMs = Date.now();
+
+                const candidate = (Array.isArray(pending.approvals) ? pending.approvals : [])
+                    .map((item) => this.normalizeApprovalRecord(item))
+                    .filter(Boolean)
+                    .find((item) => {
+                        if (!item || item.status !== 'pending') return false;
+                        if (this.approvalSeenIds[item.approval_id]) return false;
+                        if (item.tool_name && String(item.tool_name).trim() && String(item.tool_name).trim() !== toolName) return false;
+
+                        const createdAtMs = Date.parse(String(item.created_at || ''));
+                        if (Number.isFinite(createdAtMs)) {
+                            if (nowMs - createdAtMs > 20 * 60 * 1000) return false;
+                            if (Number.isFinite(startedAtMs) && createdAtMs < startedAtMs - 2 * 60 * 1000) return false;
+                        }
+
+                        return true;
+                    });
+
+                if (candidate && this.bindApprovalToToolActivity(tool, candidate)) {
+                    this.pendingApprovalsTotal = Math.max(1, Number(this.pendingApprovalsTotal || 0));
+                    this.$nextTick(() => {
+                        this.refreshLucide();
+                        this.scrollToBottom();
+                    });
+                }
+            } catch {}
         },
 
         authHeaders() {

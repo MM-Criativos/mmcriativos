@@ -18,6 +18,9 @@ export const DB_PASSWORD = process.env.DB_PASSWORD ?? "";
 export const DB_DATABASE = (process.env.DB_DATABASE ?? "").trim();
 
 export const VEE_NAME = (process.env.VEE_NAME ?? "Vee").trim();
+export const VEE_CONTROL_BASE_URL = (process.env.VEE_CONTROL_BASE_URL ?? "").trim();
+export const VEE_CONTROL_TOKEN = (process.env.VEE_CONTROL_TOKEN ?? "").trim();
+export const VEE_CONTROL_TIMEOUT_MS = Number.parseInt(process.env.VEE_CONTROL_TIMEOUT_MS ?? "20000", 10);
 
 export const SYSTEM_PROMPT_CHAT = `Você é ${VEE_NAME}, a assistente de inteligência da MM Criativos.
 
