@@ -15,6 +15,7 @@ export type DatabaseReadOnlyAdapterConfig = {
   database: string;
   maxRowsPerQuery: number;
   rateLimitPerMinute: number;
+  auditRateLimitPerMinute?: number;
 };
 
 // ─── Output types ─────────────────────────────────────────────────────────────
@@ -123,6 +124,79 @@ export type DbAgentExecutionEntry = {
   created_at: string | null;
 };
 
+export type DbSchemaObjectType = "table" | "view";
+
+export type DbSchemaColumn = {
+  ordinal_position: number;
+  name: string;
+  data_type: string;
+  column_type: string;
+  nullable: boolean;
+  default_value: string | null;
+  extra: string | null;
+  key: string | null;
+  is_primary_key: boolean;
+  is_foreign_key: boolean;
+};
+
+export type DbSchemaForeignKey = {
+  constraint_name: string;
+  column_name: string;
+  referenced_table: string;
+  referenced_column: string;
+  update_rule: string | null;
+  delete_rule: string | null;
+};
+
+export type DbSchemaIndex = {
+  name: string;
+  unique: boolean;
+  index_type: string | null;
+  cardinality: number | null;
+  columns: Array<{
+    name: string;
+    seq_in_index: number;
+    collation: string | null;
+    sub_part: number | null;
+  }>;
+};
+
+export type DbSchemaObjectInspection = {
+  object_name: string;
+  object_type: DbSchemaObjectType;
+  exists: boolean;
+  engine: string | null;
+  estimated_rows: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+  columns: DbSchemaColumn[];
+  primary_key: string[];
+  foreign_keys: DbSchemaForeignKey[];
+};
+
+export type DbSchemaObjectRelations = {
+  object_name: string;
+  outgoing: DbSchemaForeignKey[];
+  incoming: Array<{
+    source_table: string;
+    source_column: string;
+    referenced_column: string;
+    constraint_name: string;
+    update_rule: string | null;
+    delete_rule: string | null;
+  }>;
+};
+
+export type DbRelationshipDiscoveryEdge = {
+  source_table: string;
+  source_column: string;
+  target_table: string;
+  target_column: string;
+  relation_kind: "foreign_key" | "heuristic";
+  confidence: "high" | "medium";
+  constraint_name: string | null;
+};
+
 // ─── Rate limiter (in-memory sliding window) ─────────────────────────────────
 
 const rateLimitStore = new Map<string, number[]>();
@@ -167,7 +241,8 @@ export class DatabaseReadOnlyAdapter {
       ...config,
       host: config.host.trim(),
       user: config.user.trim(),
-      database: config.database.trim()
+      database: config.database.trim(),
+      auditRateLimitPerMinute: Math.max(config.rateLimitPerMinute, config.auditRateLimitPerMinute ?? config.rateLimitPerMinute)
     };
   }
 
@@ -202,14 +277,22 @@ export class DatabaseReadOnlyAdapter {
   private async query<T>(
     sql: string,
     params: (string | number | boolean | null)[],
-    clientKey: string
+    clientKey: string,
+    options?: {
+      auditMode?: boolean;
+      maxRowsOverride?: number;
+    }
   ): Promise<T[]> {
     this.assertConfigured();
-    checkRateLimit(clientKey, this.config.rateLimitPerMinute);
+    const maxPerMinute = options?.auditMode
+      ? this.config.auditRateLimitPerMinute ?? this.config.rateLimitPerMinute
+      : this.config.rateLimitPerMinute;
+    checkRateLimit(clientKey, maxPerMinute);
 
     const [rows] = await this.getPool().execute(sql, params) as [RowDataPacket[], FieldPacket[]];
     const result = rows as unknown as T[];
-    return result.slice(0, this.config.maxRowsPerQuery);
+    const maxRows = options?.maxRowsOverride ?? this.config.maxRowsPerQuery;
+    return result.slice(0, Math.max(1, maxRows));
   }
 
   private safeStr(v: unknown): string | null {
@@ -224,6 +307,14 @@ export class DatabaseReadOnlyAdapter {
   private safeNum(v: unknown): number | null {
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
+  }
+
+  private normalizeIdentifier(value: string, label: string): string {
+    const normalized = value.trim().toLowerCase();
+    if (!/^[a-z_][a-z0-9_]*$/i.test(normalized)) {
+      throw new Error(`Invalid ${label} "${value}". Use alphanumeric identifiers with underscores.`);
+    }
+    return normalized;
   }
 
   // ─── Tools ──────────────────────────────────────────────────────────────────
@@ -610,6 +701,385 @@ export class DatabaseReadOnlyAdapter {
     }));
   }
 
+  async inspectSchemaObject(
+    objectName: string,
+    clientKey: string,
+    options?: { auditMode?: boolean }
+  ): Promise<DbSchemaObjectInspection> {
+    const normalizedObjectName = this.normalizeIdentifier(objectName, "object_name");
+
+    const objectRows = await this.query<Record<string, unknown>>(
+      `SELECT TABLE_NAME, TABLE_TYPE, ENGINE, TABLE_ROWS, CREATE_TIME, UPDATE_TIME
+       FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+       LIMIT 1`,
+      [this.config.database, normalizedObjectName],
+      clientKey,
+      { auditMode: options?.auditMode, maxRowsOverride: 1 }
+    );
+
+    if (objectRows.length === 0) {
+      return {
+        object_name: normalizedObjectName,
+        object_type: "table",
+        exists: false,
+        engine: null,
+        estimated_rows: null,
+        created_at: null,
+        updated_at: null,
+        columns: [],
+        primary_key: [],
+        foreign_keys: []
+      };
+    }
+
+    const objectRow = objectRows[0];
+    const rawType = this.safeStr(objectRow["TABLE_TYPE"]) ?? "";
+    const objectType: DbSchemaObjectType = rawType.toUpperCase() === "VIEW" ? "view" : "table";
+
+    const foreignKeyRows = await this.query<Record<string, unknown>>(
+      `SELECT k.COLUMN_NAME, k.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME, k.CONSTRAINT_NAME, rc.UPDATE_RULE, rc.DELETE_RULE
+       FROM information_schema.KEY_COLUMN_USAGE k
+       LEFT JOIN information_schema.REFERENTIAL_CONSTRAINTS rc
+         ON rc.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
+        AND rc.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+        AND rc.TABLE_NAME = k.TABLE_NAME
+       WHERE k.TABLE_SCHEMA = ?
+         AND k.TABLE_NAME = ?
+         AND k.REFERENCED_TABLE_NAME IS NOT NULL
+       ORDER BY k.CONSTRAINT_NAME, k.ORDINAL_POSITION`,
+      [this.config.database, normalizedObjectName],
+      clientKey,
+      { auditMode: options?.auditMode, maxRowsOverride: 500 }
+    );
+
+    const foreignKeys: DbSchemaForeignKey[] = foreignKeyRows
+      .map((row) => {
+        const columnName = this.safeStr(row["COLUMN_NAME"]);
+        const referencedTable = this.safeStr(row["REFERENCED_TABLE_NAME"]);
+        const referencedColumn = this.safeStr(row["REFERENCED_COLUMN_NAME"]);
+        const constraintName = this.safeStr(row["CONSTRAINT_NAME"]);
+        if (!columnName || !referencedTable || !referencedColumn || !constraintName) {
+          return null;
+        }
+        return {
+          constraint_name: constraintName,
+          column_name: columnName,
+          referenced_table: referencedTable,
+          referenced_column: referencedColumn,
+          update_rule: this.safeStr(row["UPDATE_RULE"]),
+          delete_rule: this.safeStr(row["DELETE_RULE"])
+        };
+      })
+      .filter((item): item is DbSchemaForeignKey => item !== null);
+
+    const fkColumnSet = new Set(foreignKeys.map((fk) => fk.column_name));
+
+    const columnRows = await this.query<Record<string, unknown>>(
+      `SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA, COLUMN_KEY
+       FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+       ORDER BY ORDINAL_POSITION`,
+      [this.config.database, normalizedObjectName],
+      clientKey,
+      { auditMode: options?.auditMode, maxRowsOverride: 1000 }
+    );
+
+    const columns: DbSchemaColumn[] = columnRows
+      .map((row) => {
+        const columnName = this.safeStr(row["COLUMN_NAME"]);
+        if (!columnName) {
+          return null;
+        }
+        const key = this.safeStr(row["COLUMN_KEY"]);
+        return {
+          ordinal_position: this.safeNum(row["ORDINAL_POSITION"]) ?? 0,
+          name: columnName,
+          data_type: this.safeStr(row["DATA_TYPE"]) ?? "",
+          column_type: this.safeStr(row["COLUMN_TYPE"]) ?? "",
+          nullable: (this.safeStr(row["IS_NULLABLE"]) ?? "").toUpperCase() === "YES",
+          default_value: this.safeStr(row["COLUMN_DEFAULT"]),
+          extra: this.safeStr(row["EXTRA"]),
+          key,
+          is_primary_key: key === "PRI",
+          is_foreign_key: fkColumnSet.has(columnName)
+        };
+      })
+      .filter((item): item is DbSchemaColumn => item !== null)
+      .sort((a, b) => a.ordinal_position - b.ordinal_position);
+
+    const primaryKey = columns.filter(column => column.is_primary_key).map(column => column.name);
+
+    return {
+      object_name: normalizedObjectName,
+      object_type: objectType,
+      exists: true,
+      engine: this.safeStr(objectRow["ENGINE"]),
+      estimated_rows: this.safeNum(objectRow["TABLE_ROWS"]),
+      created_at: this.safeStr(objectRow["CREATE_TIME"]),
+      updated_at: this.safeStr(objectRow["UPDATE_TIME"]),
+      columns,
+      primary_key: primaryKey,
+      foreign_keys: foreignKeys
+    };
+  }
+
+  async listSchemaObjectIndexes(
+    objectName: string,
+    clientKey: string,
+    options?: { auditMode?: boolean }
+  ): Promise<{
+    object_name: string;
+    object_type: DbSchemaObjectType;
+    exists: boolean;
+    indexes: DbSchemaIndex[];
+  }> {
+    const inspection = await this.inspectSchemaObject(objectName, clientKey, options);
+    if (!inspection.exists) {
+      return {
+        object_name: inspection.object_name,
+        object_type: inspection.object_type,
+        exists: false,
+        indexes: []
+      };
+    }
+
+    const indexRows = await this.query<Record<string, unknown>>(
+      `SELECT INDEX_NAME, NON_UNIQUE, INDEX_TYPE, CARDINALITY, COLUMN_NAME, SEQ_IN_INDEX, COLLATION, SUB_PART
+       FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+       ORDER BY INDEX_NAME, SEQ_IN_INDEX`,
+      [this.config.database, inspection.object_name],
+      clientKey,
+      { auditMode: options?.auditMode, maxRowsOverride: 1000 }
+    );
+
+    const byIndex = new Map<string, DbSchemaIndex>();
+    for (const row of indexRows) {
+      const indexName = this.safeStr(row["INDEX_NAME"]);
+      const columnName = this.safeStr(row["COLUMN_NAME"]);
+      if (!indexName || !columnName) {
+        continue;
+      }
+
+      let index = byIndex.get(indexName);
+      if (!index) {
+        index = {
+          name: indexName,
+          unique: this.safeNum(row["NON_UNIQUE"]) === 0,
+          index_type: this.safeStr(row["INDEX_TYPE"]),
+          cardinality: this.safeNum(row["CARDINALITY"]),
+          columns: []
+        };
+        byIndex.set(indexName, index);
+      }
+
+      index.columns.push({
+        name: columnName,
+        seq_in_index: this.safeNum(row["SEQ_IN_INDEX"]) ?? 0,
+        collation: this.safeStr(row["COLLATION"]),
+        sub_part: this.safeNum(row["SUB_PART"])
+      });
+    }
+
+    const indexes = [...byIndex.values()]
+      .map(index => ({
+        ...index,
+        columns: index.columns.sort((a, b) => a.seq_in_index - b.seq_in_index)
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return {
+      object_name: inspection.object_name,
+      object_type: inspection.object_type,
+      exists: true,
+      indexes
+    };
+  }
+
+  async listSchemaObjectRelations(
+    objectName: string,
+    clientKey: string,
+    options?: { auditMode?: boolean }
+  ): Promise<DbSchemaObjectRelations & { exists: boolean; object_type: DbSchemaObjectType }> {
+    const inspection = await this.inspectSchemaObject(objectName, clientKey, options);
+    if (!inspection.exists) {
+      return {
+        object_name: inspection.object_name,
+        object_type: inspection.object_type,
+        exists: false,
+        outgoing: [],
+        incoming: []
+      };
+    }
+
+    const incomingRows = await this.query<Record<string, unknown>>(
+      `SELECT k.TABLE_NAME AS SOURCE_TABLE, k.COLUMN_NAME AS SOURCE_COLUMN, k.REFERENCED_COLUMN_NAME AS REFERENCED_COLUMN, k.CONSTRAINT_NAME, rc.UPDATE_RULE, rc.DELETE_RULE
+       FROM information_schema.KEY_COLUMN_USAGE k
+       LEFT JOIN information_schema.REFERENTIAL_CONSTRAINTS rc
+         ON rc.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
+        AND rc.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+        AND rc.TABLE_NAME = k.TABLE_NAME
+       WHERE k.TABLE_SCHEMA = ?
+         AND k.REFERENCED_TABLE_SCHEMA = ?
+         AND k.REFERENCED_TABLE_NAME = ?
+         AND k.REFERENCED_TABLE_NAME IS NOT NULL
+       ORDER BY k.TABLE_NAME, k.CONSTRAINT_NAME, k.ORDINAL_POSITION`,
+      [this.config.database, this.config.database, inspection.object_name],
+      clientKey,
+      { auditMode: options?.auditMode, maxRowsOverride: 1000 }
+    );
+
+    const incoming = incomingRows
+      .map((row) => {
+        const sourceTable = this.safeStr(row["SOURCE_TABLE"]);
+        const sourceColumn = this.safeStr(row["SOURCE_COLUMN"]);
+        const referencedColumn = this.safeStr(row["REFERENCED_COLUMN"]);
+        const constraintName = this.safeStr(row["CONSTRAINT_NAME"]);
+        if (!sourceTable || !sourceColumn || !referencedColumn || !constraintName) {
+          return null;
+        }
+        return {
+          source_table: sourceTable,
+          source_column: sourceColumn,
+          referenced_column: referencedColumn,
+          constraint_name: constraintName,
+          update_rule: this.safeStr(row["UPDATE_RULE"]),
+          delete_rule: this.safeStr(row["DELETE_RULE"])
+        };
+      })
+      .filter(
+        (item): item is DbSchemaObjectRelations["incoming"][number] =>
+          item !== null
+      );
+
+    return {
+      object_name: inspection.object_name,
+      object_type: inspection.object_type,
+      exists: true,
+      outgoing: inspection.foreign_keys,
+      incoming
+    };
+  }
+
+  async listSchemaObjectsMetadata(
+    objectNames: string[],
+    clientKey: string,
+    options?: { auditMode?: boolean }
+  ): Promise<DbSchemaObjectInspection[]> {
+    const normalizedNames = [...new Set(objectNames.map(name => this.normalizeIdentifier(name, "object_name")))];
+    const results: DbSchemaObjectInspection[] = [];
+    for (const objectName of normalizedNames) {
+      const inspection = await this.inspectSchemaObject(objectName, clientKey, options);
+      results.push(inspection);
+    }
+    return results.sort((a, b) => a.object_name.localeCompare(b.object_name));
+  }
+
+  async discoverRelationships(
+    objectNames: string[],
+    clientKey: string,
+    options?: {
+      includeHeuristics?: boolean;
+      auditMode?: boolean;
+    }
+  ): Promise<DbRelationshipDiscoveryEdge[]> {
+    const normalizedNames = [...new Set(objectNames.map(name => this.normalizeIdentifier(name, "object_name")))];
+    if (normalizedNames.length === 0) {
+      return [];
+    }
+
+    const placeholders = normalizedNames.map(() => "?").join(", ");
+    const fkRows = await this.query<Record<string, unknown>>(
+      `SELECT TABLE_NAME AS SOURCE_TABLE, COLUMN_NAME AS SOURCE_COLUMN, REFERENCED_TABLE_NAME AS TARGET_TABLE, REFERENCED_COLUMN_NAME AS TARGET_COLUMN, CONSTRAINT_NAME
+       FROM information_schema.KEY_COLUMN_USAGE
+       WHERE TABLE_SCHEMA = ?
+         AND REFERENCED_TABLE_NAME IS NOT NULL
+         AND TABLE_NAME IN (${placeholders})
+         AND REFERENCED_TABLE_NAME IN (${placeholders})
+       ORDER BY TABLE_NAME, COLUMN_NAME`,
+      [this.config.database, ...normalizedNames, ...normalizedNames],
+      clientKey,
+      { auditMode: options?.auditMode, maxRowsOverride: 2000 }
+    );
+
+    const byKey = new Map<string, DbRelationshipDiscoveryEdge>();
+    for (const row of fkRows) {
+      const sourceTable = this.safeStr(row["SOURCE_TABLE"]);
+      const sourceColumn = this.safeStr(row["SOURCE_COLUMN"]);
+      const targetTable = this.safeStr(row["TARGET_TABLE"]);
+      const targetColumn = this.safeStr(row["TARGET_COLUMN"]);
+      if (!sourceTable || !sourceColumn || !targetTable || !targetColumn) {
+        continue;
+      }
+      const key = `${sourceTable}.${sourceColumn}->${targetTable}.${targetColumn}`;
+      byKey.set(key, {
+        source_table: sourceTable,
+        source_column: sourceColumn,
+        target_table: targetTable,
+        target_column: targetColumn,
+        relation_kind: "foreign_key",
+        confidence: "high",
+        constraint_name: this.safeStr(row["CONSTRAINT_NAME"])
+      });
+    }
+
+    if (options?.includeHeuristics) {
+      const heuristicRows = await this.query<Record<string, unknown>>(
+        `SELECT TABLE_NAME AS SOURCE_TABLE, COLUMN_NAME AS SOURCE_COLUMN
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = ?
+           AND TABLE_NAME IN (${placeholders})
+           AND COLUMN_NAME LIKE '%\\_id' ESCAPE '\\'
+         ORDER BY TABLE_NAME, ORDINAL_POSITION`,
+        [this.config.database, ...normalizedNames],
+        clientKey,
+        { auditMode: options.auditMode, maxRowsOverride: 5000 }
+      );
+
+      const nameSet = new Set(normalizedNames);
+      for (const row of heuristicRows) {
+        const sourceTable = this.safeStr(row["SOURCE_TABLE"]);
+        const sourceColumn = this.safeStr(row["SOURCE_COLUMN"]);
+        if (!sourceTable || !sourceColumn || sourceColumn === "id" || !sourceColumn.endsWith("_id")) {
+          continue;
+        }
+
+        const base = sourceColumn.slice(0, -3);
+        const candidates = [...new Set([base, `${base}s`, `${base}es`, base.endsWith("y") ? `${base.slice(0, -1)}ies` : ""])]
+          .filter(Boolean);
+
+        for (const candidate of candidates) {
+          if (!nameSet.has(candidate) || candidate === sourceTable) {
+            continue;
+          }
+          const key = `${sourceTable}.${sourceColumn}->${candidate}.id`;
+          if (byKey.has(key)) {
+            continue;
+          }
+          byKey.set(key, {
+            source_table: sourceTable,
+            source_column: sourceColumn,
+            target_table: candidate,
+            target_column: "id",
+            relation_kind: "heuristic",
+            confidence: "medium",
+            constraint_name: null
+          });
+        }
+      }
+    }
+
+    return [...byKey.values()].sort((a, b) => {
+      const left = `${a.source_table}.${a.source_column}`;
+      const right = `${b.source_table}.${b.source_column}`;
+      if (left === right) {
+        return `${a.target_table}.${a.target_column}`.localeCompare(`${b.target_table}.${b.target_column}`);
+      }
+      return left.localeCompare(right);
+    });
+  }
+
   async closePool(): Promise<void> {
     if (this.pool) {
       await this.pool.end();
@@ -626,7 +1096,8 @@ export class DatabaseReadOnlyAdapter {
    */
   async executeStructuredQuery(
     input: StructuredQueryInput,
-    clientKey: string
+    clientKey: string,
+    options?: { auditMode?: boolean }
   ): Promise<{
     table: string;
     resolved_table: string;
@@ -654,7 +1125,10 @@ export class DatabaseReadOnlyAdapter {
     const built = buildSelectQuery(input, this.config.maxRowsPerQuery);
     // buildSelectQuery throws on any policy violation — no SQL reaches MySQL.
 
-    checkRateLimit(clientKey, this.config.rateLimitPerMinute);
+    const maxPerMinute = options?.auditMode
+      ? this.config.auditRateLimitPerMinute ?? this.config.rateLimitPerMinute
+      : this.config.rateLimitPerMinute;
+    checkRateLimit(clientKey, maxPerMinute);
     const startedAt = process.hrtime.bigint();
 
     const [rawRows] = await this.getPool().execute(
@@ -686,7 +1160,7 @@ export class DatabaseReadOnlyAdapter {
       performance: {
         execution_ms: Number(executionMs.toFixed(3)),
         max_rows_per_query: this.config.maxRowsPerQuery,
-        rate_limit_per_minute: this.config.rateLimitPerMinute
+        rate_limit_per_minute: maxPerMinute
       },
       pagination: {
         limit: appliedLimit,

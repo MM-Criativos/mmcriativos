@@ -116,6 +116,24 @@ Authorization: Bearer <MCP_AUTH_TOKEN>
 
 - `vee.db.query` is generic and works for any allowlisted table/view without creating a new tool.
 - `vee.db.list_allowlist` returns the effective runtime allowlist (tables, named views, blocked columns, write mode, and source).
+- Schema and relationship introspection tools:
+  - `vee.db.inspect_schema_object`
+  - `vee.db.list_table_indexes`
+  - `vee.db.list_table_relations`
+  - `vee.db.list_allowlist_schema`
+  - `vee.db.discover_relationships`
+  - `vee.db.test_join_assisted`
+  - `vee.db.validate_named_views`
+  - `vee.db.validate_table_behavior`
+- Coverage automation tools:
+  - `vee.db.schedule_coverage_scan`
+  - `vee.db.run_coverage_batch`
+  - `vee.db.get_coverage_status`
+  - `vee.db.generate_coverage_report`
+- Operational documentation tools:
+  - `vee.db.save_coverage_report_markdown`
+  - `vee.db.update_allowlist_inventory_doc`
+  - `vee.db.append_schema_observation`
 - Baseline write-mode intent:
   - `safe_execute` (MM Criativos core): `projects`, `project_tasks`, `vee_project_events`, `vee_status_history`, `vee_blocks`, `vee_operational_decisions`, `vee_execution_notes`
   - `approval_required` (sensitive core): `clients`, `contacts`, `tenants`, `users`, `messages`, auth/credential tables, billing tables, sensitive integrations
@@ -162,6 +180,9 @@ Authorization: Bearer <MCP_AUTH_TOKEN>
   - supports required/auto fields via env:
     - `DB_WRITE_REQUIRED_FIELDS_JSON`
     - `DB_WRITE_AUTO_FILL_FIELDS_JSON`
+- Audit/cobertura throughput:
+  - Default read rate limit: `DB_READONLY_RATE_LIMIT`
+  - Coverage/audit read rate limit override: `DB_READONLY_AUDIT_RATE_LIMIT` (or fallback `DB_COVERAGE_RATE_LIMIT`)
 
 ## Claude connector behavior
 

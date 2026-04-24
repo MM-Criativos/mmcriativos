@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { randomUUID } from "node:crypto";
+import path from "node:path";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -13,8 +14,13 @@ import { ObsidianAdapter } from "./adapters/obsidianAdapter.js";
 import { FilesystemLocalAdapter } from "./adapters/filesystemLocalAdapter.js";
 import { ServerSshAdapter } from "./adapters/serverSshAdapter.js";
 import { VeeControlAdapter } from "./adapters/veeControlAdapter.js";
-import { listQueryAllowlist, listWritePolicyGroups, resolveTablePolicy } from "./adapters/queryAllowlist.js";
-import type { WhereCondition } from "./adapters/structuredQueryBuilder.js";
+import {
+  listQueryAllowlist,
+  listWritePolicyGroups,
+  resolveTablePolicy,
+  resolveActualTableName
+} from "./adapters/queryAllowlist.js";
+import { buildWriteQuery, type WhereCondition } from "./adapters/structuredQueryBuilder.js";
 import {
   applyWorkflowOperations,
   parseWorkflowOperations,
@@ -111,6 +117,10 @@ const DB_READONLY_PASSWORD = process.env.DB_READONLY_PASSWORD ?? "";
 const DB_READONLY_DATABASE = (process.env.DB_READONLY_DATABASE ?? "").trim();
 const DB_READONLY_MAX_ROWS = Number.parseInt(process.env.DB_READONLY_MAX_ROWS ?? "100", 10);
 const DB_READONLY_RATE_LIMIT = Number.parseInt(process.env.DB_READONLY_RATE_LIMIT ?? "10", 10);
+const DB_READONLY_AUDIT_RATE_LIMIT = Number.parseInt(
+  process.env.DB_READONLY_AUDIT_RATE_LIMIT ?? process.env.DB_COVERAGE_RATE_LIMIT ?? String(DB_READONLY_RATE_LIMIT),
+  10
+);
 const DB_WRITE_HOST = (process.env.DB_WRITE_HOST ?? "").trim();
 const DB_WRITE_PORT = Number.parseInt(process.env.DB_WRITE_PORT ?? "3306", 10);
 const DB_WRITE_USER = (process.env.DB_WRITE_USER ?? "").trim();
@@ -186,7 +196,10 @@ const dbReadOnlyAdapters: Record<DbTarget, DatabaseReadOnlyAdapter> = {
     maxRowsPerQuery: Number.isNaN(DB_READONLY_MAX_ROWS)
       ? 100
       : Math.max(1, Math.min(DB_READONLY_MAX_ROWS, 100)),
-    rateLimitPerMinute: Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT)
+    rateLimitPerMinute: Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT),
+    auditRateLimitPerMinute: Number.isNaN(DB_READONLY_AUDIT_RATE_LIMIT)
+      ? (Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT))
+      : Math.max(1, DB_READONLY_AUDIT_RATE_LIMIT)
   }),
   mmcc: new DatabaseReadOnlyAdapter({
     host: DB_MMCC_READONLY_HOST,
@@ -197,7 +210,10 @@ const dbReadOnlyAdapters: Record<DbTarget, DatabaseReadOnlyAdapter> = {
     maxRowsPerQuery: Number.isNaN(DB_READONLY_MAX_ROWS)
       ? 100
       : Math.max(1, Math.min(DB_READONLY_MAX_ROWS, 100)),
-    rateLimitPerMinute: Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT)
+    rateLimitPerMinute: Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT),
+    auditRateLimitPerMinute: Number.isNaN(DB_READONLY_AUDIT_RATE_LIMIT)
+      ? (Number.isNaN(DB_READONLY_RATE_LIMIT) ? 10 : Math.max(1, DB_READONLY_RATE_LIMIT))
+      : Math.max(1, DB_READONLY_AUDIT_RATE_LIMIT)
   })
 };
 
@@ -439,6 +455,21 @@ const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_fs_write_file", phase: "v0.2", permission: "safe_execute", status: "enabled" },
   { name: "vee_fs_list_allowed_paths", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_db_list_allowlist", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_inspect_schema_object", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_list_table_indexes", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_list_table_relations", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_list_allowlist_schema", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_discover_relationships", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_test_join_assisted", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_validate_named_views", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_validate_table_behavior", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_schedule_coverage_scan", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_run_coverage_batch", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_get_coverage_status", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_generate_coverage_report", phase: "v0.3", permission: "read_only", status: "enabled" },
+  { name: "vee_db_save_coverage_report_markdown", phase: "v0.3", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_update_allowlist_inventory_doc", phase: "v0.3", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_append_schema_observation", phase: "v0.3", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_query", phase: "v0.3", permission: "read_only", status: "enabled" },
   { name: "vee_db_write", phase: "v0.3", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_record_event", phase: "v0.3", permission: "safe_execute", status: "enabled" },
@@ -1192,6 +1223,678 @@ const orderBySchema = z.object({
   column: z.string().min(1).describe("Column to order by"),
   direction: z.enum(["ASC", "DESC"]).optional().describe("Sort direction (default ASC)")
 });
+
+type AllowlistEntry = ReturnType<typeof listQueryAllowlist>[number];
+type CoverageStatus = "ok" | "vazia" | "schema_divergente" | "bloqueada" | "erro";
+
+type CoverageEntryResult = {
+  logical_name: string;
+  resolved_name: string;
+  kind: AllowlistEntry["kind"];
+  status: CoverageStatus;
+  row_count: number | null;
+  checked_at: string;
+  schema_summary: {
+    object_type: "table" | "view";
+    columns_total: number;
+    missing_allowlist_columns: string[];
+  };
+  validations: {
+    read_probe: "pass" | "fail";
+    blocked_column_guard: "pass" | "fail" | "skipped";
+    query_controls: "pass" | "fail";
+    write_policy: "pass" | "fail" | "skipped";
+    error_messages: "pass" | "fail";
+  };
+  warnings: string[];
+  error: string | null;
+};
+
+type CoverageJobState = {
+  job_id: string;
+  db_target: DbTarget;
+  created_at: string;
+  updated_at: string;
+  status: "queued" | "running" | "paused" | "completed" | "erro";
+  include_named_views: boolean;
+  audit_mode: boolean;
+  queue: AllowlistEntry[];
+  cursor: number;
+  results: Record<string, CoverageEntryResult>;
+  last_error: string | null;
+  pause_reason: string | null;
+};
+
+const coverageJobs = new Map<string, CoverageJobState>();
+const COVERAGE_JOB_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+
+function normalizeAllowlistName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function cleanupCoverageJobs(): void {
+  const now = Date.now();
+  for (const [jobId, job] of coverageJobs.entries()) {
+    const updatedAt = Date.parse(job.updated_at);
+    if (!Number.isFinite(updatedAt)) {
+      continue;
+    }
+    if (now - updatedAt > COVERAGE_JOB_MAX_AGE_MS) {
+      coverageJobs.delete(jobId);
+    }
+  }
+}
+
+function getCoverageQueue(includeNamedViews: boolean, tableFilter?: string[]): AllowlistEntry[] {
+  const entries = listQueryAllowlist().filter(entry => includeNamedViews || entry.kind === "table");
+  if (!tableFilter || tableFilter.length === 0) {
+    return entries;
+  }
+  const normalizedFilter = new Set(tableFilter.map(name => normalizeAllowlistName(name)));
+  return entries.filter(
+    entry =>
+      normalizedFilter.has(normalizeAllowlistName(entry.logical_name)) ||
+      normalizedFilter.has(normalizeAllowlistName(entry.resolved_name))
+  );
+}
+
+function resolveAllowlistEntryOrThrow(name: string): AllowlistEntry {
+  const normalized = normalizeAllowlistName(name);
+  const entry = listQueryAllowlist().find(
+    item =>
+      normalizeAllowlistName(item.logical_name) === normalized ||
+      normalizeAllowlistName(item.resolved_name) === normalized
+  );
+  if (!entry) {
+    throw new Error(`Table/view "${name}" is not in the DB allowlist.`);
+  }
+  return entry;
+}
+
+function pickReadableColumns(entry: AllowlistEntry, availableColumns: string[]): string[] {
+  const availableSet = new Set(availableColumns.map(column => column.toLowerCase()));
+  const blockedSet = new Set(entry.blocked_columns.map(column => column.toLowerCase()));
+
+  const sourceColumns =
+    entry.allowed_columns === "*"
+      ? availableColumns
+      : entry.allowed_columns.filter(column => availableSet.has(column.toLowerCase()));
+
+  const readable = sourceColumns.filter(column => !blockedSet.has(column.toLowerCase()));
+  return [...new Set(readable.map(column => column.toLowerCase()))];
+}
+
+function pickProbeColumn(columns: string[]): string | null {
+  if (columns.length === 0) {
+    return null;
+  }
+  const nonId = columns.find(column => column !== "id");
+  return nonId ?? columns[0] ?? null;
+}
+
+function pickDummyValue(columnType: string, columnName: string): string | number | boolean | null {
+  const normalizedType = columnType.toLowerCase();
+  const normalizedName = columnName.toLowerCase();
+  if (
+    normalizedType.includes("int") ||
+    normalizedType.includes("decimal") ||
+    normalizedType.includes("float") ||
+    normalizedType.includes("double")
+  ) {
+    return 1;
+  }
+  if (normalizedType.includes("bool")) {
+    return true;
+  }
+  if (normalizedType.includes("date") || normalizedType.includes("time")) {
+    return "2026-01-01 00:00:00";
+  }
+  if (normalizedName.endsWith("_id") || normalizedName === "id") {
+    return 1;
+  }
+  return "coverage_probe";
+}
+
+function classifyCoverageError(message: string): CoverageStatus {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("blocked")) {
+    return "bloqueada";
+  }
+  if (normalized.includes("not in the allowed") || normalized.includes("not found")) {
+    return "schema_divergente";
+  }
+  return "erro";
+}
+
+function parseToolErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function validateTableBehaviorInternal(params: {
+  adapter: DatabaseReadOnlyAdapter;
+  target: DbTarget;
+  entry: AllowlistEntry;
+  auditMode: boolean;
+}): Promise<CoverageEntryResult> {
+  const { adapter, target, entry, auditMode } = params;
+  const checkedAt = new Date().toISOString();
+  const inspection = await adapter.inspectSchemaObject(entry.resolved_name, `vee:${target}:schema:${entry.logical_name}`, {
+    auditMode
+  });
+
+  if (!inspection.exists) {
+    return {
+      logical_name: entry.logical_name,
+      resolved_name: entry.resolved_name,
+      kind: entry.kind,
+      status: "schema_divergente",
+      row_count: null,
+      checked_at: checkedAt,
+      schema_summary: {
+        object_type: "table",
+        columns_total: 0,
+        missing_allowlist_columns: []
+      },
+      validations: {
+        read_probe: "fail",
+        blocked_column_guard: "skipped",
+        query_controls: "fail",
+        write_policy: "fail",
+        error_messages: "fail"
+      },
+      warnings: [],
+      error: `Object "${entry.resolved_name}" does not exist in schema "${entry.resolved_name}".`
+    };
+  }
+
+  const schemaColumns = inspection.columns.map(column => column.name.toLowerCase());
+  const schemaColumnSet = new Set(schemaColumns);
+  const missingAllowlistColumns =
+    entry.allowed_columns === "*"
+      ? []
+      : entry.allowed_columns.filter(column => !schemaColumnSet.has(column.toLowerCase()));
+  const readableColumns = pickReadableColumns(entry, schemaColumns);
+  const probeColumn = pickProbeColumn(readableColumns);
+
+  const warnings: string[] = [];
+  let rowCount: number | null = null;
+  let status: CoverageStatus = "ok";
+  let errorMessage: string | null = null;
+  let readProbe: "pass" | "fail" = "pass";
+  let blockedGuard: "pass" | "fail" | "skipped" = "skipped";
+  let queryControls: "pass" | "fail" = "pass";
+  let writePolicy: "pass" | "fail" | "skipped" = "skipped";
+  let errorMessages: "pass" | "fail" = "pass";
+
+  if (missingAllowlistColumns.length > 0) {
+    status = "schema_divergente";
+    warnings.push(`Allowlist columns missing in schema: ${missingAllowlistColumns.join(", ")}`);
+  }
+
+  if (!probeColumn) {
+    status = "bloqueada";
+    readProbe = "fail";
+    queryControls = "fail";
+    warnings.push("No readable columns available after blocked-column filtering.");
+  } else {
+    try {
+      const readResult = await adapter.executeStructuredQuery(
+        {
+          table: entry.logical_name,
+          columns: readableColumns.slice(0, Math.min(readableColumns.length, 3)),
+          limit: 1,
+          offset: 0
+        },
+        `vee:${target}:coverage:read:${entry.logical_name}`,
+        { auditMode }
+      );
+      rowCount = readResult.total;
+      if (status === "ok" && readResult.total === 0) {
+        status = "vazia";
+      }
+    } catch (error) {
+      readProbe = "fail";
+      const message = parseToolErrorMessage(error);
+      status = classifyCoverageError(message);
+      errorMessage = message;
+    }
+
+    if (readProbe === "pass") {
+      try {
+        await adapter.executeStructuredQuery(
+          {
+            table: entry.logical_name,
+            columns: [probeColumn],
+            where: [{ column: probeColumn, operator: "IS NOT NULL" }],
+            orderBy: [{ column: probeColumn, direction: "ASC" }],
+            limit: 2,
+            offset: 0
+          },
+          `vee:${target}:coverage:controls:${entry.logical_name}`,
+          { auditMode }
+        );
+      } catch (error) {
+        queryControls = "fail";
+        const message = parseToolErrorMessage(error);
+        status = status === "ok" ? classifyCoverageError(message) : status;
+        errorMessage = errorMessage ?? message;
+      }
+    }
+  }
+
+  if (entry.blocked_columns.length > 0) {
+    const blockedColumn = entry.blocked_columns[0]!;
+    try {
+      await adapter.executeStructuredQuery(
+        {
+          table: entry.logical_name,
+          columns: [blockedColumn],
+          limit: 1
+        },
+        `vee:${target}:coverage:blocked:${entry.logical_name}`,
+        { auditMode }
+      );
+      blockedGuard = "fail";
+      warnings.push(`Blocked-column guard failed for "${blockedColumn}".`);
+    } catch (error) {
+      const message = parseToolErrorMessage(error).toLowerCase();
+      blockedGuard = message.includes("blocked") ? "pass" : "fail";
+    }
+  }
+
+  const policy = resolveTablePolicy(entry.logical_name);
+  if (!policy) {
+    writePolicy = "fail";
+    warnings.push("Table policy not found while validating write permissions.");
+  } else {
+    const writeCandidate = probeColumn;
+    if (!writeCandidate) {
+      writePolicy = "skipped";
+    } else {
+      const sampleColumn = inspection.columns.find(column => column.name.toLowerCase() === writeCandidate);
+      const sampleValue = pickDummyValue(sampleColumn?.column_type ?? sampleColumn?.data_type ?? "varchar", writeCandidate);
+      const hasIdColumn = schemaColumnSet.has("id");
+      const upsertKey = hasIdColumn ? ["id"] : inspection.primary_key.length > 0 ? [inspection.primary_key[0]!] : [];
+      const upsertData: Record<string, unknown> = {};
+      if (upsertKey.length > 0) {
+        upsertData[upsertKey[0]!] = 1;
+      }
+      upsertData[writeCandidate] = sampleValue;
+
+      try {
+        buildWriteQuery({
+          operation: "UPDATE",
+          table: entry.logical_name,
+          data: { [writeCandidate]: sampleValue },
+          where: [{ column: upsertKey[0] ?? "id", operator: "=", value: 1 }],
+          reason: "coverage_validation: update policy check"
+        });
+
+        buildWriteQuery({
+          operation: "UPSERT",
+          table: entry.logical_name,
+          data: upsertData,
+          upsertKey: upsertKey.length > 0 ? upsertKey : undefined,
+          reason: "coverage_validation: upsert policy check"
+        });
+
+        writePolicy = policy.writeMode === "read_only" ? "fail" : "pass";
+      } catch (error) {
+        const message = parseToolErrorMessage(error).toLowerCase();
+        if (policy.writeMode === "read_only" && message.includes("read-only")) {
+          writePolicy = "pass";
+        } else {
+          writePolicy = "fail";
+        }
+      }
+    }
+  }
+
+  try {
+    await adapter.executeStructuredQuery(
+      {
+        table: entry.logical_name,
+        columns: ["__vee_invalid_column__"],
+        limit: 1
+      },
+      `vee:${target}:coverage:error-msg:${entry.logical_name}`,
+      { auditMode }
+    );
+    errorMessages = "fail";
+  } catch (error) {
+    const message = parseToolErrorMessage(error).toLowerCase();
+    errorMessages =
+      message.includes("not in the allowed") || message.includes("unsafe column") || message.includes("blocked")
+        ? "pass"
+        : "fail";
+  }
+
+  if (status === "ok" && rowCount === 0) {
+    status = "vazia";
+  }
+  if (blockedGuard === "fail" && status === "ok") {
+    status = "bloqueada";
+  }
+  if (writePolicy === "fail" && status === "ok") {
+    warnings.push("Write policy check failed for this table.");
+  }
+
+  return {
+    logical_name: entry.logical_name,
+    resolved_name: entry.resolved_name,
+    kind: entry.kind,
+    status,
+    row_count: rowCount,
+    checked_at: checkedAt,
+    schema_summary: {
+      object_type: inspection.object_type,
+      columns_total: inspection.columns.length,
+      missing_allowlist_columns: missingAllowlistColumns
+    },
+    validations: {
+      read_probe: readProbe,
+      blocked_column_guard: blockedGuard,
+      query_controls: queryControls,
+      write_policy: writePolicy,
+      error_messages: errorMessages
+    },
+    warnings,
+    error: errorMessage
+  };
+}
+
+async function validateNamedViewInternal(params: {
+  adapter: DatabaseReadOnlyAdapter;
+  target: DbTarget;
+  entry: AllowlistEntry;
+  auditMode: boolean;
+}): Promise<CoverageEntryResult> {
+  const { adapter, target, entry, auditMode } = params;
+  const checkedAt = new Date().toISOString();
+  const inspection = await adapter.inspectSchemaObject(entry.resolved_name, `vee:${target}:view:${entry.logical_name}`, {
+    auditMode
+  });
+
+  if (!inspection.exists) {
+    return {
+      logical_name: entry.logical_name,
+      resolved_name: entry.resolved_name,
+      kind: entry.kind,
+      status: "schema_divergente",
+      row_count: null,
+      checked_at: checkedAt,
+      schema_summary: {
+        object_type: "view",
+        columns_total: 0,
+        missing_allowlist_columns: []
+      },
+      validations: {
+        read_probe: "fail",
+        blocked_column_guard: "skipped",
+        query_controls: "fail",
+        write_policy: "skipped",
+        error_messages: "pass"
+      },
+      warnings: [],
+      error: `Named view "${entry.logical_name}" resolves to "${entry.resolved_name}" but was not found.`
+    };
+  }
+
+  let status: CoverageStatus = "ok";
+  let rowCount = 0;
+  let errorMessage: string | null = null;
+  try {
+    const result = await adapter.executeStructuredQuery(
+      { table: entry.logical_name, limit: 1 },
+      `vee:${target}:view-probe:${entry.logical_name}`,
+      { auditMode }
+    );
+    rowCount = result.total;
+    if (result.total === 0) {
+      status = "vazia";
+    }
+  } catch (error) {
+    const message = parseToolErrorMessage(error);
+    status = classifyCoverageError(message);
+    errorMessage = message;
+  }
+
+  return {
+    logical_name: entry.logical_name,
+    resolved_name: entry.resolved_name,
+    kind: entry.kind,
+    status,
+    row_count: rowCount,
+    checked_at: checkedAt,
+    schema_summary: {
+      object_type: inspection.object_type,
+      columns_total: inspection.columns.length,
+      missing_allowlist_columns: []
+    },
+    validations: {
+      read_probe: status === "erro" ? "fail" : "pass",
+      blocked_column_guard: "skipped",
+      query_controls: status === "erro" ? "fail" : "pass",
+      write_policy: "skipped",
+      error_messages: "pass"
+    },
+    warnings: [],
+    error: errorMessage
+  };
+}
+
+function summarizeCoverage(results: CoverageEntryResult[]): Record<CoverageStatus, number> {
+  const summary: Record<CoverageStatus, number> = {
+    ok: 0,
+    vazia: 0,
+    schema_divergente: 0,
+    bloqueada: 0,
+    erro: 0
+  };
+  for (const result of results) {
+    summary[result.status] += 1;
+  }
+  return summary;
+}
+
+function createCoverageJob(params: {
+  dbTarget: DbTarget;
+  includeNamedViews: boolean;
+  auditMode: boolean;
+  queue: AllowlistEntry[];
+}): CoverageJobState {
+  const now = new Date().toISOString();
+  return {
+    job_id: randomUUID(),
+    db_target: params.dbTarget,
+    created_at: now,
+    updated_at: now,
+    status: "queued",
+    include_named_views: params.includeNamedViews,
+    audit_mode: params.auditMode,
+    queue: params.queue,
+    cursor: 0,
+    results: {},
+    last_error: null,
+    pause_reason: null
+  };
+}
+
+function toCoverageJobPayload(job: CoverageJobState): Record<string, unknown> {
+  const resultList = Object.values(job.results).sort((a, b) => a.logical_name.localeCompare(b.logical_name));
+  return {
+    job_id: job.job_id,
+    db_target: job.db_target,
+    status: job.status,
+    created_at: job.created_at,
+    updated_at: job.updated_at,
+    include_named_views: job.include_named_views,
+    audit_mode: job.audit_mode,
+    progress: {
+      total: job.queue.length,
+      processed: job.cursor,
+      remaining: Math.max(job.queue.length - job.cursor, 0),
+      percent: job.queue.length > 0 ? Number(((job.cursor / job.queue.length) * 100).toFixed(2)) : 100
+    },
+    summary: summarizeCoverage(resultList),
+    pause_reason: job.pause_reason,
+    last_error: job.last_error,
+    results: resultList
+  };
+}
+
+async function runCoverageBatchInternal(params: {
+  job: CoverageJobState;
+  adapter: DatabaseReadOnlyAdapter;
+  target: DbTarget;
+  batchSize: number;
+  maxRuntimeMs: number;
+}): Promise<Record<string, unknown>> {
+  const { job, adapter, target } = params;
+  const startedAt = Date.now();
+  const safeBatchSize = Math.max(1, Math.min(params.batchSize, 200));
+  const safeRuntimeMs = Math.max(250, Math.min(params.maxRuntimeMs, 120000));
+  let processed = 0;
+
+  job.status = "running";
+  job.pause_reason = null;
+  job.last_error = null;
+  job.updated_at = new Date().toISOString();
+
+  while (job.cursor < job.queue.length && processed < safeBatchSize) {
+    const elapsed = Date.now() - startedAt;
+    if (elapsed >= safeRuntimeMs) {
+      job.status = "paused";
+      job.pause_reason = "runtime_budget_reached";
+      break;
+    }
+
+    const entry = job.queue[job.cursor];
+    if (!entry) {
+      break;
+    }
+
+    try {
+      const result =
+        entry.kind === "table"
+          ? await validateTableBehaviorInternal({
+              adapter,
+              target,
+              entry,
+              auditMode: job.audit_mode
+            })
+          : await validateNamedViewInternal({
+              adapter,
+              target,
+              entry,
+              auditMode: job.audit_mode
+            });
+
+      job.results[entry.logical_name] = result;
+      job.cursor += 1;
+      processed += 1;
+      job.updated_at = new Date().toISOString();
+    } catch (error) {
+      const message = parseToolErrorMessage(error);
+      const status = classifyCoverageError(message);
+      job.results[entry.logical_name] = {
+        logical_name: entry.logical_name,
+        resolved_name: entry.resolved_name,
+        kind: entry.kind,
+        status,
+        row_count: null,
+        checked_at: new Date().toISOString(),
+        schema_summary: {
+          object_type: entry.kind === "named_view" ? "view" : "table",
+          columns_total: 0,
+          missing_allowlist_columns: []
+        },
+        validations: {
+          read_probe: "fail",
+          blocked_column_guard: "skipped",
+          query_controls: "fail",
+          write_policy: "skipped",
+          error_messages: "fail"
+        },
+        warnings: [],
+        error: message
+      };
+      job.cursor += 1;
+      processed += 1;
+      job.last_error = message;
+      if (message.toLowerCase().includes("rate limit exceeded")) {
+        job.status = "paused";
+        job.pause_reason = "rate_limit_reached";
+        break;
+      }
+    }
+  }
+
+  if (job.cursor >= job.queue.length) {
+    job.status = "completed";
+    job.pause_reason = null;
+  } else if (job.status === "running") {
+    job.status = "paused";
+    job.pause_reason = "batch_completed";
+  }
+
+  job.updated_at = new Date().toISOString();
+
+  return {
+    processed_in_batch: processed,
+    elapsed_ms: Date.now() - startedAt,
+    ...toCoverageJobPayload(job)
+  };
+}
+
+function buildCoverageMarkdown(report: Record<string, unknown>, title?: string): string {
+  const generatedAt = new Date().toISOString();
+  const reportTitle = title?.trim() ? title.trim() : "DB Coverage Report";
+  return [
+    `# ${reportTitle}`,
+    "",
+    `Generated at: ${generatedAt}`,
+    "",
+    "```json",
+    JSON.stringify(report, null, 2),
+    "```",
+    ""
+  ].join("\n");
+}
+
+function resolveWritablePath(targetPath: string): string {
+  const trimmed = targetPath.trim();
+  if (!trimmed) {
+    throw new Error("path is required.");
+  }
+  if (path.isAbsolute(trimmed)) {
+    return trimmed;
+  }
+  if (!OBSIDIAN_ROOT_PATH) {
+    throw new Error("Relative path requires OBSIDIAN_ROOT_PATH to be configured.");
+  }
+  return path.join(OBSIDIAN_ROOT_PATH, trimmed);
+}
+
+async function writeMarkdownDocument(targetPath: string, content: string): Promise<{ ok: boolean; path: string }> {
+  const fullPath = resolveWritablePath(targetPath);
+  const write = await filesystemLocalAdapter.writeFile(fullPath, content);
+  return { ok: write.ok, path: write.path };
+}
+
+async function appendMarkdownDocument(targetPath: string, content: string): Promise<{ ok: boolean; path: string }> {
+  const fullPath = resolveWritablePath(targetPath);
+  let existing = "";
+  try {
+    const current = await filesystemLocalAdapter.readFile(fullPath);
+    existing = current.content;
+  } catch {
+    existing = "";
+  }
+  const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
+  const write = await filesystemLocalAdapter.writeFile(fullPath, `${existing}${separator}${content}`);
+  return { ok: write.ok, path: write.path };
+}
 
 function createServer(): McpServer {
   const server = new McpServer(
@@ -3277,6 +3980,896 @@ function createServer(): McpServer {
   );
 
   server.registerTool(
+    "vee_db_inspect_schema_object",
+    {
+      title: "DB - Inspect Schema Object",
+      description:
+        "Inspects one allowlisted table/view and returns object type, columns, nullability, defaults, PK and FK metadata.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        object_name: z.string().min(1).describe("Allowlisted table or named view"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for metadata reads (default true)")
+      }
+    },
+    async ({ db_target, object_name, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_inspect_schema_object",
+        permission: "read_only",
+        isWrite: false,
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, object_name, audit_mode: audit_mode ?? true },
+        errorContext: `Failed to inspect schema object "${object_name}"`,
+        handler: async () => {
+          const entry = resolveAllowlistEntryOrThrow(object_name);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const inspection = await adapter.inspectSchemaObject(
+            entry.resolved_name,
+            `vee:${target}:schema-inspect:${entry.logical_name}`,
+            { auditMode: audit_mode ?? true }
+          );
+
+          const payload = {
+            db_target: target,
+            allowlist_entry: entry,
+            inspection
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_list_table_indexes",
+    {
+      title: "DB - List Table Indexes",
+      description: "Lists indexes for one allowlisted table/view (name, uniqueness, type, cardinality, ordered columns).",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        object_name: z.string().min(1).describe("Allowlisted table or named view"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for metadata reads (default true)")
+      }
+    },
+    async ({ db_target, object_name, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_list_table_indexes",
+        permission: "read_only",
+        isWrite: false,
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, object_name, audit_mode: audit_mode ?? true },
+        errorContext: `Failed to list indexes for "${object_name}"`,
+        handler: async () => {
+          const entry = resolveAllowlistEntryOrThrow(object_name);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const indexes = await adapter.listSchemaObjectIndexes(
+            entry.resolved_name,
+            `vee:${target}:schema-index:${entry.logical_name}`,
+            { auditMode: audit_mode ?? true }
+          );
+          const payload = {
+            db_target: target,
+            allowlist_entry: entry,
+            indexes
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_list_table_relations",
+    {
+      title: "DB - List Table Relations",
+      description: "Lists outgoing and incoming FK relations for one allowlisted table/view.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        object_name: z.string().min(1).describe("Allowlisted table or named view"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for metadata reads (default true)")
+      }
+    },
+    async ({ db_target, object_name, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_list_table_relations",
+        permission: "read_only",
+        isWrite: false,
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, object_name, audit_mode: audit_mode ?? true },
+        errorContext: `Failed to list relations for "${object_name}"`,
+        handler: async () => {
+          const entry = resolveAllowlistEntryOrThrow(object_name);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const relations = await adapter.listSchemaObjectRelations(
+            entry.resolved_name,
+            `vee:${target}:schema-rel:${entry.logical_name}`,
+            { auditMode: audit_mode ?? true }
+          );
+          const payload = {
+            db_target: target,
+            allowlist_entry: entry,
+            relations
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_list_allowlist_schema",
+    {
+      title: "DB - List Allowlist Schema",
+      description:
+        "Lists all allowlisted tables/views with full schema metadata (object type, columns, PK/FK, write policy, blocked columns).",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        include_named_views: z.boolean().optional().describe("Include named views (default true)"),
+        table_filter: z.array(z.string().min(1)).optional().describe("Optional allowlist filter by logical/resolved names"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for metadata reads (default true)")
+      }
+    },
+    async ({ db_target, include_named_views, table_filter, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_list_allowlist_schema",
+        permission: "read_only",
+        isWrite: false,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          include_named_views: include_named_views ?? true,
+          table_filter,
+          audit_mode: audit_mode ?? true
+        },
+        errorContext: "Failed to list allowlist schema metadata",
+        handler: async () => {
+          const includeViews = include_named_views ?? true;
+          const queue = getCoverageQueue(includeViews, table_filter);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const metadata = await adapter.listSchemaObjectsMetadata(
+            queue.map(entry => resolveActualTableName(entry.resolved_name)),
+            `vee:${target}:allowlist-schema`,
+            { auditMode: audit_mode ?? true }
+          );
+          const metadataByObject = new Map(metadata.map(item => [item.object_name, item]));
+          const entries = queue.map(entry => ({
+            ...entry,
+            schema: metadataByObject.get(resolveActualTableName(entry.resolved_name)) ?? null
+          }));
+          const payload = {
+            db_target: target,
+            totals: {
+              entries: entries.length,
+              tables: entries.filter(entry => entry.kind === "table").length,
+              named_views: entries.filter(entry => entry.kind === "named_view").length,
+              missing_in_schema: entries.filter(entry => !entry.schema || !entry.schema.exists).length
+            },
+            entries
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_discover_relationships",
+    {
+      title: "DB - Discover Relationships",
+      description:
+        "Discovers relationships between allowlisted tables using FK metadata and optional heuristic *_id inference.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        tables: z.array(z.string().min(1)).optional().describe("Optional subset of allowlisted tables"),
+        include_heuristics: z.boolean().optional().describe("Include *_id heuristic relationships (default true)"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for metadata reads (default true)")
+      }
+    },
+    async ({ db_target, tables, include_heuristics, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_discover_relationships",
+        permission: "read_only",
+        isWrite: false,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          tables,
+          include_heuristics: include_heuristics ?? true,
+          audit_mode: audit_mode ?? true
+        },
+        errorContext: "Failed to discover table relationships",
+        handler: async () => {
+          const requestedEntries = (tables && tables.length > 0
+            ? tables.map(name => resolveAllowlistEntryOrThrow(name))
+            : getCoverageQueue(false)
+          ).filter(entry => entry.kind === "table");
+          const objectNames = [...new Set(requestedEntries.map(entry => resolveActualTableName(entry.resolved_name)))];
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const relationships = await adapter.discoverRelationships(
+            objectNames,
+            `vee:${target}:rel-discovery`,
+            { includeHeuristics: include_heuristics ?? true, auditMode: audit_mode ?? true }
+          );
+          const payload = {
+            db_target: target,
+            include_heuristics: include_heuristics ?? true,
+            tables: objectNames,
+            total_relationships: relationships.length,
+            relationships
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_test_join_assisted",
+    {
+      title: "DB - Test Join Assisted",
+      description:
+        "Tests a basic JOIN between two allowlisted tables using provided columns or auto-discovered relationship metadata.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        left_table: z.string().min(1).describe("Base table/view for SELECT"),
+        right_table: z.string().min(1).describe("Table/view to JOIN"),
+        left_column: z.string().min(1).optional().describe("Join column from left_table"),
+        right_column: z.string().min(1).optional().describe("Join column from right_table"),
+        join_type: z.enum(["INNER", "LEFT", "RIGHT"]).optional().describe("JOIN type (default INNER)"),
+        limit: z.number().int().min(1).max(50).optional().describe("Rows to return (default 5)"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for test query (default true)")
+      }
+    },
+    async ({ db_target, left_table, right_table, left_column, right_column, join_type, limit, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_test_join_assisted",
+        permission: "read_only",
+        isWrite: false,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          left_table,
+          right_table,
+          left_column,
+          right_column,
+          join_type: join_type ?? "INNER",
+          limit: limit ?? 5,
+          audit_mode: audit_mode ?? true
+        },
+        errorContext: `Failed to run assisted join between "${left_table}" and "${right_table}"`,
+        handler: async () => {
+          const leftEntry = resolveAllowlistEntryOrThrow(left_table);
+          const rightEntry = resolveAllowlistEntryOrThrow(right_table);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          let joinLeftColumn = left_column?.trim().toLowerCase();
+          let joinRightColumn = right_column?.trim().toLowerCase();
+          let relationshipHint: Record<string, unknown> | null = null;
+
+          if (!joinLeftColumn || !joinRightColumn) {
+            const discovered = await adapter.discoverRelationships(
+              [
+                resolveActualTableName(leftEntry.resolved_name),
+                resolveActualTableName(rightEntry.resolved_name)
+              ],
+              `vee:${target}:join-hint:${leftEntry.logical_name}:${rightEntry.logical_name}`,
+              { includeHeuristics: true, auditMode: audit_mode ?? true }
+            );
+
+            const leftResolved = resolveActualTableName(leftEntry.resolved_name);
+            const rightResolved = resolveActualTableName(rightEntry.resolved_name);
+            const direct = discovered.find(
+              rel => rel.source_table === leftResolved && rel.target_table === rightResolved
+            );
+            const inverse = discovered.find(
+              rel => rel.source_table === rightResolved && rel.target_table === leftResolved
+            );
+
+            if (direct) {
+              joinLeftColumn = joinLeftColumn ?? direct.source_column;
+              joinRightColumn = joinRightColumn ?? direct.target_column;
+              relationshipHint = direct;
+            } else if (inverse) {
+              joinLeftColumn = joinLeftColumn ?? inverse.target_column;
+              joinRightColumn = joinRightColumn ?? inverse.source_column;
+              relationshipHint = inverse;
+            }
+          }
+
+          if (!joinLeftColumn || !joinRightColumn) {
+            throw new Error(
+              `Could not infer join columns between "${left_table}" and "${right_table}". Provide left_column and right_column.`
+            );
+          }
+
+          const onClause = `${leftEntry.logical_name}.${joinLeftColumn} = ${rightEntry.logical_name}.${joinRightColumn}`;
+          const result = await adapter.executeStructuredQuery(
+            {
+              table: leftEntry.logical_name,
+              columns: [
+                `${leftEntry.logical_name}.${joinLeftColumn}`,
+                `${rightEntry.logical_name}.${joinRightColumn}`
+              ],
+              joins: [
+                {
+                  type: join_type ?? "INNER",
+                  table: rightEntry.logical_name,
+                  on: onClause
+                }
+              ],
+              limit: limit ?? 5
+            },
+            `vee:${target}:join-test:${leftEntry.logical_name}:${rightEntry.logical_name}`,
+            { auditMode: audit_mode ?? true }
+          );
+
+          const payload = {
+            db_target: target,
+            join: {
+              left_table: leftEntry.logical_name,
+              right_table: rightEntry.logical_name,
+              on: onClause,
+              join_type: join_type ?? "INNER",
+              relationship_hint: relationshipHint
+            },
+            result
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_validate_named_views",
+    {
+      title: "DB - Validate Named Views",
+      description:
+        "Validates allowlisted named views by checking existence, schema visibility and minimal read probe.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        views: z.array(z.string().min(1)).optional().describe("Optional subset of named views"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for test query (default true)")
+      }
+    },
+    async ({ db_target, views, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_validate_named_views",
+        permission: "read_only",
+        isWrite: false,
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, views, audit_mode: audit_mode ?? true },
+        errorContext: "Failed to validate named views",
+        handler: async () => {
+          const selected = (views && views.length > 0
+            ? views.map(name => resolveAllowlistEntryOrThrow(name))
+            : getCoverageQueue(true)
+          ).filter(entry => entry.kind === "named_view");
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const results: CoverageEntryResult[] = [];
+          for (const entry of selected) {
+            const result = await validateNamedViewInternal({
+              adapter,
+              target,
+              entry,
+              auditMode: audit_mode ?? true
+            });
+            results.push(result);
+          }
+          const payload = {
+            db_target: target,
+            total: results.length,
+            summary: summarizeCoverage(results),
+            results
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_validate_table_behavior",
+    {
+      title: "DB - Validate Table Behavior",
+      description:
+        "Validates read behavior, blocked-column guard, WHERE/ORDER/LIMIT controls, write policy checks, and error-message patterns for one allowlisted table.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        table: z.string().min(1).describe("Allowlisted table logical/resolved name"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for validation probes (default true)")
+      }
+    },
+    async ({ db_target, table, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_validate_table_behavior",
+        permission: "read_only",
+        isWrite: false,
+        args: { db_target: db_target ?? DB_DEFAULT_TARGET, table, audit_mode: audit_mode ?? true },
+        errorContext: `Failed to validate table behavior for "${table}"`,
+        handler: async () => {
+          const entry = resolveAllowlistEntryOrThrow(table);
+          if (entry.kind !== "table") {
+            throw new Error(`"${table}" resolves to a named view. Use vee_db_validate_named_views for views.`);
+          }
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const result = await validateTableBehaviorInternal({
+            adapter,
+            target,
+            entry,
+            auditMode: audit_mode ?? true
+          });
+          const payload = {
+            db_target: target,
+            result
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_schedule_coverage_scan",
+    {
+      title: "DB - Schedule Coverage Scan",
+      description:
+        "Creates a queued coverage job for allowlisted tables/views. Supports partial execution and resume via job_id.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        include_named_views: z.boolean().optional().describe("Include named views in queue (default false)"),
+        table_filter: z.array(z.string().min(1)).optional().describe("Optional subset by logical/resolved name"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for scan probes (default true)"),
+        run_initial_batch: z.boolean().optional().describe("Run first batch immediately (default true)"),
+        initial_batch_size: z.number().int().min(1).max(200).optional().describe("Initial batch size (default 10)"),
+        initial_max_runtime_ms: z.number().int().min(250).max(120000).optional().describe("Initial batch runtime budget")
+      }
+    },
+    async ({
+      db_target,
+      include_named_views,
+      table_filter,
+      audit_mode,
+      run_initial_batch,
+      initial_batch_size,
+      initial_max_runtime_ms
+    }) =>
+      runAuditedTool({
+        toolName: "vee_db_schedule_coverage_scan",
+        permission: "read_only",
+        isWrite: false,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          include_named_views: include_named_views ?? false,
+          table_filter,
+          audit_mode: audit_mode ?? true,
+          run_initial_batch: run_initial_batch ?? true,
+          initial_batch_size: initial_batch_size ?? 10,
+          initial_max_runtime_ms: initial_max_runtime_ms ?? 15000
+        },
+        errorContext: "Failed to schedule coverage scan",
+        handler: async () => {
+          cleanupCoverageJobs();
+          const includeViews = include_named_views ?? false;
+          const queue = getCoverageQueue(includeViews, table_filter);
+          if (queue.length === 0) {
+            throw new Error("Coverage queue is empty after filters.");
+          }
+
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const job = createCoverageJob({
+            dbTarget: target,
+            includeNamedViews: includeViews,
+            auditMode: audit_mode ?? true,
+            queue
+          });
+          coverageJobs.set(job.job_id, job);
+
+          let payload = toCoverageJobPayload(job);
+          if (run_initial_batch ?? true) {
+            payload = await runCoverageBatchInternal({
+              job,
+              adapter,
+              target,
+              batchSize: initial_batch_size ?? 10,
+              maxRuntimeMs: initial_max_runtime_ms ?? 15000
+            });
+          }
+
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_run_coverage_batch",
+    {
+      title: "DB - Run Coverage Batch",
+      description:
+        "Runs the next batch for a scheduled coverage job with queue/pause semantics and resumable progress.",
+      inputSchema: {
+        job_id: z.string().min(1).describe("Coverage job id returned by vee_db_schedule_coverage_scan"),
+        batch_size: z.number().int().min(1).max(200).optional().describe("How many entries to process"),
+        max_runtime_ms: z.number().int().min(250).max(120000).optional().describe("Runtime budget in milliseconds")
+      }
+    },
+    async ({ job_id, batch_size, max_runtime_ms }) =>
+      runAuditedTool({
+        toolName: "vee_db_run_coverage_batch",
+        permission: "read_only",
+        isWrite: false,
+        args: { job_id, batch_size: batch_size ?? 10, max_runtime_ms: max_runtime_ms ?? 15000 },
+        errorContext: `Failed to run coverage batch for job "${job_id}"`,
+        handler: async () => {
+          cleanupCoverageJobs();
+          const job = coverageJobs.get(job_id);
+          if (!job) {
+            throw new Error(`Coverage job "${job_id}" not found or expired.`);
+          }
+          const { target, adapter } = resolveReadOnlyAdapter(job.db_target);
+          const payload = await runCoverageBatchInternal({
+            job,
+            adapter,
+            target,
+            batchSize: batch_size ?? 10,
+            maxRuntimeMs: max_runtime_ms ?? 15000
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_get_coverage_status",
+    {
+      title: "DB - Get Coverage Status",
+      description:
+        "Returns status for one coverage job or a summary list of active jobs, including resumable progress details.",
+      inputSchema: {
+        job_id: z.string().optional().describe("Coverage job id. If omitted, returns all active jobs."),
+        include_results: z.boolean().optional().describe("Include per-table results (default true)")
+      }
+    },
+    async ({ job_id, include_results }) =>
+      runAuditedTool({
+        toolName: "vee_db_get_coverage_status",
+        permission: "read_only",
+        isWrite: false,
+        args: { job_id: job_id ?? null, include_results: include_results ?? true },
+        errorContext: "Failed to get coverage status",
+        handler: async () => {
+          cleanupCoverageJobs();
+          if (job_id) {
+            const job = coverageJobs.get(job_id);
+            if (!job) {
+              throw new Error(`Coverage job "${job_id}" not found or expired.`);
+            }
+            const payload = toCoverageJobPayload(job);
+            if (include_results === false) {
+              const compact = { ...payload };
+              delete compact.results;
+              return {
+                content: [{ type: "text", text: JSON.stringify(compact, null, 2) }],
+                structuredContent: compact
+              };
+            }
+            return {
+              content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+              structuredContent: payload
+            };
+          }
+
+          const jobs = [...coverageJobs.values()]
+            .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+            .map(job => {
+              const payload = toCoverageJobPayload(job);
+              if (include_results === false) {
+                const compact = { ...payload };
+                delete compact.results;
+                return compact;
+              }
+              return payload;
+            });
+
+          const payload = { total_jobs: jobs.length, jobs };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_generate_coverage_report",
+    {
+      title: "DB - Generate Coverage Report",
+      description:
+        "Generates a consolidated coverage report from a scheduled job or by running a full ad-hoc scan.",
+      inputSchema: {
+        job_id: z.string().optional().describe("Existing coverage job id"),
+        db_target: dbTargetSchema,
+        include_named_views: z.boolean().optional().describe("For ad-hoc mode, include named views (default false)"),
+        table_filter: z.array(z.string().min(1)).optional().describe("For ad-hoc mode, limit queue to subset"),
+        audit_mode: z.boolean().optional().describe("For ad-hoc mode, use audit rate-limit mode (default true)")
+      }
+    },
+    async ({ job_id, db_target, include_named_views, table_filter, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_generate_coverage_report",
+        permission: "read_only",
+        isWrite: false,
+        args: {
+          job_id: job_id ?? null,
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          include_named_views: include_named_views ?? false,
+          table_filter,
+          audit_mode: audit_mode ?? true
+        },
+        errorContext: "Failed to generate coverage report",
+        handler: async () => {
+          cleanupCoverageJobs();
+          let reportPayload: Record<string, unknown>;
+
+          if (job_id) {
+            const job = coverageJobs.get(job_id);
+            if (!job) {
+              throw new Error(`Coverage job "${job_id}" not found or expired.`);
+            }
+            reportPayload = toCoverageJobPayload(job);
+          } else {
+            const includeViews = include_named_views ?? false;
+            const queue = getCoverageQueue(includeViews, table_filter);
+            if (queue.length === 0) {
+              throw new Error("Coverage queue is empty after filters.");
+            }
+            const { target, adapter } = resolveReadOnlyAdapter(db_target);
+            const tempJob = createCoverageJob({
+              dbTarget: target,
+              includeNamedViews: includeViews,
+              auditMode: audit_mode ?? true,
+              queue
+            });
+            while (tempJob.status !== "completed") {
+              await runCoverageBatchInternal({
+                job: tempJob,
+                adapter,
+                target,
+                batchSize: 100,
+                maxRuntimeMs: 120000
+              });
+              if (tempJob.status === "paused" && tempJob.pause_reason === "rate_limit_reached") {
+                break;
+              }
+            }
+            reportPayload = toCoverageJobPayload(tempJob);
+          }
+
+          const payload = {
+            generated_at: new Date().toISOString(),
+            report: reportPayload
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_save_coverage_report_markdown",
+    {
+      title: "DB - Save Coverage Report Markdown",
+      description:
+        "Saves a consolidated coverage report as markdown to an allowed filesystem path (absolute path or vault-relative path).",
+      inputSchema: {
+        path: z.string().min(1).describe("Output path (absolute or OBSIDIAN_ROOT_PATH-relative)"),
+        job_id: z.string().optional().describe("Coverage job id to persist"),
+        report: z.record(z.string(), z.unknown()).optional().describe("Explicit report payload (used when job_id is omitted)"),
+        title: z.string().optional().describe("Optional markdown title")
+      }
+    },
+    async ({ path: output_path, job_id, report, title }) =>
+      runAuditedTool({
+        toolName: "vee_db_save_coverage_report_markdown",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { path: output_path, job_id: job_id ?? null, has_report: !!report, title: title ?? null },
+        errorContext: `Failed to save coverage report markdown to "${output_path}"`,
+        handler: async () => {
+          cleanupCoverageJobs();
+          let resolvedReport: Record<string, unknown>;
+          if (report) {
+            resolvedReport = report;
+          } else if (job_id) {
+            const job = coverageJobs.get(job_id);
+            if (!job) {
+              throw new Error(`Coverage job "${job_id}" not found or expired.`);
+            }
+            resolvedReport = toCoverageJobPayload(job);
+          } else {
+            throw new Error("Provide either report or job_id.");
+          }
+
+          const markdown = buildCoverageMarkdown(resolvedReport, title);
+          const write = await writeMarkdownDocument(output_path, markdown);
+          const payload = {
+            ok: true,
+            path: write.path,
+            bytes: Buffer.byteLength(markdown, "utf8")
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_update_allowlist_inventory_doc",
+    {
+      title: "DB - Update Allowlist Inventory Doc",
+      description:
+        "Builds and writes a live markdown inventory of approved allowlisted tables/views and key schema metadata.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        path: z.string().min(1).describe("Output path (absolute or OBSIDIAN_ROOT_PATH-relative)"),
+        include_named_views: z.boolean().optional().describe("Include named views (default true)"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for metadata reads (default true)")
+      }
+    },
+    async ({ db_target, path: output_path, include_named_views, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_update_allowlist_inventory_doc",
+        permission: "safe_execute",
+        isWrite: true,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          path: output_path,
+          include_named_views: include_named_views ?? true,
+          audit_mode: audit_mode ?? true
+        },
+        errorContext: `Failed to update allowlist inventory document "${output_path}"`,
+        handler: async () => {
+          const includeViews = include_named_views ?? true;
+          const queue = getCoverageQueue(includeViews);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const metadata = await adapter.listSchemaObjectsMetadata(
+            queue.map(entry => resolveActualTableName(entry.resolved_name)),
+            `vee:${target}:inventory-doc`,
+            { auditMode: audit_mode ?? true }
+          );
+          const metadataByObject = new Map(metadata.map(item => [item.object_name, item]));
+
+          const lines: string[] = [];
+          lines.push("# DB Allowlist Inventory");
+          lines.push("");
+          lines.push(`Generated at: ${new Date().toISOString()}`);
+          lines.push(`DB target: ${target}`);
+          lines.push("");
+          lines.push("| logical_name | resolved_name | kind | object_type | exists | write_mode | blocked_columns |");
+          lines.push("| --- | --- | --- | --- | --- | --- | --- |");
+
+          for (const entry of queue) {
+            const schema = metadataByObject.get(resolveActualTableName(entry.resolved_name));
+            lines.push(
+              `| ${entry.logical_name} | ${entry.resolved_name} | ${entry.kind} | ${schema?.object_type ?? "-"} | ${schema?.exists ? "yes" : "no"} | ${entry.write_mode} | ${(entry.blocked_columns ?? []).join(", ")} |`
+            );
+          }
+
+          lines.push("");
+          lines.push("## Raw");
+          lines.push("");
+          lines.push("```json");
+          lines.push(
+            JSON.stringify(
+              queue.map(entry => ({
+                ...entry,
+                schema: metadataByObject.get(resolveActualTableName(entry.resolved_name)) ?? null
+              })),
+              null,
+              2
+            )
+          );
+          lines.push("```");
+          lines.push("");
+
+          const markdown = lines.join("\n");
+          const write = await writeMarkdownDocument(output_path, markdown);
+          const payload = {
+            ok: true,
+            db_target: target,
+            path: write.path,
+            entries: queue.length,
+            bytes: Buffer.byteLength(markdown, "utf8")
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_append_schema_observation",
+    {
+      title: "DB - Append Schema Observation",
+      description:
+        "Appends timestamped schema observations for an allowlisted table/view to a markdown file, keeping a living inventory log.",
+      inputSchema: {
+        db_target: dbTargetSchema,
+        object_name: z.string().min(1).describe("Allowlisted table/view name"),
+        observation: z.string().min(1).describe("Observation text"),
+        path: z.string().min(1).describe("Output path (absolute or OBSIDIAN_ROOT_PATH-relative)"),
+        audit_mode: z.boolean().optional().describe("Use audit rate-limit mode for metadata reads (default true)")
+      }
+    },
+    async ({ db_target, object_name, observation, path: output_path, audit_mode }) =>
+      runAuditedTool({
+        toolName: "vee_db_append_schema_observation",
+        permission: "safe_execute",
+        isWrite: true,
+        args: {
+          db_target: db_target ?? DB_DEFAULT_TARGET,
+          object_name,
+          path: output_path,
+          audit_mode: audit_mode ?? true
+        },
+        errorContext: `Failed to append schema observation for "${object_name}"`,
+        handler: async () => {
+          const entry = resolveAllowlistEntryOrThrow(object_name);
+          const { target, adapter } = resolveReadOnlyAdapter(db_target);
+          const inspection = await adapter.inspectSchemaObject(
+            entry.resolved_name,
+            `vee:${target}:obs:${entry.logical_name}`,
+            { auditMode: audit_mode ?? true }
+          );
+
+          const block = [
+            `## ${new Date().toISOString()} - ${entry.logical_name}`,
+            "",
+            `- resolved_name: ${entry.resolved_name}`,
+            `- kind: ${entry.kind}`,
+            `- object_type: ${inspection.object_type}`,
+            `- exists: ${inspection.exists}`,
+            `- columns_total: ${inspection.columns.length}`,
+            `- foreign_keys: ${inspection.foreign_keys.length}`,
+            `- note: ${observation.trim()}`,
+            ""
+          ].join("\n");
+
+          const write = await appendMarkdownDocument(output_path, block);
+          const payload = {
+            ok: true,
+            db_target: target,
+            object_name: entry.logical_name,
+            path: write.path
+          };
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
     "vee_db_query",
     {
       title: "DB — Structured Query",
@@ -4825,7 +6418,9 @@ app.listen(PORT, HOST, () => {
   console.log(`[Vee MCP] ${dbWriteMode}`);
   console.log(`[Vee MCP] ${claudeMode}`);
   console.log(`[Vee MCP] ${fsMode}`);
-  console.log(
-    "[Vee MCP] enabled tools: vee.health, vee.list_capabilities, vee.n8n.list_workflows, vee.n8n.get_workflow, vee.n8n.preview_workflow_diff, vee.n8n.list_recent_executions, vee.n8n.get_execution, vee.n8n.retry_execution, vee.n8n.stop_execution, vee.n8n.update_workflow, vee.n8n.patch_workflow_nodes, vee.n8n.rollback_workflow, vee.obsidian.health, vee.obsidian.search, vee.obsidian.read_note, vee.obsidian.create_note, vee.obsidian.append_to_note, vee.obsidian.update_note_section, vee.obsidian.append_to_daily_log, vee.obsidian.create_task_note, vee.server.status, vee.server.list_containers, vee.server.get_container_logs, vee.server.disk_usage, vee.server.memory_usage, vee.server.list_containers_detailed, vee.server.inspect_container, vee.server.restart_container, vee.server.tail_log, vee.server.service_status, vee.server.health_check, vee.server.list_allowed_paths, vee.claude.connection_info, vee.db.get_tenant_by_slug, vee.db.get_client_by_phone, vee.db.get_recent_ai_messages, vee.db.get_context_state, vee.db.get_booking_session, vee.db.get_recent_appointments, vee.db.get_project_summary, vee.db.get_pending_tasks, vee.db.get_user_preferences, vee.db.get_agent_execution_history, vee.db.update_project_status, vee.db.create_internal_task, vee.db.save_execution_note, vee.db.update_context_state, vee.db.register_incident, vee.db.attach_task_to_project, vee.db.mark_task_as_blocked, vee.db.mark_task_as_done, vee.fs.list_allowed_paths, vee.fs.list_directory, vee.fs.read_file, vee.fs.search_text, vee.fs.write_file, vee.db.list_allowlist, vee.db.query, vee.db.write, vee.db.record_event, vee.db.record_decision, vee.db.get_timeline"
-  );
+  const enabledToolNames = capabilityCatalog
+    .filter(tool => tool.status === "enabled")
+    .map(tool => tool.name)
+    .sort((a, b) => a.localeCompare(b));
+  console.log(`[Vee MCP] enabled tools (${enabledToolNames.length}): ${enabledToolNames.join(", ")}`);
 });
