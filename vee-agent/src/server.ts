@@ -8,7 +8,8 @@ import {
   handleGetSession,
   handleCreateSession,
   handleUpdateSession,
-  handleDeleteSession
+  handleDeleteSession,
+  handleEditSessionMessage
 } from "./routes/sessions.js";
 import { handleLogFeed } from "./routes/log.js";
 
@@ -100,6 +101,13 @@ app.get("/sessions/:id", withAuth, (req, res) => {
 
 app.patch("/sessions/:id", withAuth, (req, res) => {
   handleUpdateSession(req, res).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  });
+});
+
+app.patch("/sessions/:id/messages/:messageId", withAuth, (req, res) => {
+  handleEditSessionMessage(req, res).catch((err: unknown) => {
     const message = err instanceof Error ? err.message : String(err);
     res.status(500).json({ error: message });
   });

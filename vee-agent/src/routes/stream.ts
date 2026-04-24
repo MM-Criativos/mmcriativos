@@ -13,7 +13,8 @@ import {
   getSession,
   loadHistory,
   saveMessage,
-  updateSessionTitle
+  updateSessionTitle,
+  editUserMessage
 } from "../sessions.js";
 import { emitLog } from "../eventBus.js";
 import {
@@ -28,6 +29,7 @@ type StreamRequestBody = {
   session_id?: string;
   mode?: "chat" | "cowork";
   title?: string;
+  edit_message_id?: number;
 };
 
 type AccumulatedToolCall = {
@@ -70,9 +72,28 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
     sseWrite(res, { type: "session_created", session_id: sessionId, mode });
   }
 
-  // Load history + add new user message
+  const editMessageId = Number(body.edit_message_id ?? 0);
+  const isEditFlow = Number.isFinite(editMessageId) && editMessageId > 0;
+
+  if (isEditFlow) {
+    const editResult = await editUserMessage(sessionId, editMessageId, userMessage);
+    if (!editResult.ok) {
+      sseWrite(res, { type: "error", message: editResult.error });
+      res.end();
+      return;
+    }
+    sseWrite(res, {
+      type: "message_edited",
+      message_id: editMessageId,
+      pruned_messages: editResult.pruned_messages
+    });
+  }
+
+  // Load history + add new user message (new message flow only)
   const history = await loadHistory(sessionId);
-  await saveMessage({ session_id: sessionId, role: "user", content: userMessage });
+  if (!isEditFlow) {
+    await saveMessage({ session_id: sessionId, role: "user", content: userMessage });
+  }
 
   const model = mode === "cowork" ? MODEL_COWORK : MODEL_CHAT;
   const systemPrompt = mode === "cowork" ? SYSTEM_PROMPT_COWORK : SYSTEM_PROMPT_CHAT;
@@ -80,7 +101,7 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
   const messages: ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
     ...history,
-    { role: "user", content: userMessage }
+    ...(!isEditFlow ? [{ role: "user" as const, content: userMessage }] : [])
   ];
 
   // Load tools (all modes)

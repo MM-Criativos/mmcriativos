@@ -289,7 +289,51 @@
                                     <template x-if="msg.role === 'user'">
                                         <div class="vee-msg-user">
                                             <div class="vee-msg-user__bubble">
-                                                <p x-text="msg.content" class="vee-msg-user__text"></p>
+                                                <template x-if="editingMessageId === msg.id">
+                                                    <div class="vee-msg-edit-wrap">
+                                                        <textarea
+                                                            x-model="editingMessageText"
+                                                            class="vee-msg-edit-textarea"
+                                                            rows="3"
+                                                            maxlength="4000"
+                                                            :disabled="isStreaming"
+                                                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); if (!isStreaming) submitMessageEdit(msg); }"
+                                                        ></textarea>
+                                                        <div class="vee-msg-edit-actions">
+                                                            <button
+                                                                type="button"
+                                                                class="vee-msg-edit-btn vee-msg-edit-btn--cancel"
+                                                                @click="cancelMessageEdit()"
+                                                                :disabled="isStreaming"
+                                                            >
+                                                                Cancelar
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                class="vee-msg-edit-btn vee-msg-edit-btn--save"
+                                                                @click="submitMessageEdit(msg)"
+                                                                :disabled="isStreaming || !editingMessageText.trim()"
+                                                            >
+                                                                Salvar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template x-if="editingMessageId !== msg.id">
+                                                    <div>
+                                                        <p x-text="msg.content" class="vee-msg-user__text"></p>
+                                                        <div class="vee-msg-user__actions" x-show="msg.can_edit">
+                                                            <button
+                                                                type="button"
+                                                                class="vee-msg-user__edit-btn"
+                                                                @click="startMessageEdit(msg)"
+                                                                :disabled="isStreaming"
+                                                            >
+                                                                Editar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
                                     </template>
@@ -366,7 +410,7 @@
                             <div class="vee-input-box">
                                 <textarea
                                     x-model="inputText"
-                                    @keydown.enter.prevent="if (!$event.shiftKey && !isStreaming) sendMessage()"
+                                    @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); if (!isStreaming) sendMessage(); }"
                                     :disabled="isStreaming"
                                     placeholder="Escreva para a Vee..."
                                     rows="1"
@@ -681,6 +725,8 @@ document.addEventListener('alpine:init', () => {
         editingSessionId: null,
         editingTitle: '',
         inputText: '',
+        editingMessageId: null,
+        editingMessageText: '',
 
         // ---- log state ----
         logEvents: [],
@@ -813,6 +859,7 @@ document.addEventListener('alpine:init', () => {
                 this.streamController.abort();
                 this.isStreaming = false;
             }
+            this.cancelMessageEdit();
             this.callOpen = false;
             this.open = false;
             document.body.classList.remove('overflow-hidden');
@@ -888,6 +935,7 @@ document.addEventListener('alpine:init', () => {
         newSession() {
             this.currentSession = null;
             this.messages = [];
+            this.cancelMessageEdit();
         },
 
         async loadSessions() {
@@ -915,8 +963,12 @@ document.addEventListener('alpine:init', () => {
                 const data = await res.json();
                 this.currentSession = data.session;
                 this.messages = this.normalizeMessages(data.messages || []);
+                this.cancelMessageEdit();
                 localStorage.setItem('vee-last-session', id);
-                this.$nextTick(() => this.scrollToBottom());
+                this.$nextTick(() => {
+                    this.decorateMessageHtml();
+                    this.scrollToBottom();
+                });
             } catch {}
         },
 
@@ -952,10 +1004,69 @@ document.addEventListener('alpine:init', () => {
         normalizeMessages(raw) {
             const msgs = [];
             for (const m of raw) {
-                if (m.role === 'user')      msgs.push({ role:'user',      content: m.content || '', toolActivities:[] });
-                else if (m.role === 'assistant') msgs.push({ role:'assistant', content: m.content || '', toolActivities:[] });
+                const role = m?.role;
+                if (role === 'user') {
+                    msgs.push({
+                        id: Number(m?.id || 0) || null,
+                        role: 'user',
+                        content: m?.content || '',
+                        can_edit: Boolean(m?.can_edit),
+                        toolActivities: [],
+                    });
+                } else if (role === 'assistant') {
+                    msgs.push({
+                        id: Number(m?.id || 0) || null,
+                        role: 'assistant',
+                        content: m?.content || '',
+                        can_edit: false,
+                        toolActivities: [],
+                    });
+                }
             }
             return msgs;
+        },
+
+        startMessageEdit(msg) {
+            if (this.isStreaming) return;
+            const messageId = Number(msg?.id || 0);
+            const content = String(msg?.content || '').trim();
+            if (messageId <= 0 || !content || !msg?.can_edit) return;
+            this.editingMessageId = messageId;
+            this.editingMessageText = content;
+            this.$nextTick(() => this.scrollToBottom());
+        },
+
+        cancelMessageEdit() {
+            this.editingMessageId = null;
+            this.editingMessageText = '';
+        },
+
+        async submitMessageEdit(msg) {
+            if (this.isStreaming) return;
+            const messageId = Number(msg?.id || 0);
+            const newText = this.editingMessageText.trim();
+            if (messageId <= 0 || !newText) return;
+
+            const index = this.messages.findIndex((item) => Number(item?.id || 0) === messageId);
+            if (index < 0) {
+                this.cancelMessageEdit();
+                return;
+            }
+
+            const previous = String(this.messages[index]?.content || '').trim();
+            if (newText === previous) {
+                this.cancelMessageEdit();
+                return;
+            }
+
+            this.messages[index].content = newText;
+            this.messages[index].can_edit = false;
+            this.messages = this.messages.slice(0, index + 1);
+            this.cancelMessageEdit();
+
+            await this.$nextTick();
+            this.scrollToBottom();
+            await this.streamSSE(newText, { editMessageId: messageId });
         },
 
         // ---- streaming ----
@@ -963,19 +1074,25 @@ document.addEventListener('alpine:init', () => {
             const text = this.inputText.trim();
             if (!text || this.isStreaming) return;
 
+            this.cancelMessageEdit();
             this.inputText = '';
-            this.messages.push({ role:'user', content:text, toolActivities:[] });
+            this.messages.push({ id:null, role:'user', content:text, can_edit:false, toolActivities:[] });
             await this.$nextTick();
             this.scrollToBottom();
             await this.streamSSE(text);
         },
 
-        async streamSSE(message) {
+        async streamSSE(message, options = {}) {
+            const editMessageId = Number(options?.editMessageId || 0);
             this.isStreaming = true;
             this.streamController = new AbortController();
 
+            if (editMessageId > 0 && this.messages.length > 0 && this.messages[this.messages.length - 1]?.role === 'assistant') {
+                this.messages.pop();
+            }
+
             const assistantIdx = this.messages.length;
-            this.messages.push({ role:'assistant', content:'', toolActivities:[] });
+            this.messages.push({ id:null, role:'assistant', content:'', can_edit:false, toolActivities:[] });
 
             try {
                 const res = await fetch(`${this.agentUrl}/stream`, {
@@ -985,6 +1102,7 @@ document.addEventListener('alpine:init', () => {
                         message,
                         session_id: this.currentSession?.id ?? undefined,
                         mode: 'chat',
+                        edit_message_id: editMessageId > 0 ? editMessageId : undefined,
                     }),
                     signal: this.streamController.signal,
                 });
@@ -1042,14 +1160,20 @@ document.addEventListener('alpine:init', () => {
                                         } catch {}
                                     }
                                 }
-                                this.$nextTick(() => this.scrollToBottom());
+                                this.$nextTick(() => {
+                                    this.decorateMessageHtml();
+                                    this.scrollToBottom();
+                                });
                                 break;
                             case 'tool_start':
                                 this.messages[assistantIdx].toolActivities.push({
                                     call_id:evt.call_id, name:evt.name, args:evt.args,
                                     status:'running', result:null, error:null, duration_ms:null,
                                 });
-                                this.$nextTick(() => this.scrollToBottom());
+                                this.$nextTick(() => {
+                                    this.decorateMessageHtml();
+                                    this.scrollToBottom();
+                                });
                                 break;
                             case 'tool_result': {
                                 const t = this.messages[assistantIdx].toolActivities.find(x => x.call_id === evt.call_id);
@@ -1071,6 +1195,9 @@ document.addEventListener('alpine:init', () => {
                                 break;
                             case 'done':
                                 this.isStreaming = false;
+                                if (this.currentSession?.id) {
+                                    await this.loadSession(this.currentSession.id);
+                                }
                                 break;
                             case 'error':
                                 this.messages[assistantIdx].content += `\n\n**Erro:** ${evt.message}`;
@@ -1136,6 +1263,83 @@ document.addEventListener('alpine:init', () => {
 
         authHeaders() {
             return this.agentToken ? { 'Authorization': `Bearer ${this.agentToken}` } : {};
+        },
+
+        async copyText(text) {
+            const content = String(text || '');
+            if (!content) return false;
+            try {
+                if (navigator?.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(content);
+                    return true;
+                }
+            } catch {}
+
+            try {
+                const temp = document.createElement('textarea');
+                temp.value = content;
+                temp.setAttribute('readonly', '');
+                temp.style.position = 'fixed';
+                temp.style.opacity = '0';
+                temp.style.pointerEvents = 'none';
+                document.body.appendChild(temp);
+                temp.focus();
+                temp.select();
+                const copied = document.execCommand('copy');
+                temp.remove();
+                return copied;
+            } catch {
+                return false;
+            }
+        },
+
+        setCopyButtonState(button, label) {
+            if (!button) return;
+            const defaultLabel = button.dataset.defaultLabel || 'Copiar';
+            const previousTimer = Number(button.dataset.resetTimer || 0);
+            if (previousTimer) {
+                window.clearTimeout(previousTimer);
+            }
+            button.textContent = label;
+            const timer = window.setTimeout(() => {
+                button.textContent = defaultLabel;
+                button.dataset.resetTimer = '';
+            }, 1400);
+            button.dataset.resetTimer = String(timer);
+        },
+
+        decorateMessageHtml() {
+            const area = this.$refs.messagesArea;
+            if (!area) return;
+
+            area.querySelectorAll('.vee-msg-content pre').forEach((pre) => {
+                let wrapper = pre.parentElement;
+                if (!wrapper || !wrapper.classList.contains('vee-md-code-block')) {
+                    wrapper = document.createElement('div');
+                    wrapper.className = 'vee-md-code-block';
+                    pre.replaceWith(wrapper);
+                    wrapper.appendChild(pre);
+                }
+
+                if (wrapper.querySelector('.vee-md-copy-btn')) {
+                    return;
+                }
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'vee-md-copy-btn';
+                btn.dataset.defaultLabel = 'Copiar';
+                btn.textContent = 'Copiar';
+                btn.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const codeEl = pre.querySelector('code');
+                    const codeText = String(codeEl?.textContent || pre.textContent || '').trimEnd();
+                    const copied = await this.copyText(codeText);
+                    this.setCopyButtonState(btn, copied ? 'Copiado' : 'Falhou');
+                });
+                wrapper.appendChild(btn);
+            });
         },
 
         renderMarkdown(text) {

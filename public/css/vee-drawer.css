@@ -667,6 +667,73 @@
     white-space: pre-wrap;
     margin: 0;
 }
+.vee-msg-user__actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+.vee-msg-user__edit-btn {
+    border: 1px solid rgba(255, 255, 255, .45);
+    border-radius: var(--vee-radius-sm);
+    background: rgba(0, 0, 0, .16);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1;
+    padding: 6px 8px;
+    cursor: pointer;
+}
+.vee-msg-user__edit-btn:hover {
+    background: rgba(0, 0, 0, .24);
+}
+.vee-msg-user__edit-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+.vee-msg-edit-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.vee-msg-edit-textarea {
+    width: 100%;
+    min-height: 86px;
+    resize: vertical;
+    border: 1px solid rgba(255, 255, 255, .4);
+    border-radius: var(--vee-radius-sm);
+    background: rgba(0, 0, 0, .18);
+    color: #fff;
+    padding: 8px 10px;
+    line-height: 1.45;
+    font-size: 13px;
+}
+.vee-msg-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.vee-msg-edit-btn {
+    border-radius: var(--vee-radius-sm);
+    font-size: 11px;
+    line-height: 1;
+    padding: 6px 9px;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+.vee-msg-edit-btn--cancel {
+    background: rgba(0, 0, 0, .2);
+    border-color: rgba(255, 255, 255, .3);
+    color: #fff;
+}
+.vee-msg-edit-btn--save {
+    background: #fff;
+    color: #101010;
+    border-color: rgba(255, 255, 255, .5);
+    font-weight: 600;
+}
+.vee-msg-edit-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
 
 /* Assistant row */
 .vee-msg-assistant {
@@ -1452,6 +1519,30 @@
 .vee-msg-content code { color: var(--vee-orange); background: #1f1f1f; padding: .1rem .3rem; border-radius: var(--vee-radius-sm); }
 .vee-msg-content pre { background: #111; border: 1px solid var(--vee-border-dark); border-radius: var(--vee-radius-md); padding: .75rem; overflow-x: auto; }
 .vee-msg-content pre code { color: var(--vee-text-sub); background: transparent; padding: 0; }
+.vee-msg-content .vee-md-code-block {
+    position: relative;
+    margin-bottom: .5rem;
+}
+.vee-msg-content .vee-md-code-block pre {
+    margin: 0;
+    padding: 2rem .75rem .75rem;
+}
+.vee-md-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 6px;
+    background: rgba(255,255,255,.08);
+    color: #f3f6fc;
+    font-size: 11px;
+    line-height: 1;
+    padding: 5px 8px;
+    cursor: pointer;
+}
+.vee-md-copy-btn:hover {
+    background: rgba(255,255,255,.16);
+}
 .vee-msg-content ul,
 .vee-msg-content ol  { padding-left: 1.25rem; margin-bottom: .5rem; }
 .vee-msg-content li  { margin-bottom: .125rem; }

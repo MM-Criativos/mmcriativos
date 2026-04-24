@@ -5,7 +5,8 @@ import {
   createSession,
   updateSessionTitle,
   deleteSession,
-  loadHistory
+  loadSessionMessages,
+  editUserMessage
 } from "../sessions.js";
 
 export async function handleListSessions(req: Request, res: Response): Promise<void> {
@@ -21,7 +22,7 @@ export async function handleGetSession(req: Request, res: Response): Promise<voi
     res.status(404).json({ error: "Session not found" });
     return;
   }
-  const messages = await loadHistory(id);
+  const messages = await loadSessionMessages(id);
   res.json({ session, messages });
 }
 
@@ -56,4 +57,32 @@ export async function handleDeleteSession(req: Request, res: Response): Promise<
   }
   await deleteSession(id);
   res.json({ ok: true });
+}
+
+export async function handleEditSessionMessage(req: Request, res: Response): Promise<void> {
+  const { id, messageId } = req.params as { id: string; messageId: string };
+  const parsedMessageId = Number.parseInt(messageId, 10);
+  if (!Number.isFinite(parsedMessageId) || parsedMessageId <= 0) {
+    res.status(400).json({ error: "Invalid message id" });
+    return;
+  }
+
+  const body = req.body as { content?: string };
+  const content = String(body.content ?? "").trim();
+  if (!content) {
+    res.status(422).json({ error: "content is required" });
+    return;
+  }
+
+  const result = await editUserMessage(id, parsedMessageId, content);
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+
+  res.json({
+    ok: true,
+    message_id: parsedMessageId,
+    pruned_messages: result.pruned_messages
+  });
 }
