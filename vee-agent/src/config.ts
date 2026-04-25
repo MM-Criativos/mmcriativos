@@ -6,7 +6,7 @@ export const AUTH_TOKEN = (process.env.AGENT_AUTH_TOKEN ?? "").trim();
 
 export const OPENAI_API_KEY = (process.env.OPENAI_API_KEY ?? "").trim();
 export const MODEL_CHAT = (process.env.MODEL_CHAT ?? "gpt-5.4-mini").trim();
-export const MODEL_COWORK = (process.env.MODEL_COWORK ?? "gpt-5.3-codex").trim();
+export const MODEL_COWORK = (process.env.MODEL_COWORK ?? "gpt-4.1-mini").trim();
 
 export const MCP_SERVER_URL = (process.env.MCP_SERVER_URL ?? "http://localhost:3333/mcp").trim();
 export const MCP_AUTH_TOKEN = (process.env.MCP_AUTH_TOKEN ?? "").trim();

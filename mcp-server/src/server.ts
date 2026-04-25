@@ -14,6 +14,7 @@ import { ObsidianAdapter } from "./adapters/obsidianAdapter.js";
 import { FilesystemLocalAdapter } from "./adapters/filesystemLocalAdapter.js";
 import { ServerSshAdapter } from "./adapters/serverSshAdapter.js";
 import { VeeControlAdapter } from "./adapters/veeControlAdapter.js";
+import { GitHubAdapter } from "./adapters/githubAdapter.js";
 import {
   listQueryAllowlist,
   listWritePolicyGroups,
@@ -31,7 +32,7 @@ import {
 
 type CapabilityDescriptor = {
   name: string;
-  phase: "v0.1" | "v0.2" | "v0.3" | "future";
+  phase: "v0.1" | "v0.2" | "v0.3" | "v0.4" | "future";
   permission: "read_only" | "safe_execute" | "approval_required" | "restricted";
   status: "enabled" | "planned";
 };
@@ -141,6 +142,10 @@ const DB_MMCC_WRITE_DATABASE = (process.env.DB_MMCC_WRITE_DATABASE ?? "").trim()
 const DB_MMCC_WRITE_ENABLED =
   (process.env.DB_MMCC_WRITE_ENABLED ?? "false").trim().toLowerCase() === "true";
 
+const GITHUB_TOKEN = (process.env.GITHUB_TOKEN ?? "").trim();
+const GITHUB_DEFAULT_OWNER = (process.env.GITHUB_DEFAULT_OWNER ?? "").trim();
+const GITHUB_TIMEOUT_MS = Number.parseInt(process.env.GITHUB_TIMEOUT_MS ?? "15000", 10);
+
 const n8nAdapter = new N8nRestAdapter({
   baseUrl: N8N_BASE_URL,
   apiKey: N8N_API_KEY,
@@ -239,6 +244,12 @@ const dbWriteAdapters: Record<DbTarget, DatabaseWriteAdapter> = {
 // Backward-compatible defaults for legacy db tools without db_target.
 const dbReadOnlyAdapter = dbReadOnlyAdapters[DB_DEFAULT_TARGET];
 const dbWriteAdapter = dbWriteAdapters[DB_DEFAULT_TARGET];
+
+const githubAdapter = new GitHubAdapter({
+  token: GITHUB_TOKEN,
+  defaultOwner: GITHUB_DEFAULT_OWNER || undefined,
+  timeoutMs: Number.isNaN(GITHUB_TIMEOUT_MS) ? 15000 : GITHUB_TIMEOUT_MS,
+});
 
 const dbTargetSchema = z
   .enum(DB_TARGET_VALUES)
@@ -497,7 +508,20 @@ const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_db_record_block", phase: "v0.3", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_unblock_entity", phase: "v0.3", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_get_timeline", phase: "v0.3", permission: "read_only", status: "enabled" },
-  { name: "vee_db_get_operational_timeline", phase: "v0.3", permission: "read_only", status: "enabled" }
+  { name: "vee_db_get_operational_timeline", phase: "v0.3", permission: "read_only", status: "enabled" },
+  // GitHub Tools — v0.4
+  { name: "vee_github_list_repos",         phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_get_file",           phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_search_code",        phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_list_issues",        phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_get_issue",          phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_list_prs",           phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_get_pr",             phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_list_commits",       phase: "v0.4", permission: "read_only",         status: "enabled" },
+  { name: "vee_github_create_issue",       phase: "v0.4", permission: "safe_execute",      status: "enabled" },
+  { name: "vee_github_add_issue_comment",  phase: "v0.4", permission: "safe_execute",      status: "enabled" },
+  { name: "vee_github_push_file",          phase: "v0.4", permission: "approval_required", status: "enabled" },
+  { name: "vee_github_create_pr",          phase: "v0.4", permission: "approval_required", status: "enabled" },
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -6373,6 +6397,361 @@ function createServer(): McpServer {
       })
   );
 
+  // ─── GitHub Tools — v0.4 ────────────────────────────────────────────────────
+
+  server.registerTool(
+    "vee_github_list_repos",
+    {
+      title: "Vee GitHub List Repos",
+      description: "Lists repositories for a GitHub user or organization.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        sort: z.enum(["created", "updated", "pushed", "full_name"]).optional().describe("Sort order. Default: updated"),
+        limit: z.number().int().min(1).max(100).optional().describe("Max repos to return. Default: 30")
+      }
+    },
+    async ({ owner, sort, limit }) =>
+      runAuditedTool({
+        toolName: "vee_github_list_repos",
+        permission: "read_only",
+        isWrite: false,
+        args: { owner, sort, limit },
+        errorContext: "Failed to list GitHub repos",
+        handler: async () => {
+          const payload = await githubAdapter.listRepos({ owner, sort, limit });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_get_file",
+    {
+      title: "Vee GitHub Get File",
+      description: "Returns the content of a file from a GitHub repository.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name (without owner)"),
+        path: z.string().min(1).describe("File path inside the repo (e.g. src/index.ts)"),
+        branch: z.string().optional().describe("Branch or commit SHA. Default: repo default branch")
+      }
+    },
+    async ({ owner, repo, path, branch }) =>
+      runAuditedTool({
+        toolName: "vee_github_get_file",
+        permission: "read_only",
+        isWrite: false,
+        args: { owner, repo, path, branch },
+        errorContext: `Failed to get file ${path} from ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.getFile({ owner, repo, path, branch });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_search_code",
+    {
+      title: "Vee GitHub Search Code",
+      description: "Searches code across GitHub repositories. Supports GitHub search qualifiers.",
+      inputSchema: {
+        query: z.string().min(1).describe("Search term (e.g. 'className extension:ts')"),
+        owner: z.string().optional().describe("Restrict to this user/org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().optional().describe("Restrict to this specific repo"),
+        limit: z.number().int().min(1).max(50).optional().describe("Max results. Default: 20")
+      }
+    },
+    async ({ query, owner, repo, limit }) =>
+      runAuditedTool({
+        toolName: "vee_github_search_code",
+        permission: "read_only",
+        isWrite: false,
+        args: { query, owner, repo, limit },
+        errorContext: "Failed to search GitHub code",
+        handler: async () => {
+          const payload = await githubAdapter.searchCode({ query, owner, repo, limit });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_list_issues",
+    {
+      title: "Vee GitHub List Issues",
+      description: "Lists issues in a GitHub repository.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        state: z.enum(["open", "closed", "all"]).optional().describe("Issue state filter. Default: open"),
+        labels: z.array(z.string()).optional().describe("Filter by label names"),
+        limit: z.number().int().min(1).max(100).optional().describe("Max issues to return. Default: 30")
+      }
+    },
+    async ({ owner, repo, state, labels, limit }) =>
+      runAuditedTool({
+        toolName: "vee_github_list_issues",
+        permission: "read_only",
+        isWrite: false,
+        args: { owner, repo, state, labels, limit },
+        errorContext: `Failed to list issues for ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.listIssues({ owner, repo, state, labels, limit });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_get_issue",
+    {
+      title: "Vee GitHub Get Issue",
+      description: "Returns details of a specific GitHub issue.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        issue_number: z.number().int().positive().describe("Issue number")
+      }
+    },
+    async ({ owner, repo, issue_number }) =>
+      runAuditedTool({
+        toolName: "vee_github_get_issue",
+        permission: "read_only",
+        isWrite: false,
+        args: { owner, repo, issue_number },
+        errorContext: `Failed to get issue #${issue_number} from ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.getIssue({ owner, repo, issue_number });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_list_prs",
+    {
+      title: "Vee GitHub List PRs",
+      description: "Lists pull requests in a GitHub repository.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        state: z.enum(["open", "closed", "all"]).optional().describe("PR state filter. Default: open"),
+        limit: z.number().int().min(1).max(50).optional().describe("Max PRs to return. Default: 20")
+      }
+    },
+    async ({ owner, repo, state, limit }) =>
+      runAuditedTool({
+        toolName: "vee_github_list_prs",
+        permission: "read_only",
+        isWrite: false,
+        args: { owner, repo, state, limit },
+        errorContext: `Failed to list PRs for ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.listPrs({ owner, repo, state, limit });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_get_pr",
+    {
+      title: "Vee GitHub Get PR",
+      description: "Returns details of a specific pull request.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        pull_number: z.number().int().positive().describe("Pull request number")
+      }
+    },
+    async ({ owner, repo, pull_number }) =>
+      runAuditedTool({
+        toolName: "vee_github_get_pr",
+        permission: "read_only",
+        isWrite: false,
+        args: { owner, repo, pull_number },
+        errorContext: `Failed to get PR #${pull_number} from ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.getPr({ owner, repo, pull_number });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_list_commits",
+    {
+      title: "Vee GitHub List Commits",
+      description: "Lists commits from a GitHub repository or branch.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        branch: z.string().optional().describe("Branch or tag. Default: repo default branch"),
+        limit: z.number().int().min(1).max(50).optional().describe("Max commits to return. Default: 20")
+      }
+    },
+    async ({ owner, repo, branch, limit }) =>
+      runAuditedTool({
+        toolName: "vee_github_list_commits",
+        permission: "read_only",
+        isWrite: false,
+        args: { owner, repo, branch, limit },
+        errorContext: `Failed to list commits for ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.listCommits({ owner, repo, branch, limit });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_create_issue",
+    {
+      title: "Vee GitHub Create Issue",
+      description: "Creates a new issue in a GitHub repository.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        title: z.string().min(1).describe("Issue title"),
+        body: z.string().optional().describe("Issue body (markdown)"),
+        labels: z.array(z.string()).optional().describe("Label names to apply")
+      }
+    },
+    async ({ owner, repo, title, body, labels }) =>
+      runAuditedTool({
+        toolName: "vee_github_create_issue",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { owner, repo, title, labels },
+        errorContext: `Failed to create issue in ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.createIssue({ owner, repo, title, body, labels });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_add_issue_comment",
+    {
+      title: "Vee GitHub Add Issue Comment",
+      description: "Adds a comment to a GitHub issue or pull request.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        issue_number: z.number().int().positive().describe("Issue or PR number"),
+        body: z.string().min(1).describe("Comment body (markdown)")
+      }
+    },
+    async ({ owner, repo, issue_number, body }) =>
+      runAuditedTool({
+        toolName: "vee_github_add_issue_comment",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { owner, repo, issue_number },
+        errorContext: `Failed to add comment to issue #${issue_number} in ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.addIssueComment({ owner, repo, issue_number, body });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_push_file",
+    {
+      title: "Vee GitHub Push File",
+      description: "Creates or updates a file in a GitHub repository (generates a commit).",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        path: z.string().min(1).describe("File path in the repo (e.g. src/utils/helper.ts)"),
+        content: z.string().describe("File content as plain text"),
+        message: z.string().min(1).describe("Commit message"),
+        branch: z.string().optional().describe("Target branch. Default: repo default branch"),
+        sha: z.string().optional().describe("Current file SHA — required when updating an existing file")
+      }
+    },
+    async ({ owner, repo, path, content, message, branch, sha }) =>
+      runAuditedTool({
+        toolName: "vee_github_push_file",
+        permission: "approval_required",
+        isWrite: true,
+        args: { owner, repo, path, message, branch },
+        errorContext: `Failed to push file ${path} to ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.pushFile({ owner, repo, path, content, message, branch, sha });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_github_create_pr",
+    {
+      title: "Vee GitHub Create PR",
+      description: "Opens a pull request from one branch to another in a GitHub repository.",
+      inputSchema: {
+        owner: z.string().optional().describe("GitHub user or org. Uses GITHUB_DEFAULT_OWNER if omitted."),
+        repo: z.string().min(1).describe("Repository name"),
+        title: z.string().min(1).describe("PR title"),
+        body: z.string().optional().describe("PR description (markdown)"),
+        head: z.string().min(1).describe("Source branch (with changes)"),
+        base: z.string().min(1).describe("Target branch (e.g. main)"),
+        draft: z.boolean().optional().describe("Create as draft PR. Default: false")
+      }
+    },
+    async ({ owner, repo, title, body, head, base, draft }) =>
+      runAuditedTool({
+        toolName: "vee_github_create_pr",
+        permission: "approval_required",
+        isWrite: true,
+        args: { owner, repo, title, head, base, draft },
+        errorContext: `Failed to create PR in ${repo}`,
+        handler: async () => {
+          const payload = await githubAdapter.createPr({ owner, repo, title, body, head, base, draft });
+          return {
+            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+            structuredContent: payload
+          };
+        }
+      })
+  );
+
   return server;
 }
 
@@ -6449,6 +6828,9 @@ app.listen(PORT, HOST, () => {
     FS_ALLOWED_ROOTS.length > 0
       ? `fs enabled (env: ${FS_ALLOWLIST_ENV}, roots: ${FS_ALLOWED_ROOTS.join(", ")}${FS_WRITE_ENABLED ? ", writes ON" : ""})`
       : `fs disabled (env: ${FS_ALLOWLIST_ENV}, FS_ALLOWED_ROOTS not set)`;
+  const githubMode = githubAdapter.isConfigured()
+    ? `github enabled (default owner: ${githubAdapter.getDefaultOwner() || "not set"})`
+    : "github disabled (GITHUB_TOKEN not set)";
 
   console.log(`[Vee MCP] listening on http://${HOST}:${PORT}`);
   console.log(`[Vee MCP] /mcp (${authMode})`);
@@ -6462,6 +6844,7 @@ app.listen(PORT, HOST, () => {
   console.log(`[Vee MCP] ${dbWriteMode}`);
   console.log(`[Vee MCP] ${claudeMode}`);
   console.log(`[Vee MCP] ${fsMode}`);
+  console.log(`[Vee MCP] ${githubMode}`);
   const enabledToolNames = capabilityCatalog
     .filter(tool => tool.status === "enabled")
     .map(tool => tool.name)
