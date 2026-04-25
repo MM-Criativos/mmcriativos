@@ -15,6 +15,39 @@ const MAX_TOOL_RESULT_HISTORY_CHARS = Number.parseInt(
   10
 );
 
+// MAX_CONTEXT_TOKENS: estimated token budget for the full context window sent to
+// OpenAI. When the current history exceeds this threshold the entire conversation
+// is compacted into a fresh summary and the window is reset — regardless of how
+// many turns are in the window.
+export const MAX_CONTEXT_TOKENS = Number.parseInt(
+  process.env.MAX_CONTEXT_TOKENS ?? "120000",
+  10
+);
+
+/**
+ * Rough token estimate for a messages array.
+ * Uses ~4 chars per token — conservative enough for a mix of Portuguese and code.
+ * Good enough as a pre-flight check; no need for tiktoken overhead here.
+ */
+export function estimateTokens(messages: ChatCompletionMessageParam[]): number {
+  let chars = 0;
+  for (const msg of messages) {
+    if (typeof msg.content === "string") {
+      chars += msg.content.length;
+    } else if (Array.isArray(msg.content)) {
+      for (const part of msg.content) {
+        if (part && typeof part === "object" && "text" in part) {
+          chars += String((part as { text: unknown }).text).length;
+        }
+      }
+    }
+    if ("tool_calls" in msg && Array.isArray((msg as Record<string, unknown>).tool_calls)) {
+      chars += JSON.stringify((msg as Record<string, unknown>).tool_calls).length;
+    }
+  }
+  return Math.ceil(chars / 4);
+}
+
 export type Session = {
   id: string;
   title: string;
