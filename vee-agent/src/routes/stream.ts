@@ -18,7 +18,9 @@ import {
   saveContextSummary,
   saveMessage,
   updateSessionTitle,
-  editUserMessage
+  editUserMessage,
+  MAX_CONTEXT_TOKENS,
+  estimateTokens
 } from "../sessions.js";
 import { generateSummary } from "../summarizer.js";
 import { emitLog } from "../eventBus.js";
@@ -48,22 +50,51 @@ function sseWrite(res: Response, data: Record<string, unknown>): void {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-async function resolveContextSummary(sessionId: string): Promise<string | null> {
+/**
+ * Resolves the context summary for a session.
+ *
+ * Two compaction triggers:
+ *  1. Turn-window overflow — turns older than MAX_HISTORY_TURNS are summarized
+ *     incrementally (existing behaviour).
+ *  2. Token threshold — when the estimated tokens of the current history
+ *     exceeds MAX_CONTEXT_TOKENS (default 120k), ALL stored messages are
+ *     summarized from scratch and `forceFullCompaction` is returned as true.
+ *     The caller must then skip the history entirely and rely solely on the
+ *     summary block.
+ */
+async function resolveContextSummary(
+  sessionId: string,
+  historyMessages: ChatCompletionMessageParam[]
+): Promise<{ summary: string; forceFullCompaction: boolean } | null> {
   const allRows = await loadStoredMessages(sessionId);
   const overflowTurns = extractOverflowTurns(allRows);
 
-  if (overflowTurns.length === 0) return null;
+  const estimatedTokens = estimateTokens(historyMessages);
+  const forceCompaction = MAX_CONTEXT_TOKENS > 0 && estimatedTokens > MAX_CONTEXT_TOKENS;
 
-  const overflowUserTurns = overflowTurns.filter((r) => r.role === "user").length;
+  if (overflowTurns.length === 0 && !forceCompaction) return null;
+
+  const turnsToSummarize = forceCompaction ? allRows : overflowTurns;
+  const overflowUserTurns = forceCompaction
+    ? allRows.filter((r) => r.role === "user").length
+    : overflowTurns.filter((r) => r.role === "user").length;
 
   const cached = await getContextSummary(sessionId);
-  if (cached && cached.turns >= overflowUserTurns) {
-    return cached.summary;
+
+  // Skip regeneration if the cached summary already covers all overflow turns
+  // (only applies to the non-forced path).
+  if (!forceCompaction && cached && cached.turns >= overflowUserTurns) {
+    return { summary: cached.summary, forceFullCompaction: false };
   }
 
-  const summary = await generateSummary(overflowTurns, cached?.summary ?? null);
+  // For a forced full compaction, always regenerate from scratch (pass null so
+  // the summarizer doesn't try to layer on top of a stale summary).
+  const summary = await generateSummary(
+    turnsToSummarize,
+    forceCompaction ? null : (cached?.summary ?? null)
+  );
   await saveContextSummary(sessionId, summary, overflowUserTurns);
-  return summary;
+  return { summary, forceFullCompaction: forceCompaction };
 }
 
 export async function handleStream(req: Request, res: Response): Promise<void> {
@@ -115,37 +146,49 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
     await saveMessage({ session_id: sessionId, role: "user", content: userMessage });
   }
 
-  // In chat mode: start with the planning model (5.4-mini); switches to the
-  // execution model (5.3-codex) inside runAgentLoop whenever tools are called.
-  // In cowork mode: always uses MODEL_COWORK directly.
   const planningModel = mode === "cowork" ? MODEL_COWORK : MODEL_CHAT;
   const systemPrompt = mode === "cowork" ? SYSTEM_PROMPT_COWORK : SYSTEM_PROMPT_CHAT;
 
   let summaryBlock: ChatCompletionMessageParam[] = [];
+  let forceFullCompaction = false;
   try {
-    const contextSummary = await resolveContextSummary(sessionId);
-    if (contextSummary) {
+    const contextResult = await resolveContextSummary(sessionId, history);
+    if (contextResult) {
+      forceFullCompaction = contextResult.forceFullCompaction;
       summaryBlock = [
         {
           role: "user",
-          content: `📋 Contexto das mensagens anteriores desta sessão:\n\n${contextSummary}`
+          content: `📋 Contexto das mensagens anteriores desta sessão:\n\n${contextResult.summary}`
         },
         {
           role: "assistant",
           content: "Contexto anterior recebido. Continuando a partir daqui."
         }
       ];
+      if (forceFullCompaction) {
+        sseWrite(res, {
+          type: "context_compacted",
+          reason: "token_threshold",
+          estimated_tokens: estimateTokens(history)
+        });
+      }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     sseWrite(res, { type: "warning", message: `Context summarization failed: ${msg}` });
   }
 
+  // When a full token-based compaction fires, the summary already covers the
+  // entire history — skip it to stay well under the context limit.
+  // For edit flows under compaction, we re-add the user message so the
+  // messages array always ends with a user turn.
+  const needsUserMessage = !isEditFlow || forceFullCompaction;
+
   const messages: ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
     ...summaryBlock,
-    ...history,
-    ...(!isEditFlow ? [{ role: "user" as const, content: userMessage }] : [])
+    ...(forceFullCompaction ? [] : history),
+    ...(needsUserMessage ? [{ role: "user" as const, content: userMessage }] : [])
   ];
 
   let tools: ChatCompletionTool[] = [];
@@ -209,9 +252,6 @@ async function runAgentLoop(options: {
   const { messages, tools, planningModel, sessionId, mode, res } = options;
   let fullAssistantContent = "";
 
-  // Dynamic model: starts as the planning model (e.g. gpt-5.4-mini in chat mode).
-  // Switches to MODEL_COWORK (gpt-5.3-codex) when tool calls are detected, then
-  // returns to the planning model once tool execution is complete.
   let currentModel = planningModel;
 
   for (let iteration = 0; iteration < 10; iteration++) {
@@ -226,7 +266,6 @@ async function runAgentLoop(options: {
       streamParams.tool_choice = "auto";
     }
 
-    // Emit model info so the UI can show which model is active
     sseWrite(res, { type: "model_active", model: currentModel, iteration });
 
     const stream = await openai.chat.completions.create({
@@ -293,12 +332,10 @@ async function runAgentLoop(options: {
     messages.push(assistantMessage);
 
     if (finishReason === "stop" || completedToolCalls.length === 0) {
-      // No tool calls — back to planning model for next turn
       currentModel = planningModel;
       break;
     }
 
-    // Tool calls detected — switch to execution model for the next iteration
     currentModel = MODEL_COWORK;
 
     for (const tc of completedToolCalls) {
