@@ -48,26 +48,19 @@ function sseWrite(res: Response, data: Record<string, unknown>): void {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-/**
- * Checks whether older turns need summarization and returns the summary string
- * (cached or freshly generated). Returns null if the session is still within
- * the turn window and no summary is needed.
- */
 async function resolveContextSummary(sessionId: string): Promise<string | null> {
   const allRows = await loadStoredMessages(sessionId);
   const overflowTurns = extractOverflowTurns(allRows);
 
   if (overflowTurns.length === 0) return null;
 
-  // Count overflow user turns
   const overflowUserTurns = overflowTurns.filter((r) => r.role === "user").length;
 
   const cached = await getContextSummary(sessionId);
   if (cached && cached.turns >= overflowUserTurns) {
-    return cached.summary; // Cache is up to date
+    return cached.summary;
   }
 
-  // Generate (or refresh) summary — incremental: pass existing summary if present
   const summary = await generateSummary(overflowTurns, cached?.summary ?? null);
   await saveContextSummary(sessionId, summary, overflowUserTurns);
   return summary;
@@ -83,14 +76,12 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // SSE headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  // Session setup
   let sessionId = body.session_id ?? "";
   if (sessionId) {
     const existing = await getSession(sessionId);
@@ -119,18 +110,17 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
     });
   }
 
-  // Load windowed history + save new user message
   const history = await loadHistory(sessionId);
   if (!isEditFlow) {
     await saveMessage({ session_id: sessionId, role: "user", content: userMessage });
   }
 
-  const model = mode === "cowork" ? MODEL_COWORK : MODEL_CHAT;
+  // In chat mode: start with the planning model (5.4-mini); switches to the
+  // execution model (5.3-codex) inside runAgentLoop whenever tools are called.
+  // In cowork mode: always uses MODEL_COWORK directly.
+  const planningModel = mode === "cowork" ? MODEL_COWORK : MODEL_CHAT;
   const systemPrompt = mode === "cowork" ? SYSTEM_PROMPT_COWORK : SYSTEM_PROMPT_CHAT;
 
-  // ─── Rolling summarization ────────────────────────────────────────────────
-  // If the session has more turns than the window allows, summarize the overflow
-  // and inject it as a compact context block before the windowed history.
   let summaryBlock: ChatCompletionMessageParam[] = [];
   try {
     const contextSummary = await resolveContextSummary(sessionId);
@@ -147,7 +137,6 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
       ];
     }
   } catch (err) {
-    // Non-fatal: if summarization fails, proceed without the summary block
     const msg = err instanceof Error ? err.message : String(err);
     sseWrite(res, { type: "warning", message: `Context summarization failed: ${msg}` });
   }
@@ -159,7 +148,6 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
     ...(!isEditFlow ? [{ role: "user" as const, content: userMessage }] : [])
   ];
 
-  // Load tools (all modes)
   let tools: ChatCompletionTool[] = [];
   try {
     tools = await getOpenAITools();
@@ -176,11 +164,17 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
   });
 
   try {
-    const fullResponse = await runAgentLoop({ messages, tools, model, sessionId, mode, res });
+    const fullResponse = await runAgentLoop({
+      messages,
+      tools,
+      planningModel,
+      sessionId,
+      mode,
+      res
+    });
 
     await saveMessage({ session_id: sessionId, role: "assistant", content: fullResponse });
 
-    // Auto-title on first exchange
     if (history.length === 0) {
       const title = userMessage.slice(0, 60) + (userMessage.length > 60 ? "…" : "");
       await updateSessionTitle(sessionId, title);
@@ -207,17 +201,22 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
 async function runAgentLoop(options: {
   messages: ChatCompletionMessageParam[];
   tools: ChatCompletionTool[];
-  model: string;
+  planningModel: string;
   sessionId: string;
   mode: "chat" | "cowork";
   res: Response;
 }): Promise<string> {
-  const { messages, tools, model, sessionId, mode, res } = options;
+  const { messages, tools, planningModel, sessionId, mode, res } = options;
   let fullAssistantContent = "";
+
+  // Dynamic model: starts as the planning model (e.g. gpt-5.4-mini in chat mode).
+  // Switches to MODEL_COWORK (gpt-5.3-codex) when tool calls are detected, then
+  // returns to the planning model once tool execution is complete.
+  let currentModel = planningModel;
 
   for (let iteration = 0; iteration < 10; iteration++) {
     const streamParams: Parameters<typeof openai.chat.completions.create>[0] = {
-      model,
+      model: currentModel,
       messages,
       stream: true as const
     };
@@ -226,6 +225,9 @@ async function runAgentLoop(options: {
       streamParams.tools = tools;
       streamParams.tool_choice = "auto";
     }
+
+    // Emit model info so the UI can show which model is active
+    sseWrite(res, { type: "model_active", model: currentModel, iteration });
 
     const stream = await openai.chat.completions.create({
       ...streamParams,
@@ -291,8 +293,13 @@ async function runAgentLoop(options: {
     messages.push(assistantMessage);
 
     if (finishReason === "stop" || completedToolCalls.length === 0) {
+      // No tool calls — back to planning model for next turn
+      currentModel = planningModel;
       break;
     }
+
+    // Tool calls detected — switch to execution model for the next iteration
+    currentModel = MODEL_COWORK;
 
     for (const tc of completedToolCalls) {
       let parsedArgs: Record<string, unknown> = {};
