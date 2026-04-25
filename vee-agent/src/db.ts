@@ -40,6 +40,17 @@ export async function ensureTables(): Promise<void> {
           REFERENCES vee_sessions (id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+
+    // Add context summary columns if they don't exist yet (idempotent)
+    try {
+      await conn.execute(`
+        ALTER TABLE vee_sessions
+          ADD COLUMN context_summary MEDIUMTEXT DEFAULT NULL,
+          ADD COLUMN context_summary_turns INT UNSIGNED NOT NULL DEFAULT 0
+      `);
+    } catch {
+      // Columns already exist — safe to ignore
+    }
   } finally {
     conn.release();
   }
