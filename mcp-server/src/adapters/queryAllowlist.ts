@@ -260,6 +260,13 @@ const BASE_TABLE_POLICIES_MMCRIATIVOS: Record<string, TablePolicy> = {
     sensitive: false,
     writeMode: "read_only"
   },
+  vee_messages: {
+    table: "vee_messages",
+    allowedColumns: "*",
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "read_only"
+  },
   vee_mcp_calls: {
     table: "vee_mcp_calls",
     allowedColumns: "*",
