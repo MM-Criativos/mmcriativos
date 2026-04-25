@@ -3,6 +3,18 @@ import { v4 as uuidv4 } from "uuid";
 import { pool } from "./db.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 
+// ─── Context window config ────────────────────────────────────────────────────
+// MAX_HISTORY_TURNS: max number of user turns (user + assistant + tools) to keep
+// in context. Older turns are silently dropped. Set to 0 to disable.
+const MAX_HISTORY_TURNS = Number.parseInt(process.env.MAX_HISTORY_TURNS ?? "20", 10);
+
+// MAX_TOOL_RESULT_HISTORY_CHARS: tool results are stored in full in the DB but
+// truncated when reloaded into context to avoid blowing up input tokens.
+const MAX_TOOL_RESULT_HISTORY_CHARS = Number.parseInt(
+  process.env.MAX_TOOL_RESULT_HISTORY_CHARS ?? "3000",
+  10
+);
+
 export type Session = {
   id: string;
   title: string;
@@ -111,15 +123,40 @@ export async function loadSessionMessages(session_id: string): Promise<SessionMe
   }));
 }
 
+/**
+ * Applies a sliding window by user turns. Each "turn" starts at a user message
+ * and includes the subsequent assistant + tool messages. Cutting always happens
+ * at a user message boundary, so the messages array sent to OpenAI is always
+ * structurally valid (no orphaned tool results).
+ */
+function applyTurnWindow(rows: StoredMessage[]): StoredMessage[] {
+  if (MAX_HISTORY_TURNS <= 0) return rows;
+
+  const turnStarts: number[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].role === "user") turnStarts.push(i);
+  }
+
+  if (turnStarts.length <= MAX_HISTORY_TURNS) return rows;
+
+  return rows.slice(turnStarts[turnStarts.length - MAX_HISTORY_TURNS]);
+}
+
 export async function loadHistory(session_id: string): Promise<ChatCompletionMessageParam[]> {
-  const rows = await loadStoredMessages(session_id);
+  const allRows = await loadStoredMessages(session_id);
+  const rows = applyTurnWindow(allRows);
 
   return rows.map((row): ChatCompletionMessageParam => {
     if (row.role === "tool") {
+      const raw = row.content ?? "";
+      const content =
+        MAX_TOOL_RESULT_HISTORY_CHARS > 0 && raw.length > MAX_TOOL_RESULT_HISTORY_CHARS
+          ? raw.slice(0, MAX_TOOL_RESULT_HISTORY_CHARS) + "\n…[truncated for context]"
+          : raw;
       return {
         role: "tool",
         tool_call_id: row.tool_call_id ?? "",
-        content: row.content ?? ""
+        content
       };
     }
 
