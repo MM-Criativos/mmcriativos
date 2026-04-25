@@ -1,7 +1,8 @@
-FROM node:20-alpine
+# ─── Stage 1: Builder ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
 
 # Build tools needed for ssh2 native bindings (cpu-features)
-RUN apk add --no-cache python3 make g++ openssh-client
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
@@ -14,8 +15,20 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-# Remove dev dependencies after build
+# Prune dev dependencies — only production deps remain in node_modules
 RUN npm prune --omit=dev
+
+# ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS runtime
+
+RUN apk add --no-cache openssh-client
+
+WORKDIR /app
+
+# Copy pruned node_modules and compiled dist from builder
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY package.json ./
 
 ENV NODE_ENV=production
 ENV PORT=3333
