@@ -5,8 +5,8 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 
 // ─── Context window config ────────────────────────────────────────────────────
 // MAX_HISTORY_TURNS: max number of user turns (user + assistant + tools) to keep
-// in context. Older turns are silently dropped. Set to 0 to disable.
-const MAX_HISTORY_TURNS = Number.parseInt(process.env.MAX_HISTORY_TURNS ?? "20", 10);
+// in context. Older turns are summarized and injected as a compact block.
+const MAX_HISTORY_TURNS = Number.parseInt(process.env.MAX_HISTORY_TURNS ?? "10", 10);
 
 // MAX_TOOL_RESULT_HISTORY_CHARS: tool results are stored in full in the DB but
 // truncated when reloaded into context to avoid blowing up input tokens.
@@ -63,7 +63,6 @@ export async function getSession(id: string): Promise<Session | null> {
 }
 
 export async function listSessions(limit = 50): Promise<Session[]> {
-  // LIMIT não pode ser bind parameter no mysql2 com prepared statements
   const safeLimit = Math.min(Math.max(1, Math.floor(limit)), 200);
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT * FROM vee_sessions ORDER BY updated_at DESC LIMIT ${safeLimit}`
@@ -102,7 +101,7 @@ export async function saveMessage(params: {
   );
 }
 
-async function loadStoredMessages(session_id: string): Promise<StoredMessage[]> {
+export async function loadStoredMessages(session_id: string): Promise<StoredMessage[]> {
   const [rows] = await pool.execute<RowDataPacket[]>(
     "SELECT * FROM vee_messages WHERE session_id = ? ORDER BY id ASC",
     [session_id]
@@ -123,11 +122,54 @@ export async function loadSessionMessages(session_id: string): Promise<SessionMe
   }));
 }
 
+// ─── Context summary helpers ──────────────────────────────────────────────────
+
+export async function getContextSummary(
+  session_id: string
+): Promise<{ summary: string; turns: number } | null> {
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    "SELECT context_summary, context_summary_turns FROM vee_sessions WHERE id = ?",
+    [session_id]
+  );
+  const row = rows[0] as { context_summary: string | null; context_summary_turns: number } | undefined;
+  if (!row?.context_summary) return null;
+  return { summary: row.context_summary, turns: row.context_summary_turns };
+}
+
+export async function saveContextSummary(
+  session_id: string,
+  summary: string,
+  turns: number
+): Promise<void> {
+  await pool.execute(
+    "UPDATE vee_sessions SET context_summary = ?, context_summary_turns = ? WHERE id = ?",
+    [summary, turns, session_id]
+  );
+}
+
 /**
- * Applies a sliding window by user turns. Each "turn" starts at a user message
- * and includes the subsequent assistant + tool messages. Cutting always happens
- * at a user message boundary, so the messages array sent to OpenAI is always
- * structurally valid (no orphaned tool results).
+ * Returns the rows that fall outside (before) the current turn window —
+ * i.e. the turns that loadHistory would silently drop. Used by the summarizer.
+ */
+export function extractOverflowTurns(rows: StoredMessage[]): StoredMessage[] {
+  if (MAX_HISTORY_TURNS <= 0) return [];
+
+  const turnStarts: number[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].role === "user") turnStarts.push(i);
+  }
+
+  if (turnStarts.length <= MAX_HISTORY_TURNS) return [];
+
+  return rows.slice(0, turnStarts[turnStarts.length - MAX_HISTORY_TURNS]);
+}
+
+// ─── History loading ──────────────────────────────────────────────────────────
+
+/**
+ * Applies a sliding window by user turns. Cutting always happens at a user
+ * message boundary so the messages array sent to OpenAI is always valid
+ * (no orphaned tool results).
  */
 function applyTurnWindow(rows: StoredMessage[]): StoredMessage[] {
   if (MAX_HISTORY_TURNS <= 0) return rows;
