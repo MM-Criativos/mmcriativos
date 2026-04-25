@@ -12,10 +12,15 @@ import {
   createSession,
   getSession,
   loadHistory,
+  loadStoredMessages,
+  extractOverflowTurns,
+  getContextSummary,
+  saveContextSummary,
   saveMessage,
   updateSessionTitle,
   editUserMessage
 } from "../sessions.js";
+import { generateSummary } from "../summarizer.js";
 import { emitLog } from "../eventBus.js";
 import {
   MODEL_CHAT,
@@ -41,6 +46,31 @@ type AccumulatedToolCall = {
 
 function sseWrite(res: Response, data: Record<string, unknown>): void {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+/**
+ * Checks whether older turns need summarization and returns the summary string
+ * (cached or freshly generated). Returns null if the session is still within
+ * the turn window and no summary is needed.
+ */
+async function resolveContextSummary(sessionId: string): Promise<string | null> {
+  const allRows = await loadStoredMessages(sessionId);
+  const overflowTurns = extractOverflowTurns(allRows);
+
+  if (overflowTurns.length === 0) return null;
+
+  // Count overflow user turns
+  const overflowUserTurns = overflowTurns.filter((r) => r.role === "user").length;
+
+  const cached = await getContextSummary(sessionId);
+  if (cached && cached.turns >= overflowUserTurns) {
+    return cached.summary; // Cache is up to date
+  }
+
+  // Generate (or refresh) summary — incremental: pass existing summary if present
+  const summary = await generateSummary(overflowTurns, cached?.summary ?? null);
+  await saveContextSummary(sessionId, summary, overflowUserTurns);
+  return summary;
 }
 
 export async function handleStream(req: Request, res: Response): Promise<void> {
@@ -89,7 +119,7 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
     });
   }
 
-  // Load history + add new user message (new message flow only)
+  // Load windowed history + save new user message
   const history = await loadHistory(sessionId);
   if (!isEditFlow) {
     await saveMessage({ session_id: sessionId, role: "user", content: userMessage });
@@ -98,8 +128,33 @@ export async function handleStream(req: Request, res: Response): Promise<void> {
   const model = mode === "cowork" ? MODEL_COWORK : MODEL_CHAT;
   const systemPrompt = mode === "cowork" ? SYSTEM_PROMPT_COWORK : SYSTEM_PROMPT_CHAT;
 
+  // ─── Rolling summarization ────────────────────────────────────────────────
+  // If the session has more turns than the window allows, summarize the overflow
+  // and inject it as a compact context block before the windowed history.
+  let summaryBlock: ChatCompletionMessageParam[] = [];
+  try {
+    const contextSummary = await resolveContextSummary(sessionId);
+    if (contextSummary) {
+      summaryBlock = [
+        {
+          role: "user",
+          content: `📋 Contexto das mensagens anteriores desta sessão:\n\n${contextSummary}`
+        },
+        {
+          role: "assistant",
+          content: "Contexto anterior recebido. Continuando a partir daqui."
+        }
+      ];
+    }
+  } catch (err) {
+    // Non-fatal: if summarization fails, proceed without the summary block
+    const msg = err instanceof Error ? err.message : String(err);
+    sseWrite(res, { type: "warning", message: `Context summarization failed: ${msg}` });
+  }
+
   const messages: ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
+    ...summaryBlock,
     ...history,
     ...(!isEditFlow ? [{ role: "user" as const, content: userMessage }] : [])
   ];
@@ -188,14 +243,12 @@ async function runAgentLoop(options: {
       const delta = choice.delta;
       finishReason = choice.finish_reason ?? finishReason;
 
-      // Stream text content
       if (delta.content) {
         iterationContent += delta.content;
         fullAssistantContent += delta.content;
         sseWrite(res, { type: "text", content: delta.content });
       }
 
-      // Accumulate tool calls
       if (delta.tool_calls) {
         for (const tc of delta.tool_calls) {
           const idx = tc.index ?? 0;
@@ -209,7 +262,6 @@ async function runAgentLoop(options: {
       }
     }
 
-    // Add assistant message to history
     const completedToolCalls = pendingToolCalls.filter(Boolean);
 
     const toolCallsForMessage: ChatCompletionMessageToolCall[] | undefined =
@@ -238,12 +290,10 @@ async function runAgentLoop(options: {
 
     messages.push(assistantMessage);
 
-    // Done — no tool calls
     if (finishReason === "stop" || completedToolCalls.length === 0) {
       break;
     }
 
-    // Execute tool calls
     for (const tc of completedToolCalls) {
       let parsedArgs: Record<string, unknown> = {};
       try {
