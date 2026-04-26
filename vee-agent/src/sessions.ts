@@ -217,9 +217,45 @@ function applyTurnWindow(rows: StoredMessage[]): StoredMessage[] {
   return rows.slice(turnStarts[turnStarts.length - MAX_HISTORY_TURNS]);
 }
 
+/**
+ * Removes tool-role messages whose tool_call_id is not referenced by any
+ * assistant message in the same window. These orphans arise when the agent
+ * called a tool but the companion assistant+tool_calls row was never persisted
+ * (e.g. due to a crash or the pre-fix bug in stream.ts). Sending them to
+ * OpenAI causes a 400 "No tool call found for function call output" error.
+ */
+function stripOrphanedToolMessages(rows: StoredMessage[]): StoredMessage[] {
+  const knownCallIds = new Set<string>();
+  for (const row of rows) {
+    if (row.role === "assistant" && row.tool_calls) {
+      const toolCalls: Array<{ id?: string }> =
+        typeof row.tool_calls === "string"
+          ? JSON.parse(row.tool_calls)
+          : row.tool_calls;
+      for (const tc of toolCalls) {
+        if (tc.id) knownCallIds.add(tc.id);
+      }
+    }
+  }
+
+  return rows.filter((row) => {
+    if (row.role === "tool") {
+      const known = row.tool_call_id != null && knownCallIds.has(row.tool_call_id);
+      if (!known) {
+        console.warn(
+          `[loadHistory] Dropping orphaned tool message id=${row.id} tool_call_id=${row.tool_call_id ?? "(null)"}`
+        );
+      }
+      return known;
+    }
+    return true;
+  });
+}
+
 export async function loadHistory(session_id: string): Promise<ChatCompletionMessageParam[]> {
   const allRows = await loadStoredMessages(session_id);
-  const rows = applyTurnWindow(allRows);
+  const windowed = applyTurnWindow(allRows);
+  const rows = stripOrphanedToolMessages(windowed);
 
   return rows.map((row): ChatCompletionMessageParam => {
     if (row.role === "tool") {
