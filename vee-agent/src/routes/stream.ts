@@ -599,12 +599,18 @@ async function runAgentLoopResponses(options: {
       }
     }
 
-    // If the assistant said something and will call tools, save the assistant text now
-    if (iterationContent && completedToolCalls.length > 0) {
+    // Save the assistant message with tool_calls whenever tool calls are present,
+    // even when there is no accompanying text content (iterationContent is empty).
+    //
+    // Without this, sessions resumed after a tool-only turn will have orphaned
+    // `function_call_output` items in the Responses API input with no matching
+    // `function_call` counterpart, causing OpenAI to return:
+    //   400 "No tool call found for function call output with call_id …"
+    if (completedToolCalls.length > 0) {
       await saveMessage({
         session_id: sessionId,
         role: "assistant",
-        content: iterationContent,
+        content: iterationContent || null,
         tool_calls: completedToolCalls.map((tc) => ({
           id: tc.call_id,
           type: "function" as const,
