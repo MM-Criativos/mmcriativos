@@ -41,8 +41,8 @@ export function estimateTokens(messages: ChatCompletionMessageParam[]): number {
         }
       }
     }
-    if ("tool_calls" in msg && Array.isArray((msg as Record<string, unknown>).tool_calls)) {
-      chars += JSON.stringify((msg as Record<string, unknown>).tool_calls).length;
+    if ("tool_calls" in msg && Array.isArray((msg as unknown as Record<string, unknown>).tool_calls)) {
+      chars += JSON.stringify((msg as unknown as Record<string, unknown>).tool_calls).length;
     }
   }
   return Math.ceil(chars / 4);
