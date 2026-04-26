@@ -1,0 +1,54 @@
+--- a/mcp-server/src/server.ts
++++ b/mcp-server/src/server.ts
+@@ -479,7 +479,7 @@
+   { name: "vee_db_attach_task_to_project", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+   { name: "vee_db_mark_task_as_blocked", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+   { name: "vee_db_mark_task_as_done", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+-  { name: "vee_mmcc_list_tenants", phase: "v0.1", permission: "read_only", status: "planned" },
++  { name: "vee_mmcc_list_tenants", phase: "v0.2", permission: "read_only", status: "enabled" },
+   { name: "vee_fs_list_directory", phase: "v0.2", permission: "read_only", status: "enabled" },
+   { name: "vee_fs_read_file", phase: "v0.2", permission: "read_only", status: "enabled" },
+   { name: "vee_fs_search_text", phase: "v0.2", permission: "read_only", status: "enabled" },
+@@ -3763,6 +3763,42 @@
+           return {
+             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+             structuredContent: result
++          };
++        }
++      })
++  );
++
++  server.registerTool(
++    "vee_mmcc_list_tenants",
++    {
++      title: "MMCC — List Tenants",
++      description:
++        "Lists all tenants registered in the MMCC database. Returns id, slug, name, plan, status, and timestamps.",
++      inputSchema: {}
++    },
++    async () =>
++      runAuditedTool({
++        toolName: "vee_mmcc_list_tenants",
++        permission: "read_only",
++        isWrite: false,
++        args: {},
++        errorContext: "Failed to list MMCC tenants",
++        handler: async () => {
++          const { adapter } = resolveReadOnlyAdapter("mmcc");
++          const result = await adapter.executeStructuredQuery(
++            {
++              dbTarget: "mmcc",
++              table: "tenants",
++              columns: ["id", "slug", "name", "plan", "status", "created_at", "updated_at"],
++              orderBy: [{ column: "name", direction: "ASC" }],
++              limit: 100
++            },
++            "vee:mmcc"
++          );
++          const payload = { db_target: "mmcc", ...result };
++          return {
++            content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
++            structuredContent: payload
+           };
+         }
+       })
