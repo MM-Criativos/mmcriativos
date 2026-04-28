@@ -36,17 +36,6 @@ type RequestOptions = {
   body?: unknown;
 };
 
-// Fields accepted by n8n PUT /workflows/{id} — all others are read-only and must be stripped
-const WORKFLOW_WRITABLE_FIELDS = [
-  "name",
-  "nodes",
-  "connections",
-  "settings",
-  "staticData",
-  "pinData",
-  "versionId"
-] as const;
-
 export class N8nApiError extends Error {
   readonly status: number;
   readonly responseBody: string;
@@ -224,12 +213,15 @@ export class N8nRestAdapter {
       throw new Error("workflow payload must be an object.");
     }
 
-    // Strip read-only / extra fields — n8n's PUT endpoint only accepts specific writable fields
-    const writablePayload = Object.fromEntries(
-      WORKFLOW_WRITABLE_FIELDS
-        .filter((k) => k in workflowPayload)
-        .map((k) => [k, workflowPayload[k]])
-    );
+    // n8n PUT /workflows/{id} only accepts these fields — all others are read-only and rejected.
+    // Build the payload explicitly to avoid TypeScript issues.
+    const writablePayload: Record<string, unknown> = {
+      name: workflowPayload["name"],
+      nodes: workflowPayload["nodes"],
+      connections: workflowPayload["connections"],
+      settings: workflowPayload["settings"] ?? {},
+      staticData: workflowPayload["staticData"] ?? null
+    };
 
     return this.requestJson<Record<string, unknown>>(`/workflows/${encodeURIComponent(normalizedId)}`, {
       method: "PUT",
