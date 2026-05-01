@@ -186,7 +186,7 @@
                 {{-- Env status --}}
                 <div class="vee-topbar__env">
                     <span class="vee-topbar__env-dot"></span>
-                    <span class="vee-topbar__env-text">4 ambientes ativos</span>
+                    <span class="vee-topbar__env-text" x-text="orchAgents.length + ' agente' + (orchAgents.length !== 1 ? 's' : '') + ' ativos'"></span>
                 </div>
             </div>
 
@@ -544,12 +544,22 @@
                         <div class="vee-section-header">
                             <span class="vee-section-header__title">Feed de atividade</span>
                             <div class="vee-spacer"></div>
-                            <span class="vee-badge vee-badge--accent">2 ativos</span>
-                            <span class="vee-badge vee-badge--success">2 concluídos</span>
+                            <template x-if="activeAgentId === 'test-runner'">
+                                <span class="vee-badge vee-badge--accent" x-text="orchTestGroups.filter(function(g){return g.status!=='skip';}).length + ' grupos'"></span>
+                            </template>
+                            <template x-if="activeAgentId === 'test-runner'">
+                                <span class="vee-badge vee-badge--muted" x-text="orchTestGroups.filter(function(g){return g.status==='skip';}).length + ' skip'"></span>
+                            </template>
+                            <template x-if="activeAgentId !== 'test-runner'">
+                                <span class="vee-badge vee-badge--accent" x-text="orchAgents.filter(function(a){return a.status==='active'||a.status==='working';}).length + ' ativos'"></span>
+                            </template>
+                            <template x-if="activeAgentId !== 'test-runner'">
+                                <span class="vee-badge vee-badge--success" x-text="orchAgents.filter(function(a){return a.status==='done';}).length + ' concluidos'"></span>
+                            </template>
                         </div>
                         <div class="vee-feed-list">
                             <template x-for="item in orchFeed" :key="item.id">
-                                <div :style="`border-left-color:${item.status==='done'?'#22c55e':item.status==='working'?'#ff8800':'#444'};`"
+                                <div :style="`border-left-color:${item.status==='done'||item.status==='pass'?'#22c55e':item.status==='working'||item.status==='running'?'#ff8800':item.status==='fail'?'#ef4444':item.isSkipped?'#555':'#444'};`"
                                      class="vee-content-card">
                                     <div class="vee-content-card__header">
                                         <span class="vee-feed-card__route" x-text="item.from + ' → ' + item.to"></span>
@@ -563,6 +573,21 @@
                                     </template>
                                     <template x-if="item.status==='done'">
                                         <div class="vee-feed-card__done">✓ concluído</div>
+                                    </template>
+                                    <template x-if="item.isSkipped">
+                                        <div style="font-size:10px;color:#666;margin-top:4px;font-style:italic;" x-text="'Skip: ' + item.skipReason"></div>
+                                    </template>
+                                    <template x-if="item.bugs && item.bugs.length > 0">
+                                        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
+                                            <template x-for="bug in item.bugs" :key="bug">
+                                                <span style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;" x-text="bug"></span>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template x-if="item.route">
+                                        <div style="margin-top:5px;">
+                                            <span :style="`background:${item.route==='atendimento'?'rgba(59,130,246,.12)':'rgba(168,85,247,.12)'};color:${item.route==='atendimento'?'#60a5fa':'#c084fc'};border:1px solid ${item.route==='atendimento'?'rgba(59,130,246,.3)':'rgba(168,85,247,.3)'};padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;`" x-text="item.route"></span>
+                                        </div>
                                     </template>
                                 </div>
                             </template>
@@ -868,7 +893,7 @@ document.addEventListener('alpine:init', () => {
         // ---- UI state ----
         tab: 'plan',
         orchView: 'A',
-        activeAgentId: 0,
+        activeAgentId: 'test-runner',
 
         // ---- call state ----
         callOpen: false,
@@ -930,20 +955,49 @@ document.addEventListener('alpine:init', () => {
         tabLabels: { plan:'Planejamento', orch:'Orquestramento', cowork:'Cowork', approvals:'Approvals', logs:'Logs' },
 
         orchAgents: [
-            { id:0, name:'Code Analyst', env:'local',      status:'done',    task:'Deps mapeadas ✓' },
-            { id:1, name:'Architect',    env:'local',      status:'working', task:'Propondo arquitetura...' },
-            { id:2, name:'DB Agent',     env:'prod/db',    status:'working', task:'Preparando migration...' },
-            { id:3, name:'Deployer',     env:'containers', status:'idle',    task:'Aguardando' },
-            { id:4, name:'Vault Agent',  env:'vault',      status:'done',    task:'Secrets validados ✓' },
-            { id:5, name:'Obsidian',     env:'obsidian',   status:'working', task:'Documentando...' },
+            { id:'test-runner', name:'Test Runner', env:'mmcloud',  status:'active', task:'Pronto para executar' },
+            { id:'vault-agent', name:'Vault Agent', env:'vault',    status:'active', task:'Secrets validados ✓' },
+            { id:'obsidian',    name:'Obsidian',    env:'obsidian', status:'active', task:'Documentando...' },
         ],
-        orchFeed: [
-            { id:0, from:'Code Analyst', to:'Vee',     msg:'47 dependências mapeadas. 3 contextos: billing, reconciliation, notifications.', time:'14:34', status:'done' },
-            { id:1, from:'Vault Agent',  to:'Vee',     msg:'12 variáveis identificadas. Política de rotação validada. Sem conflitos.',       time:'14:33', status:'done' },
-            { id:2, from:'Vee', to:'Architect',        msg:'Baseado em deps.json, proponha separação em micro-serviços. Defina contratos.',   time:'14:34', status:'working', pct:62 },
-            { id:3, from:'Vee', to:'DB Agent',         msg:'Prepare scripts de schema migration por contexto. Não execute ainda.',            time:'14:34', status:'working', pct:28 },
-            { id:4, from:'Obsidian', to:'Vee',         msg:'Criando notas de decisão arquitetural. ADR-042 em progresso.',                   time:'14:34', status:'working', pct:40 },
+        orchTestGroups: [
+            { id:'A', name:'Onboarding',        route:'atendimento', tenant_slug:'veetest',   daily:3,  total:4,  bugs:[],          status:'idle' },
+            { id:'B', name:'Intent',            route:'atendimento', tenant_slug:'veetest',   daily:5,  total:5,  bugs:[],          status:'idle' },
+            { id:'C', name:'Fluxo Completo',    route:'atendimento', tenant_slug:'veetest',   daily:3,  total:4,  bugs:[],          status:'idle' },
+            { id:'D', name:'Entity Resolver',   route:'agendamento', tenant_slug:'veetest',   daily:6,  total:7,  bugs:['BUG-001'], status:'idle' },
+            { id:'E', name:'Missing Fields',    route:'agendamento', tenant_slug:'veetest',   daily:5,  total:5,  bugs:['BUG-001'], status:'idle' },
+            { id:'F', name:'PreCheck/Blocking', route:'agendamento', tenant_slug:'veetest-c', daily:0,  total:3,  bugs:[],          status:'skip', skipReason:'veetest-c nao criado' },
+            { id:'G', name:'Criacao Agend.',    route:'agendamento', tenant_slug:'veetest',   daily:2,  total:4,  bugs:['BUG-001'], status:'idle' },
+            { id:'H', name:'Reagendamento',     route:'agendamento', tenant_slug:'veetest',   daily:0,  total:3,  bugs:['BUG-001'], status:'idle' },
+            { id:'I', name:'Cancelamento',      route:'agendamento', tenant_slug:'veetest',   daily:0,  total:2,  bugs:['BUG-001'], status:'idle' },
+            { id:'J', name:'Desambiguacao',     route:'agendamento', tenant_slug:'veetest-c', daily:0,  total:2,  bugs:[],          status:'skip', skipReason:'veetest-c nao criado' },
+            { id:'K', name:'Save Process',      route:'agendamento', tenant_slug:'veetest',   daily:2,  total:2,  bugs:['BUG-002'], status:'idle' },
+            { id:'L', name:'Hub/Roteamento',    route:'atendimento', tenant_slug:'veetest',   daily:2,  total:2,  bugs:[],          status:'idle' },
+            { id:'M', name:'mmbeauty',          route:'agendamento', tenant_slug:'mmbeauty',  daily:6,  total:12, bugs:['BUG-001'], status:'idle' },
         ],
+        get orchFeed() {
+            if (this.activeAgentId === 'test-runner') {
+                return this.orchTestGroups.map(function(g) {
+                    return {
+                        id: g.id,
+                        from: 'Test Runner',
+                        to: 'Grupo ' + g.id + ' — ' + g.name,
+                        msg: g.daily + ' casos daily · ' + g.total + ' total · tenant: ' + g.tenant_slug + (g.bugs.length ? ' · ' + g.bugs.join(', ') : ''),
+                        time: g.lastRun || '—',
+                        status: g.status === 'skip' ? 'idle' : g.status,
+                        pct: g.pct || 0,
+                        bugs: g.bugs,
+                        route: g.route,
+                        isSkipped: g.status === 'skip',
+                        skipReason: g.skipReason || '',
+                        groupId: g.id,
+                    };
+                });
+            }
+            return [
+                { id:0, from:'Vault Agent', to:'Vee', msg:'Secrets validados. Politica de rotacao OK.', time: new Date().toTimeString().slice(0,5), status:'done', bugs:[], isSkipped:false },
+                { id:1, from:'Obsidian',    to:'Vee', msg:'Notas sincronizadas com o vault.',            time: new Date().toTimeString().slice(0,5), status:'done', bugs:[], isSkipped:false },
+            ];
+        }
         orchPipeline: [
             { agent:'Code Analyst', label:'Análise de código',       status:'done',    out:'deps.json' },
             { agent:'Architect',    label:'Proposta de arquitetura', status:'working', pct:62 },
