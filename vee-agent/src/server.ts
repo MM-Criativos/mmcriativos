@@ -19,6 +19,7 @@ import {
   handleDeleteSession,
   handleEditSessionMessage
 } from "./routes/sessions.js";
+import { handleOrchStatus, handleSaveOrchRun } from './routes/orch.js';
 import { handleLogFeed } from "./routes/log.js";
 import {
   handleApproveApproval,
@@ -170,6 +171,19 @@ app.post("/approvals/:id/reject", withAuth, (req, res) => {
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
+
+// ── Orch (Platform Health / Test Runner) ─────────────────────────────────────
+app.get('/orch/status', withAuth, (req, res) => {
+  handleOrchStatus(req, res).catch((err: unknown) => {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  });
+});
+
+app.post('/orch/runs', withAuth, (req, res) => {
+  handleSaveOrchRun(req, res).catch((err: unknown) => {
+    res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+  });
+});
 
 async function boot(): Promise<void> {
   // Start server first — /health responds even if DB is not ready
