@@ -1824,7 +1824,7 @@ document.addEventListener('alpine:init', () => {
                     tenant_slug: tc.tenant_slug,
                     tenant_id:   tc.tenant_id,
                     user_message: tc.message,
-                    remoteJid:   '5511900000001@s.whatsapp.net',
+                    remoteJid:   '5511958469546@s.whatsapp.net',
                     pushName:    'Tester',
                     idMessage:   'TEST-' + startedAt,
                 }),
