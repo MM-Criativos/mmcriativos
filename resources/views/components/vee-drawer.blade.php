@@ -1056,7 +1056,7 @@ document.addEventListener('alpine:init', () => {
                 { id:0, from:'Vault Agent', to:'Vee', msg:'Secrets validados. Politica de rotacao OK.', time: new Date().toTimeString().slice(0,5), status:'done', bugs:[], isSkipped:false },
                 { id:1, from:'Obsidian',    to:'Vee', msg:'Notas sincronizadas com o vault.',            time: new Date().toTimeString().slice(0,5), status:'done', bugs:[], isSkipped:false },
             ];
-        }
+        },
         orchPipeline: [
             { agent:'Code Analyst', label:'Análise de código',       status:'done',    out:'deps.json' },
             { agent:'Architect',    label:'Proposta de arquitetura', status:'working', pct:62 },
