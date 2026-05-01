@@ -190,7 +190,7 @@
                 <template x-for="toast in orchToasts" :key="toast.id">
                     <div @click="switchToLogs(); dismissToast(toast.id)"
                          :style="`background:${toast.type==='pass'?'rgba(34,197,94,.18)':toast.type==='fail'?'rgba(239,68,68,.18)':'rgba(255,136,0,.18)'};border:1px solid ${toast.type==='pass'?'rgba(34,197,94,.5)':toast.type==='fail'?'rgba(239,68,68,.5)':'rgba(255,136,0,.5)'};`"
-                         style="padding:10px 14px;border-radius:6px;cursor:pointer;min-width:220px;max-width:320px;backdrop-filter:blur(8px);pointer-events:all;"
+                         style="padding:12px 18px;border-radius:6px;cursor:pointer;min-width:220px;max-width:320px;backdrop-filter:blur(8px);pointer-events:all;"
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 translate-x-4"
                          x-transition:enter-end="opacity-100 translate-x-0"
@@ -612,7 +612,7 @@
                                                     :style="orchRunning[item.groupId]
                                                         ? 'opacity:.5;cursor:not-allowed;background:rgba(255,136,0,.08);border:1px solid rgba(255,136,0,.25);color:#ff8800;'
                                                         : 'background:rgba(255,136,0,.14);border:1px solid rgba(255,136,0,.4);color:#ff8800;cursor:pointer;'"
-                                                    style="padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                                                    style="padding:6px 16px;border-radius:4px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
                                                     <span x-text="orchRunning[item.groupId] ? '⟳ Rodando…' : '▶ Rodar'"></span>
                                                 </button>
                                             </template>
