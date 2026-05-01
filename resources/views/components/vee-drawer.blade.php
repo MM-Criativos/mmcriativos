@@ -182,6 +182,25 @@
                             x-text="l"></button>
                     </template>
                 </div>
+            {{-- ===== TOASTS ===== --}}
+            <div style="position:fixed;top:16px;right:72px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none;">
+                <template x-for="toast in orchToasts" :key="toast.id">
+                    <div @click="switchToLogs(); dismissToast(toast.id)"
+                         :style="`background:${toast.type==='pass'?'rgba(34,197,94,.18)':toast.type==='fail'?'rgba(239,68,68,.18)':'rgba(255,136,0,.18)'};border:1px solid ${toast.type==='pass'?'rgba(34,197,94,.5)':toast.type==='fail'?'rgba(239,68,68,.5)':'rgba(255,136,0,.5)'};`"
+                         style="padding:10px 14px;border-radius:6px;cursor:pointer;min-width:220px;max-width:320px;backdrop-filter:blur(8px);pointer-events:all;"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 translate-x-4"
+                         x-transition:enter-end="opacity-100 translate-x-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0">
+                        <div style="font-size:12px;font-weight:600;color:#fff;" x-text="toast.msg"></div>
+                        <div style="font-size:10px;color:#888;margin-top:2px;">Clique para ver nos logs</div>
+                    </div>
+                </template>
+            </div>
+
+
 
                 {{-- Env status --}}
                 <div class="vee-topbar__env">
@@ -519,7 +538,7 @@
                 {{-- ===== TAB: ORQUESTRAMENTO ===== --}}
                 <div x-show="tab==='orch'" class="flex h-full" style="display:none;">
 
-                    {{-- Agents sidebar (200px) --}}
+                    {{-- Agents sidebar --}}
                     <div class="vee-agents">
                         <div class="vee-sidebar-header">Agentes</div>
                         <div class="vee-agents__list">
@@ -529,8 +548,7 @@
                                     class="vee-sidebar-card">
                                     <div class="vee-agent-card__header">
                                         <span x-text="agent.name" class="vee-sidebar-card__name"></span>
-                                        <span :style="`background:${agentStatusColor(agent.status)};`"
-                                              class="vee-status-dot"></span>
+                                        <span :style="`background:${agentStatusColor(agent.status)};`" class="vee-status-dot"></span>
                                     </div>
                                     <div x-text="agent.env" class="vee-agent-card__env"></div>
                                     <div x-text="agent.task" :style="`color:${agentStatusColor(agent.status)};`" class="vee-agent-card__task"></div>
@@ -541,73 +559,93 @@
 
                     {{-- Feed view --}}
                     <div x-show="orchView==='A'" style="flex:1;display:flex;flex-direction:column;overflow:hidden;display:none;">
+
+                        {{-- Header com badges dinâmicos --}}
                         <div class="vee-section-header">
                             <span class="vee-section-header__title">Feed de atividade</span>
                             <div class="vee-spacer"></div>
                             <template x-if="activeAgentId === 'test-runner'">
-                                <span class="vee-badge vee-badge--accent" x-text="orchTestGroups.filter(function(g){return g.status!=='skip';}).length + ' grupos'"></span>
+                                <span class="vee-badge vee-badge--accent"
+                                      x-text="orchTestGroups.filter(function(g){return g.status!=='skip';}).length + ' grupos'"></span>
                             </template>
                             <template x-if="activeAgentId === 'test-runner'">
-                                <span class="vee-badge vee-badge--muted" x-text="orchTestGroups.filter(function(g){return g.status==='skip';}).length + ' skip'"></span>
+                                <span class="vee-badge vee-badge--muted"
+                                      x-text="orchTestGroups.filter(function(g){return g.status==='skip';}).length + ' skip'"></span>
                             </template>
                             <template x-if="activeAgentId !== 'test-runner'">
-                                <span class="vee-badge vee-badge--accent" x-text="orchAgents.filter(function(a){return a.status==='active'||a.status==='working';}).length + ' ativos'"></span>
-                            </template>
-                            <template x-if="activeAgentId !== 'test-runner'">
-                                <span class="vee-badge vee-badge--success" x-text="orchAgents.filter(function(a){return a.status==='done';}).length + ' concluidos'"></span>
+                                <span class="vee-badge vee-badge--accent"
+                                      x-text="orchAgents.filter(function(a){return a.status==='active'||a.status==='working';}).length + ' ativos'"></span>
                             </template>
                         </div>
+
+                        {{-- Cards de grupos --}}
                         <div class="vee-feed-list">
                             <template x-for="item in orchFeed" :key="item.id">
-                                <div :style="`border-left-color:${item.status==='done'||item.status==='pass'?'#22c55e':item.status==='working'||item.status==='running'?'#ff8800':item.status==='fail'?'#ef4444':item.isSkipped?'#555':'#444'};`"
+                                <div :style="`border-left-color:${item.status==='pass'||item.status==='done'?'#22c55e':item.status==='running'||item.status==='working'?'#ff8800':item.status==='fail'?'#ef4444':item.isSkipped?'#555':'#444'};`"
                                      class="vee-content-card">
+
+                                    {{-- Header: rota + hora + botão Rodar --}}
                                     <div class="vee-content-card__header">
                                         <span class="vee-feed-card__route" x-text="item.from + ' → ' + item.to"></span>
-                                        <span class="vee-feed-card__time" x-text="item.time"></span>
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <span class="vee-feed-card__time" x-text="item.time"></span>
+                                            <template x-if="!item.isSkipped && activeAgentId === 'test-runner'">
+                                                <button
+                                                    @click.stop="runTestGroup(item.groupId)"
+                                                    :disabled="!!orchRunning[item.groupId]"
+                                                    :style="orchRunning[item.groupId]
+                                                        ? 'opacity:.5;cursor:not-allowed;background:rgba(255,136,0,.08);border:1px solid rgba(255,136,0,.25);color:#ff8800;'
+                                                        : 'background:rgba(255,136,0,.14);border:1px solid rgba(255,136,0,.4);color:#ff8800;cursor:pointer;'"
+                                                    style="padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                                                    <span x-text="orchRunning[item.groupId] ? '⟳ Rodando…' : '▶ Rodar'"></span>
+                                                </button>
+                                            </template>
+                                        </div>
                                     </div>
+
+                                    {{-- Mensagem descritiva --}}
                                     <div class="vee-feed-card__msg" x-text="item.msg"></div>
-                                    <template x-if="item.status==='working'">
-                                        <div class="vee-progress">
-                                            <div :style="`width:${item.pct}%;`" class="vee-progress__fill" style="background:#ff8800;"></div>
+
+                                    {{-- Progress bar quando rodando --}}
+                                    <template x-if="orchRunning[item.groupId]">
+                                        <div class="vee-progress" style="margin-top:6px;">
+                                            <div class="vee-progress__fill" style="background:#ff8800;width:100%;animation:vee-indeterminate 1.2s linear infinite;"></div>
                                         </div>
                                     </template>
-                                    <template x-if="item.status==='done'">
-                                        <div class="vee-feed-card__done">✓ concluído</div>
-                                    </template>
+
+                                    {{-- Skip note --}}
                                     <template x-if="item.isSkipped">
                                         <div style="font-size:10px;color:#666;margin-top:4px;font-style:italic;" x-text="'Skip: ' + item.skipReason"></div>
                                     </template>
+
+                                    {{-- Bug tags --}}
                                     <template x-if="item.bugs && item.bugs.length > 0">
                                         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
                                             <template x-for="bug in item.bugs" :key="bug">
-                                                <span style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;" x-text="bug"></span>
+                                                <span style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;"
+                                                      x-text="bug"></span>
                                             </template>
                                         </div>
                                     </template>
+
+                                    {{-- Route badge --}}
                                     <template x-if="item.route">
                                         <div style="margin-top:5px;">
-                                            <span :style="`background:${item.route==='atendimento'?'rgba(59,130,246,.12)':'rgba(168,85,247,.12)'};color:${item.route==='atendimento'?'#60a5fa':'#c084fc'};border:1px solid ${item.route==='atendimento'?'rgba(59,130,246,.3)':'rgba(168,85,247,.3)'};padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;`" x-text="item.route"></span>
+                                            <span :style="`background:${item.route==='atendimento'?'rgba(59,130,246,.12)':'rgba(168,85,247,.12)'};color:${item.route==='atendimento'?'#60a5fa':'#c084fc'};border:1px solid ${item.route==='atendimento'?'rgba(59,130,246,.3)':'rgba(168,85,247,.3)'};padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;`"
+                                                  x-text="item.route"></span>
                                         </div>
                                     </template>
+
                                 </div>
                             </template>
                         </div>
-                        <div class="vee-feed-input">
-                            <div class="vee-input-box">
-                                <textarea placeholder="Instruir Vee ou agentes..."
-                                    class="vee-input-textarea" style="height:52px;"></textarea>
-                                <div class="vee-input-actions" style="justify-content:flex-end;padding:6px 10px;">
-                                    <button class="vee-send-btn">
-                                        <i data-lucide="send" class="vee-send-btn__icon"></i> Enviar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        {{-- Sem input de chat neste tab --}}
+
                     </div>
 
                     {{-- Pipeline view --}}
                     <div x-show="orchView==='B'" style="flex:1;overflow-y:auto;padding:24px;display:none;">
-                        <div class="vee-pipeline-label">Pipeline: projeto ativo</div>
+                        <div class="vee-pipeline-label">Pipeline: Test Runner</div>
                         <div class="vee-pipeline">
                             <template x-for="(step, i) in orchPipeline" :key="step.agent">
                                 <div class="vee-pipeline__step">
@@ -616,17 +654,6 @@
                                         <div :style="`color:${step.status==='done'?'#22c55e':step.status==='working'?'#ff8800':'#999'};`"
                                              class="vee-pipeline-card__agent" x-text="step.agent"></div>
                                         <div class="vee-pipeline-card__label" x-text="step.label"></div>
-                                        <template x-if="step.out">
-                                            <div class="vee-pipeline-card__out" x-text="'→ '+step.out"></div>
-                                        </template>
-                                        <template x-if="step.status==='working'">
-                                            <div class="vee-progress">
-                                                <div :style="`width:${step.pct}%;`" class="vee-progress__fill" style="background:#ff8800;"></div>
-                                            </div>
-                                        </template>
-                                        <div :style="`color:${step.status==='done'?'#22c55e':step.status==='working'?'#ff8800':'#555'};`"
-                                             class="vee-pipeline-card__status"
-                                             x-text="step.status==='done'?'✓':step.status==='working'?'●':'○'"></div>
                                     </div>
                                     <template x-if="i < orchPipeline.length - 1">
                                         <div class="vee-pipeline__arrow">→</div>
@@ -638,7 +665,7 @@
 
                     {{-- Graph view --}}
                     <div x-show="orchView==='C'" style="flex:1;overflow-y:auto;padding:20px;display:none;">
-                        <div class="vee-graph-label">Topologia de agentes — projeto ativo</div>
+                        <div class="vee-graph-label">Topologia — Test Runner</div>
                         <div class="vee-graph">
                             <svg style="position:absolute;inset:0;width:100%;height:100%;">
                                 <template x-for="([a,b], i) in orchGraphEdges" :key="i">
@@ -651,15 +678,11 @@
                                 <div :style="`left:${node.x}%;top:${node.y}%;border-color:${node.main?'#ff8800':agentStatusColor(node.status||'idle')};background:${node.main?'rgba(255,136,0,.12)':'#222'};color:${node.main?'#ff8800':'#fff'};font-weight:${node.main?'700':'600'};`"
                                      class="vee-graph-node">
                                     <span x-text="node.label"></span>
-                                    <template x-if="node.status">
-                                        <div :style="`color:${agentStatusColor(node.status)};`"
-                                             class="vee-graph-node__status"
-                                             x-text="node.status==='working'?'● ativo':node.status==='done'?'✓ done':'○ idle'"></div>
-                                    </template>
                                 </div>
                             </template>
                         </div>
                     </div>
+
                 </div>
 
                 {{-- ===== TAB: COWORK ===== --}}
@@ -894,6 +917,23 @@ document.addEventListener('alpine:init', () => {
         tab: 'plan',
         orchView: 'A',
         activeAgentId: 'test-runner',
+        orchRunning: {},
+        orchToasts:  [],
+        testCasesByGroup: {
+            'A': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Ol\u00e1, quero saber sobre voc\u00eas' },
+            'B': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Quero marcar um hor\u00e1rio' },
+            'C': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Ol\u00e1 de novo' },
+            'D': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero agendar Avalia\u00e7\u00e3o Gratuita' },
+            'E': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero marcar para amanh\u00e3 \u00e0s 10h com a Ana' },
+            'F': null,
+            'G': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Avalia\u00e7\u00e3o Gratuita, amanh\u00e3 \u00e0s 09h, com a Ana' },
+            'H': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero remarcar meu hor\u00e1rio' },
+            'I': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero cancelar meu agendamento' },
+            'J': null,
+            'K': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero agendar' },
+            'L': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Ol\u00e1' },
+            'M': { route:'agendamento', tenant_id:3, tenant_slug:'mmbeauty', message:'Quero agendar um corte' },
+        },
 
         // ---- call state ----
         callOpen: false,
@@ -1679,6 +1719,66 @@ document.addEventListener('alpine:init', () => {
         // ---- helpers ----
         agentStatusColor(status) {
             return status === 'working' ? '#ff8800' : status === 'done' ? '#22c55e' : '#555';
+        },
+
+        runTestGroup(groupId) {
+            if (this.orchRunning[groupId]) return;
+            const tc = this.testCasesByGroup[groupId];
+            if (!tc) return; // skip (no test case defined)
+
+            this.orchRunning = Object.assign({}, this.orchRunning, { [groupId]: true });
+
+            const self = this;
+            const startedAt = Date.now();
+
+            fetch('https://n8n.mmcriativos.cloud/webhook/WRPPK93a5dttEwzA/webhook/test-runner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    target:      tc.route,
+                    tenant_slug: tc.tenant_slug,
+                    tenant_id:   tc.tenant_id,
+                    user_message: tc.message,
+                    remoteJid:   '5511900000001@s.whatsapp.net',
+                    pushName:    'Tester',
+                    idMessage:   'TEST-' + startedAt,
+                }),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                const verdict = data.status === 'success' ? 'pass' : 'fail';
+                const now = new Date().toTimeString().slice(0, 5);
+                const g = self.orchTestGroups.find(function(g) { return g.id === groupId; });
+                if (g) { g.status = verdict; g.lastRun = now; }
+
+                const toastId = Date.now();
+                self.orchToasts.push({
+                    id:      toastId,
+                    msg:     'Grupo ' + groupId + (verdict === 'pass' ? ' — ✓ Passou' : ' — ✗ Falhou'),
+                    type:    verdict,
+                    groupId: groupId,
+                });
+                setTimeout(function() { self.dismissToast(toastId); }, 6000);
+            })
+            .catch(function(err) {
+                const toastId = Date.now();
+                self.orchToasts.push({
+                    id:      toastId,
+                    msg:     'Grupo ' + groupId + ' — erro: ' + err.message,
+                    type:    'fail',
+                    groupId: groupId,
+                });
+                setTimeout(function() { self.dismissToast(toastId); }, 6000);
+            })
+            .finally(function() {
+                const updated = Object.assign({}, self.orchRunning);
+                delete updated[groupId];
+                self.orchRunning = updated;
+            });
+        },
+
+        dismissToast(toastId) {
+            this.orchToasts = this.orchToasts.filter(function(t) { return t.id !== toastId; });
         },
 
         logLevelColor(level) {
