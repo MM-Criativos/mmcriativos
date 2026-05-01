@@ -1,4 +1,4 @@
-name: 🚀 Deploy para o Servidor (Produção)
+name: Deploy para o Servidor (Producao)
 
 on:
   push:
@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: 🧩 Checkout do repositório
+      - name: Checkout do repositorio
         uses: actions/checkout@v4
 
-      - name: 🔐 Configurar acesso SSH
+      - name: Configurar acesso SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: 🚀 Deploy para o servidor
+      - name: Deploy para o servidor
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -28,34 +28,41 @@ jobs:
           ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'REMOTE'
             set -e
 
-            echo "📡 Conectado ao servidor como $(whoami)"
+            echo "Conectado ao servidor como $(whoami)"
 
-            cd /var/www/mmcriativos || { echo "❌ Diretório não encontrado!"; exit 1; }
+            cd /var/www/mmcriativos || { echo "Diretorio nao encontrado!"; exit 1; }
 
-            echo "📦 Atualizando código do Git..."
+            echo "Atualizando codigo do Git..."
             git config --global --add safe.directory /var/www/mmcriativos
-            git pull origin main || { echo "❌ Falha no git pull"; exit 1; }
+            git pull origin main || { echo "Falha no git pull"; exit 1; }
 
-            echo "🧩 Instalando dependências do Composer..."
-            composer install --no-interaction --prefer-dist --optimize-autoloader || { echo "❌ Falha no composer"; exit 1; }
+            echo "Instalando dependencias do Composer..."
+            composer install --no-interaction --prefer-dist --optimize-autoloader || { echo "Falha no composer"; exit 1; }
 
-            echo "📦 Instalando dependências NPM..."
-            npm ci || npm install || { echo "❌ Falha no npm install"; exit 1; }
+            echo "Instalando dependencias NPM..."
+            npm ci || npm install || { echo "Falha no npm install"; exit 1; }
 
-            echo "🏗️ Rodando Vite build..."
-            npm run build || { echo "❌ Falha no Vite build"; exit 1; }
+            echo "Rodando Vite build..."
+            npm run build || { echo "Falha no Vite build"; exit 1; }
 
-            echo "🔗 Garantindo link de storage..."
+            echo "Garantindo link de storage..."
             php artisan storage:link || true
 
-            echo "🧰 Rodando migrations..."
-            php artisan migrate --force || { echo "❌ Falha nas migrations"; exit 1; }
+            echo "Rodando migrations..."
+            php artisan migrate --force || { echo "Falha nas migrations"; exit 1; }
 
-            echo "🧹 Limpando e otimizando cache..."
+            echo "Limpando e otimizando cache..."
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
 
-            echo "🎉 Deploy concluído com sucesso!"
+            echo "Rebuilding vee-agent Docker image..."
+            cd /var/www/mmcriativos/vee-agent
+            docker build -t easypanel/mm-criativos/vee-agent:latest . || { echo "Falha no docker build vee-agent"; exit 1; }
+
+            echo "Updating vee-agent Swarm service..."
+            docker service update --image easypanel/mm-criativos/vee-agent:latest --force mm-criativos_vee-agent || { echo "Falha no service update"; exit 1; }
+
+            echo "Deploy concluido com sucesso!"
           REMOTE
