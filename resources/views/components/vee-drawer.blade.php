@@ -1,6 +1,9 @@
 {{-- Vee Drawer v3 --}}
 <link rel="stylesheet" href="/css/vee-drawer.css">
 
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 <div
     x-data="veeDrawer()"
     x-on:open-vee.window="openDrawer()"
@@ -580,6 +583,19 @@
 
                         {{-- Cards de grupos --}}
                         <div class="vee-feed-list">
+                            {{-- Skeleton enquanto carrega --}}
+                            <template x-if="orchStatusLoading">
+                                <div style="padding:24px;text-align:center;color:#555;font-size:13px;">
+                                    <div style="display:inline-flex;align-items:center;gap:8px;">
+                                        <span style="display:inline-block;width:14px;height:14px;border:2px solid #ff8800;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>
+                                        Carregando grupos...
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!orchStatusLoading && orchStatusError">
+                                <div style="padding:16px 24px;color:#ef4444;font-size:12px;" x-text="'Erro ao carregar: ' + orchStatusError"></div>
+                            </template>
+                            <template x-if="!orchStatusLoading">
                             <template x-for="item in orchFeed" :key="item.id">
                                 <div :style="`border-left-color:${item.status==='pass'||item.status==='done'?'#22c55e':item.status==='running'||item.status==='working'?'#ff8800':item.status==='fail'?'#ef4444':item.isSkipped?'#555':'#444'};`"
                                      class="vee-content-card">
@@ -638,6 +654,7 @@
 
                                 </div>
                             </template>
+                            </template>{{-- fecha x-if orchStatusLoading --}}
                         </div>
                         {{-- Sem input de chat neste tab --}}
 
@@ -918,6 +935,8 @@ document.addEventListener('alpine:init', () => {
         orchView: 'A',
         activeAgentId: 'test-runner',
         orchRunning: {},
+        orchStatusLoading: false,
+        orchStatusError: null,
         orchToasts:  [],
         testCasesByGroup: {
             'A': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Ol\u00e1, quero saber sobre voc\u00eas' },
@@ -1101,6 +1120,7 @@ document.addEventListener('alpine:init', () => {
             this.$watch('tab', val => {
                 const s = JSON.parse(localStorage.getItem('vee-ui-state') || '{}');
                 localStorage.setItem('vee-ui-state', JSON.stringify({ ...s, tab: val }));
+                if (val === 'orch')  this.loadOrchStatus();
                 if (val === 'logs') this.startLogFeed();
                 if (val !== 'logs') this.stopLogFeed();
                 if (val === 'approvals') {
@@ -1721,6 +1741,71 @@ document.addEventListener('alpine:init', () => {
             return status === 'working' ? '#ff8800' : status === 'done' ? '#22c55e' : '#555';
         },
 
+        loadOrchStatus() {
+            const agentUrl = window.VEE_AGENT_URL;
+            const token    = window.VEE_AGENT_TOKEN;
+            if (!agentUrl) return;
+            this.orchStatusLoading = true;
+            this.orchStatusError   = null;
+            const self = this;
+            fetch(agentUrl + '/orch/status', {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+                signal: AbortSignal.timeout(10000),
+            })
+            .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function(data) {
+                if (data.workflow) {
+                    const wf = data.workflow;
+                    self.orchAgents = self.orchAgents.map(function(a) {
+                        if (a.id === 'test-runner') {
+                            return Object.assign({}, a, {
+                                status: wf.active === true ? 'active' : wf.active === false ? 'idle' : a.status,
+                                task:   wf.active === true ? 'Ativo no n8n' : 'Inativo',
+                            });
+                        }
+                        return a;
+                    });
+                }
+                if (Array.isArray(data.groups)) {
+                    self.orchTestGroups = data.groups.map(function(g) {
+                        return Object.assign({}, g, {
+                            lastRun: g.lastRun || '—',
+                        });
+                    });
+                }
+            })
+            .catch(function(err) {
+                self.orchStatusError = err.message;
+            })
+            .finally(function() {
+                self.orchStatusLoading = false;
+            });
+        },
+
+        saveOrchRun(groupId, status, executionId) {
+            const agentUrl = window.VEE_AGENT_URL;
+            const token    = window.VEE_AGENT_TOKEN;
+            if (!agentUrl) return;
+            const group = this.orchTestGroups.find(function(g) { return g.id === groupId; });
+            fetch(agentUrl + '/orch/runs', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    group_id:     groupId,
+                    status:       status,
+                    execution_id: executionId || null,
+                    route:        group ? group.route : null,
+                    tenant_slug:  group ? group.tenant_slug : null,
+                }),
+            }).catch(function() { /* best-effort */ });
+        },
+
         runTestGroup(groupId) {
             if (this.orchRunning[groupId]) return;
             const tc = this.testCasesByGroup[groupId];
@@ -1751,6 +1836,7 @@ document.addEventListener('alpine:init', () => {
                 const g = self.orchTestGroups.find(function(g) { return g.id === groupId; });
                 if (g) { g.status = verdict; g.lastRun = now; }
 
+                self.saveOrchRun(groupId, verdict, data && data.executionId ? data.executionId : null);
                 const toastId = Date.now();
                 self.orchToasts.push({
                     id:      toastId,

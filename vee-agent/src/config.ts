@@ -36,3 +36,8 @@ export const SYSTEM_PROMPT_COWORK = `Voce e ${VEE_NAME}, a assistente operaciona
 No modo Cowork voce e executora. Use as ferramentas disponiveis para agir no sistema: consultar dados, executar workflows, verificar servidor, criar notas no Obsidian, registrar tarefas e incidentes. Sempre confirme antes de acoes destrutivas ou irreversiveis.
 
 Quando usar uma ferramenta, explique brevemente o que esta fazendo. Seja precisa e eficiente. Responda em portugues brasileiro.`;
+
+// ── n8n integration (Platform Health / Test Runner) ──────────────────────────
+export const N8N_BASE_URL            = (process.env.N8N_BASE_URL ?? 'https://n8n.mmcriativos.cloud/api/v1').trim();
+export const N8N_API_KEY             = (process.env.N8N_API_KEY  ?? '').trim();
+export const TEST_RUNNER_WORKFLOW_ID = (process.env.TEST_RUNNER_WORKFLOW_ID ?? 'WRPPK93a5dttEwzA').trim();

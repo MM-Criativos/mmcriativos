@@ -41,6 +41,23 @@ export async function ensureTables(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
 
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS vee_test_runs (
+        id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        group_id     VARCHAR(10)     NOT NULL,
+        status       ENUM('pass','fail','error') NOT NULL,
+        execution_id VARCHAR(100)    DEFAULT NULL,
+        route        VARCHAR(50)     DEFAULT NULL,
+        tenant_slug  VARCHAR(100)    DEFAULT NULL,
+        message      TEXT            DEFAULT NULL,
+        detail       TEXT            DEFAULT NULL,
+        executed_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_group_id    (group_id),
+        INDEX idx_executed_at (executed_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
     // Add context summary columns if they don't exist yet (idempotent)
     try {
       await conn.execute(`
