@@ -1829,9 +1829,30 @@ document.addEventListener('alpine:init', () => {
                     idMessage:   'TEST-' + startedAt,
                 }),
             })
-            .then(function(r) { return r.json(); })
+            .then(function(r) { return r.text(); })
+            .then(function(t) { return t && t.trim() ? JSON.parse(t) : {}; })
             .then(function(data) {
-                const verdict = data.status === 'success' ? 'pass' : 'fail';
+                // n8n webhook is async: may return empty body or {status:'dispatched'}
+                // Treat empty/dispatched as "running" — status will update via loadOrchStatus()
+                const verdict = data && data.status === 'success' ? 'pass'
+                              : data && data.status === 'fail'    ? 'fail'
+                              : 'dispatched';
+                if (verdict === 'dispatched') {
+                    // Mark group as running; real result comes via /orch/status polling
+                    const g = self.orchTestGroups.find(function(g) { return g.id === groupId; });
+                    if (g) { g.status = 'running'; }
+                    const toastId = Date.now();
+                    self.orchToasts.push({
+                        id:      toastId,
+                        msg:     'Grupo ' + groupId + ' — disparado ✓ (aguardando resultado...)',
+                        type:    'pass',
+                        groupId: groupId,
+                    });
+                    setTimeout(function() { self.dismissToast(toastId); }, 8000);
+                    // Poll /orch/status after 30s to pick up real result
+                    setTimeout(function() { self.loadOrchStatus(); }, 30000);
+                    return;
+                }
                 const now = new Date().toTimeString().slice(0, 5);
                 const g = self.orchTestGroups.find(function(g) { return g.id === groupId; });
                 if (g) { g.status = verdict; g.lastRun = now; }
