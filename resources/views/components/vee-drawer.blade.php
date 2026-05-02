@@ -939,9 +939,9 @@ document.addEventListener('alpine:init', () => {
         orchStatusError: null,
         orchToasts:  [],
         testTenants: {
-            'veetest':   { tenant_id:5, client_id:65, tenant_api_token:'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d', remoteJid:'5511958469546@s.whatsapp.net' },
-            'veetest-b': { tenant_id:5, client_id:71, tenant_api_token:'373bc31cc54ae92e5ff7ff841463896fc9a33f0b1f31d5de96a95c05171a',    remoteJid:'5511958469546@s.whatsapp.net' },
-            'mmbeauty':  { tenant_id:3,                                                                                                       remoteJid:'5511958469546@s.whatsapp.net' },
+            'veetest':   { remoteJid:'5511958469546@s.whatsapp.net' },
+            'veetest-b': { remoteJid:'5511958469546@s.whatsapp.net' },
+            'mmbeauty':  { remoteJid:'5511958469546@s.whatsapp.net' },
         },
         testCasesByGroup: {
             'A': { route:'atendimento', tenant_slug:'veetest',   message:'Ol\u00e1, quero saber sobre voc\u00eas' },
@@ -1821,35 +1821,47 @@ document.addEventListener('alpine:init', () => {
             const self = this;
             const startedAt = Date.now();
 
-            fetch('https://n8n.mmcriativos.cloud/webhook/test-runner', {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            fetch('/vee/orch/test-runner/dispatch', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
                 body: (function() {
                     const t = self.testTenants[tc.tenant_slug] || {};
                     return JSON.stringify({
+                        group_id:         groupId,
+                        test_case:        tc.route === 'agendamento' ? 'existing_user_agendamento' : 'existing_user_atendimento',
                         target:           tc.route,
                         tenant_slug:      tc.tenant_slug,
-                        tenant_id:        t.tenant_id        || null,
-                        client_id:        t.client_id        || null,
-                        tenant_api_token: t.tenant_api_token || null,
                         current_flow:     tc.current_flow    || null,
                         current_step:     tc.current_step    !== undefined ? tc.current_step : null,
                         context_payload:  tc.context_payload || {},
-                        user_message:     tc.message,
+                        user_message:     tc.message || '',
                         remoteJid:        t.remoteJid        || '5511958469546@s.whatsapp.net',
                         pushName:         'Tester',
                         idMessage:        'TEST-' + startedAt,
                     });
                 })(),
             })
-            .then(function(r) { return r.text(); })
-            .then(function(t) { return t && t.trim() ? JSON.parse(t) : {}; })
+            .then(function(r) {
+                return r.text().then(function(t) {
+                    const json = t && t.trim() ? JSON.parse(t) : {};
+                    if (!r.ok) {
+                        const msg = json && (json.message || json.error || json.status) ? (json.message || json.error || json.status) : ('HTTP ' + r.status);
+                        throw new Error(msg);
+                    }
+                    return json;
+                });
+            })
             .then(function(data) {
-                // n8n webhook is async: may return empty body or {status:'dispatched'}
-                // Treat empty/dispatched as "running" — status will update via loadOrchStatus()
-                const verdict = data && data.status === 'success' ? 'pass'
-                              : data && data.status === 'fail'    ? 'fail'
-                              : 'dispatched';
+                const dispatch = data && data.dispatch ? data.dispatch : data;
+                const verdict = dispatch && dispatch.status === 'success' ? 'pass'
+                             : dispatch && dispatch.status === 'fail'    ? 'fail'
+                             : 'dispatched';
                 if (verdict === 'dispatched') {
                     // Mark group as running; real result comes via /orch/status polling
                     const g = self.orchTestGroups.find(function(g) { return g.id === groupId; });
