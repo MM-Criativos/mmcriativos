@@ -1821,7 +1821,7 @@ document.addEventListener('alpine:init', () => {
             const self = this;
             const startedAt = Date.now();
 
-            fetch('https://n8n.mmcriativos.cloud/webhook/WRPPK93a5dttEwzA/webhook/test-runner', {
+            fetch('https://n8n.mmcriativos.cloud/webhook/test-runner', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: (function() {
