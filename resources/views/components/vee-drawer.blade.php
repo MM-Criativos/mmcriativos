@@ -938,20 +938,25 @@ document.addEventListener('alpine:init', () => {
         orchStatusLoading: false,
         orchStatusError: null,
         orchToasts:  [],
+        testTenants: {
+            'veetest':   { tenant_id:5, client_id:65, tenant_api_token:'cb58831c45215bad4afe21402e238b23c3540daee73e82aafa13be491dab7e4d', remoteJid:'5511958469546@s.whatsapp.net' },
+            'veetest-b': { tenant_id:5, client_id:71, tenant_api_token:'373bc31cc54ae92e5ff7ff841463896fc9a33f0b1f31d5de96a95c05171a',    remoteJid:'5511958469546@s.whatsapp.net' },
+            'mmbeauty':  { tenant_id:3,                                                                                                       remoteJid:'5511958469546@s.whatsapp.net' },
+        },
         testCasesByGroup: {
-            'A': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Ol\u00e1, quero saber sobre voc\u00eas' },
-            'B': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Quero marcar um hor\u00e1rio' },
-            'C': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Ol\u00e1 de novo' },
-            'D': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero agendar Avalia\u00e7\u00e3o Gratuita' },
-            'E': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero marcar para amanh\u00e3 \u00e0s 10h com a Ana' },
+            'A': { route:'atendimento', tenant_slug:'veetest',   message:'Ol\u00e1, quero saber sobre voc\u00eas' },
+            'B': { route:'atendimento', tenant_slug:'veetest',   message:'Quero marcar um hor\u00e1rio' },
+            'C': { route:'atendimento', tenant_slug:'veetest',   message:'Ol\u00e1 de novo' },
+            'D': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'',          context_payload:{},                                                          message:'Quero agendar Avalia\u00e7\u00e3o Gratuita' },
+            'E': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'',          context_payload:{},                                                          message:'Quero marcar para amanh\u00e3 \u00e0s 10h com a Ana' },
             'F': null,
-            'G': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Avalia\u00e7\u00e3o Gratuita, amanh\u00e3 \u00e0s 09h, com a Ana' },
-            'H': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero remarcar meu hor\u00e1rio' },
-            'I': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero cancelar meu agendamento' },
+            'G': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'ask_field', context_payload:{},                                                          message:'Avalia\u00e7\u00e3o Gratuita, amanh\u00e3 \u00e0s 09h, com a Ana' },
+            'H': { route:'agendamento', tenant_slug:'veetest-b', current_flow:'reschedule',   current_step:'',          context_payload:{},                                                          message:'Quero remarcar meu hor\u00e1rio' },
+            'I': { route:'agendamento', tenant_slug:'veetest-b', current_flow:'cancellation', current_step:'',          context_payload:{},                                                          message:'Quero cancelar meu agendamento' },
             'J': null,
-            'K': { route:'agendamento', tenant_id:5, tenant_slug:'veetest',  message:'Quero agendar' },
-            'L': { route:'atendimento', tenant_id:5, tenant_slug:'veetest',  message:'Ol\u00e1' },
-            'M': { route:'agendamento', tenant_id:3, tenant_slug:'mmbeauty', message:'Quero agendar um corte' },
+            'K': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'ask_field', context_payload:{service_name:'Avalia\u00e7\u00e3o Gratuita',professional_name:'Ana'}, message:'Quero agendar' },
+            'L': { route:'atendimento', tenant_slug:'veetest',   message:'Ol\u00e1' },
+            'M': { route:'agendamento', tenant_slug:'mmbeauty',  current_flow:'schedule',     current_step:'',          context_payload:{},                                                          message:'Quero agendar um corte' },
         },
 
         // ---- call state ----
@@ -1819,15 +1824,23 @@ document.addEventListener('alpine:init', () => {
             fetch('https://n8n.mmcriativos.cloud/webhook/WRPPK93a5dttEwzA/webhook/test-runner', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    target:      tc.route,
-                    tenant_slug: tc.tenant_slug,
-                    tenant_id:   tc.tenant_id,
-                    user_message: tc.message,
-                    remoteJid:   '5511958469546@s.whatsapp.net',
-                    pushName:    'Tester',
-                    idMessage:   'TEST-' + startedAt,
-                }),
+                body: (function() {
+                    const t = self.testTenants[tc.tenant_slug] || {};
+                    return JSON.stringify({
+                        target:           tc.route,
+                        tenant_slug:      tc.tenant_slug,
+                        tenant_id:        t.tenant_id        || null,
+                        client_id:        t.client_id        || null,
+                        tenant_api_token: t.tenant_api_token || null,
+                        current_flow:     tc.current_flow    || null,
+                        current_step:     tc.current_step    !== undefined ? tc.current_step : null,
+                        context_payload:  tc.context_payload || {},
+                        user_message:     tc.message,
+                        remoteJid:        t.remoteJid        || '5511958469546@s.whatsapp.net',
+                        pushName:         'Tester',
+                        idMessage:        'TEST-' + startedAt,
+                    });
+                })(),
             })
             .then(function(r) { return r.text(); })
             .then(function(t) { return t && t.trim() ? JSON.parse(t) : {}; })
