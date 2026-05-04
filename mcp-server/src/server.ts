@@ -32,7 +32,7 @@ import {
 
 type CapabilityDescriptor = {
   name: string;
-  phase: "v0.1" | "v0.2" | "v0.3" | "v0.4" | "future";
+  phase: "v0.1" | "v0.2" | "v0.3" | "v0.4" | "v0.5" | "future";
   permission: "read_only" | "safe_execute" | "approval_required" | "restricted";
   status: "enabled" | "planned";
 };
@@ -479,6 +479,13 @@ const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_db_attach_task_to_project", phase: "v0.2", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_mark_task_as_blocked", phase: "v0.2", permission: "safe_execute", status: "enabled" },
   { name: "vee_db_mark_task_as_done", phase: "v0.2", permission: "safe_execute", status: "enabled" },
+  // Project Management Tools — v0.5
+  { name: "vee_db_create_project", phase: "v0.5", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_create_project_task", phase: "v0.5", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_list_project_tasks", phase: "v0.5", permission: "read_only", status: "enabled" },
+  { name: "vee_db_update_task_status", phase: "v0.5", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_set_project_stage",  phase: "v0.5", permission: "safe_execute", status: "enabled" },
+  { name: "vee_db_execute_plan",       phase: "v0.5", permission: "safe_execute", status: "enabled" },
   { name: "vee_mmcc_list_tenants", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_fs_list_directory", phase: "v0.2", permission: "read_only", status: "enabled" },
   { name: "vee_fs_read_file", phase: "v0.2", permission: "read_only", status: "enabled" },
@@ -6433,7 +6440,549 @@ function createServer(): McpServer {
       })
   );
 
-  // ─── GitHub Tools — v0.4 ────────────────────────────────────────────────────
+  // ─── Project Management Tools — v0.5 ────────────────────────────────────────
+
+  server.registerTool(
+    "vee_db_create_project",
+    {
+      title: "Vee DB Create Project",
+      description: "Creates a new project. Resolves client and service by name. Requires DB_WRITE_ENABLED=true.",
+      inputSchema: {
+        name: z.string().min(1).describe("Project name"),
+        client_name: z.string().min(1).describe("Client name or slug (resolved to client_id)"),
+        service_name: z.string().min(1).describe("Service name or slug (resolved to service_id)"),
+        summary: z.string().optional().describe("Optional project summary")
+      }
+    },
+    async ({ name, client_name, service_name, summary }) =>
+      runAuditedTool({
+        toolName: "vee_db_create_project",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { name, client_name, service_name },
+        errorContext: "Failed to create project",
+        handler: async () => {
+          const { adapter: writeAdapter } = resolveWriteAdapter("mmcriativos");
+          const { adapter: readAdapter } = resolveReadOnlyAdapter("mmcriativos");
+
+          // Resolve client
+          const clientRows = await readAdapter.executeStructuredQuery(
+            { dbTarget: "mmcriativos", table: "clients", where: [{ column: "name", operator: "LIKE", value: `%${client_name}%` }], limit: 1 },
+            "vee:mmcriativos:clients"
+          );
+          const clientRow = clientRows.rows[0];
+          if (!clientRow) throw new Error(`Client not found: "${client_name}"`);
+          const clientId = clientRow["id"] as number;
+
+          // Resolve service
+          const serviceRows = await readAdapter.executeStructuredQuery(
+            { dbTarget: "mmcriativos", table: "services", where: [{ column: "name", operator: "LIKE", value: `%${service_name}%` }], limit: 1 },
+            "vee:mmcriativos:services"
+          );
+          const serviceRow = serviceRows.rows[0];
+          if (!serviceRow) throw new Error(`Service not found: "${service_name}"`);
+          const serviceId = serviceRow["id"] as number;
+
+          // Generate slug
+          const baseSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+          let slug = baseSlug;
+          let attempt = 1;
+          while (true) {
+            const existing = await readAdapter.executeStructuredQuery(
+              { dbTarget: "mmcriativos", table: "projects", where: [{ column: "slug", operator: "=", value: slug }], limit: 1 },
+              "vee:mmcriativos:projects:slug-check"
+            );
+            if (existing.rows.length === 0) break;
+            slug = `${baseSlug}-${++attempt}`;
+          }
+
+          const writeResult = await writeAdapter.executeStructuredWrite({
+            dbTarget: "mmcriativos",
+            operation: "INSERT",
+            table: "projects",
+            data: { name, slug, client_id: clientId, service_id: serviceId, summary: summary ?? null, status: "active", current_stage: "planning" },
+            reason: "vee_db_create_project"
+          });
+
+          const payload = { ok: true, project: { id: writeResult.after?.["id"], name, slug, client_id: clientId, service_id: serviceId, status: "active", current_stage: "planning" } };
+          return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }], structuredContent: payload };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_create_project_task",
+    {
+      title: "Vee DB Create Project Task",
+      description: "Creates a task inside a project (Etapa 3 — Desenvolvimento). Resolves skill/competency by name (best-effort, nullable). Requires DB_WRITE_ENABLED=true.",
+      inputSchema: {
+        project_slug_or_id: z.string().min(1).describe("Project slug or numeric ID"),
+        title: z.string().min(1).describe("Task title"),
+        description: z.string().optional().describe("Task description"),
+        status: z.enum(["pending", "in_progress", "done"]).optional().describe("Task status. Default: pending"),
+        skill_name: z.string().optional().describe("Skill name for best-effort resolution (e.g. Design, Dev)"),
+        competency_name: z.string().optional().describe("Competency name for best-effort resolution (e.g. UI, Front-end)"),
+        assigned_to: z.number().int().positive().optional().describe("User ID to assign the task to"),
+        planned_at: z.string().optional().describe("Planned date (ISO 8601)")
+      }
+    },
+    async ({ project_slug_or_id, title, description, status, skill_name, competency_name, assigned_to, planned_at }) =>
+      runAuditedTool({
+        toolName: "vee_db_create_project_task",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { project_slug_or_id, title, status, skill_name, competency_name },
+        errorContext: "Failed to create project task",
+        handler: async () => {
+          const { adapter: writeAdapter } = resolveWriteAdapter("mmcriativos");
+          const { adapter: readAdapter } = resolveReadOnlyAdapter("mmcriativos");
+
+          // Resolve project
+          const isNumeric = /^\d+$/.test(project_slug_or_id);
+          const projectWhere = isNumeric
+            ? [{ column: "id", operator: "=" as const, value: Number(project_slug_or_id) }]
+            : [{ column: "slug", operator: "=" as const, value: project_slug_or_id }];
+          const projectRows = await readAdapter.executeStructuredQuery(
+            { dbTarget: "mmcriativos", table: "projects", where: projectWhere, limit: 1 },
+            "vee:mmcriativos:projects"
+          );
+          const project = projectRows.rows[0];
+          if (!project) throw new Error(`Project not found: "${project_slug_or_id}"`);
+          const projectId = project["id"] as number;
+
+          // Best-effort skill resolution
+          let skillId: number | null = null;
+          let competencyId: number | null = null;
+          if (skill_name) {
+            const skillRows = await readAdapter.executeStructuredQuery(
+              { dbTarget: "mmcriativos", table: "skills", where: [{ column: "name", operator: "LIKE", value: `%${skill_name}%` }], limit: 1 },
+              "vee:mmcriativos:skills"
+            );
+            if (skillRows.rows[0]) {
+              skillId = skillRows.rows[0]["id"] as number;
+              if (competency_name) {
+                const compWhere: WhereCondition[] = [
+                  { column: "skill_id", operator: "=", value: skillId },
+                  { column: "competency", operator: "LIKE", value: `%${competency_name}%` }
+                ];
+                const compRows = await readAdapter.executeStructuredQuery(
+                  { dbTarget: "mmcriativos", table: "skill_competencies", where: compWhere, limit: 1 },
+                  "vee:mmcriativos:skill_competencies"
+                );
+                if (compRows.rows[0]) competencyId = compRows.rows[0]["id"] as number;
+              }
+            }
+          }
+
+          const taskStatus = status ?? "pending";
+          const completedAt = taskStatus === "done" ? new Date().toISOString() : null;
+
+          const writeResult = await writeAdapter.executeStructuredWrite({
+            dbTarget: "mmcriativos",
+            operation: "INSERT",
+            table: "project_tasks",
+            data: { project_id: projectId, skill_id: skillId, skill_competency_id: competencyId, title, description: description ?? null, status: taskStatus, assigned_to: assigned_to ?? null, planned_at: planned_at ?? null, completed_at: completedAt },
+            reason: "vee_db_create_project_task"
+          });
+
+          const payload = {
+            ok: true,
+            task: {
+              id: writeResult.after?.["id"],
+              project_id: projectId,
+              title,
+              status: taskStatus,
+              skill_id: skillId,
+              skill_competency_id: competencyId,
+              assigned_to: assigned_to ?? null
+            }
+          };
+          return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }], structuredContent: payload };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_list_project_tasks",
+    {
+      title: "Vee DB List Project Tasks",
+      description: "Lists tasks of a project, optionally filtered by status. Returns id, title, status, skill, competency, assigned_to.",
+      inputSchema: {
+        project_slug_or_id: z.string().min(1).describe("Project slug or numeric ID"),
+        status: z.enum(["pending", "in_progress", "done"]).optional().describe("Filter by status. Returns all if omitted.")
+      }
+    },
+    async ({ project_slug_or_id, status }) =>
+      runAuditedTool({
+        toolName: "vee_db_list_project_tasks",
+        permission: "read_only",
+        isWrite: false,
+        args: { project_slug_or_id, status },
+        errorContext: "Failed to list project tasks",
+        handler: async () => {
+          const { adapter: readAdapter } = resolveReadOnlyAdapter("mmcriativos");
+
+          const isNumeric = /^\d+$/.test(project_slug_or_id);
+          const projectWhere = isNumeric
+            ? [{ column: "id", operator: "=" as const, value: Number(project_slug_or_id) }]
+            : [{ column: "slug", operator: "=" as const, value: project_slug_or_id }];
+          const projectRows = await readAdapter.executeStructuredQuery(
+            { dbTarget: "mmcriativos", table: "projects", where: projectWhere, limit: 1 },
+            "vee:mmcriativos:projects"
+          );
+          const project = projectRows.rows[0];
+          if (!project) throw new Error(`Project not found: "${project_slug_or_id}"`);
+          const projectId = project["id"] as number;
+
+          const taskWhere: WhereCondition[] = [{ column: "project_id", operator: "=", value: projectId }];
+          if (status) taskWhere.push({ column: "status", operator: "=", value: status });
+
+          const tasks = await readAdapter.executeStructuredQuery(
+            { dbTarget: "mmcriativos", table: "project_tasks", where: taskWhere, orderBy: [{ column: "id", direction: "ASC" }], limit: 100 },
+            "vee:mmcriativos:project_tasks"
+          );
+
+          const payload = { ok: true, project_id: projectId, project_name: project["name"], total: tasks.rows.length, tasks: tasks.rows };
+          return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }], structuredContent: payload };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_update_task_status",
+    {
+      title: "Vee DB Update Task Status",
+      description: "Updates the status of a project task (pending | in_progress | done). Sets completed_at when done. Requires DB_WRITE_ENABLED=true.",
+      inputSchema: {
+        task_id: z.number().int().positive().describe("Task ID"),
+        status: z.enum(["pending", "in_progress", "done"]).describe("New task status"),
+        notes: z.string().optional().describe("Optional notes about the status change")
+      }
+    },
+    async ({ task_id, status, notes }) =>
+      runAuditedTool({
+        toolName: "vee_db_update_task_status",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { task_id, status },
+        errorContext: `Failed to update status for task #${task_id}`,
+        handler: async () => {
+          const { adapter: writeAdapter } = resolveWriteAdapter("mmcriativos");
+          const completedAt = status === "done" ? new Date().toISOString() : null;
+
+          await writeAdapter.executeStructuredWrite({
+            dbTarget: "mmcriativos",
+            operation: "UPDATE",
+            table: "project_tasks",
+            data: { status, completed_at: completedAt },
+            where: [{ column: "id", operator: "=" as const, value: task_id }],
+            reason: "vee_db_update_task_status"
+          });
+
+          if (notes) {
+            await writeAdapter.saveExecutionNote({
+              noteType: "summary",
+              title: `Task #${task_id} → ${status}`,
+              content: notes,
+              toolName: "vee_db_update_task_status"
+            });
+          }
+
+          const payload = { ok: true, task_id, status, completed_at: completedAt };
+          return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }], structuredContent: payload };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_db_set_project_stage",
+    {
+      title: "Vee DB Set Project Stage",
+      description: "Sets the current stage of a project wizard (planning | creation | development | delivery). Records a stage transition event. Requires DB_WRITE_ENABLED=true.",
+      inputSchema: {
+        project_slug_or_id: z.string().min(1).describe("Project slug or numeric ID"),
+        stage: z.enum(["planning", "creation", "development", "delivery"]).describe("Target stage"),
+        notes: z.string().optional().describe("Optional notes about the stage change")
+      }
+    },
+    async ({ project_slug_or_id, stage, notes }) =>
+      runAuditedTool({
+        toolName: "vee_db_set_project_stage",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { project_slug_or_id, stage },
+        errorContext: `Failed to set stage for project "${project_slug_or_id}"`,
+        handler: async () => {
+          const { adapter: writeAdapter } = resolveWriteAdapter("mmcriativos");
+          const { adapter: readAdapter } = resolveReadOnlyAdapter("mmcriativos");
+
+          const isNumeric = /^\d+$/.test(project_slug_or_id);
+          const projectWhere = isNumeric
+            ? [{ column: "id", operator: "=" as const, value: Number(project_slug_or_id) }]
+            : [{ column: "slug", operator: "=" as const, value: project_slug_or_id }];
+          const projectRows = await readAdapter.executeStructuredQuery(
+            { dbTarget: "mmcriativos", table: "projects", where: projectWhere, limit: 1 },
+            "vee:mmcriativos:projects"
+          );
+          const project = projectRows.rows[0];
+          if (!project) throw new Error(`Project not found: "${project_slug_or_id}"`);
+          const projectId = project["id"] as number;
+          const previousStage = project["current_stage"] as string ?? "planning";
+
+          await writeAdapter.executeStructuredWrite({
+            dbTarget: "mmcriativos",
+            operation: "UPDATE",
+            table: "projects",
+            data: { current_stage: stage },
+            where: [{ column: "id", operator: "=" as const, value: projectId }],
+            reason: "vee_db_set_project_stage"
+          });
+
+          await writeAdapter.recordProjectEvent({
+            entityType: "project",
+            entityId: projectId,
+            actor: "vee",
+            action: "stage_transition",
+            payload: { from: previousStage, to: stage, notes: notes ?? null }
+          });
+
+          const payload = { ok: true, project_id: projectId, previous_stage: previousStage, current_stage: stage };
+          return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }], structuredContent: payload };
+        }
+      })
+  );
+
+  // ─── Project Executor — v0.5 ────────────────────────────────────────────────
+
+  server.registerTool(
+    "vee_db_execute_plan",
+    {
+      title: "Vee DB Execute Plan",
+      description: "Executes a batch plan of project/task operations in sequence without a round-trip per step. Supported ops: create_project, create_task, update_task_status, set_project_stage, list_tasks. Logs execution in vee_execution_notes. Best-effort: errors in individual ops are recorded but execution continues.",
+      inputSchema: {
+        plan: z.array(
+          z.object({
+            op: z.enum(["create_project", "create_task", "update_task_status", "set_project_stage", "list_tasks"])
+              .describe("Operation type"),
+            params: z.record(z.string(), z.unknown())
+              .describe("Parameters for the operation (same fields as the individual tools)")
+          })
+        ).min(1).describe("Ordered list of operations to execute"),
+        plan_title: z.string().optional().describe("Optional label for this plan (used in the execution log)"),
+        log_project_slug_or_id: z.string().optional().describe("Project to attach the execution log to (optional)")
+      }
+    },
+    async ({ plan, plan_title, log_project_slug_or_id }) =>
+      runAuditedTool({
+        toolName: "vee_db_execute_plan",
+        permission: "safe_execute",
+        isWrite: true,
+        args: { plan_title, total_ops: plan.length },
+        errorContext: "Failed to execute plan",
+        handler: async () => {
+          const { adapter: writeAdapter } = resolveWriteAdapter("mmcriativos");
+          const { adapter: readAdapter }  = resolveReadOnlyAdapter("mmcriativos");
+
+          const results: Array<{
+            op: string;
+            index: number;
+            status: "ok" | "error";
+            result?: unknown;
+            error?: string;
+          }> = [];
+
+          // Resolve log project if provided
+          let logProjectSlug: string | undefined = log_project_slug_or_id;
+
+          for (let i = 0; i < plan.length; i++) {
+            const { op, params } = plan[i];
+            try {
+              let opResult: unknown;
+
+              switch (op) {
+                case "create_project": {
+                  const { name, client_name, service_name, summary } = params as Record<string, string>;
+                  let clientId: number | null = null;
+                  if (client_name) {
+                    const cr = await readAdapter.executeStructuredQuery(
+                      { dbTarget: "mmcriativos", table: "clients", where: [{ column: "name", operator: "LIKE", value: `%${client_name}%` }], limit: 1 },
+                      "vee:plan:clients"
+                    );
+                    clientId = (cr.rows[0]?.["id"] as number) ?? null;
+                  }
+                  let serviceId: number | null = null;
+                  if (service_name) {
+                    const sr = await readAdapter.executeStructuredQuery(
+                      { dbTarget: "mmcriativos", table: "services", where: [{ column: "name", operator: "LIKE", value: `%${service_name}%` }], limit: 1 },
+                      "vee:plan:services"
+                    );
+                    serviceId = (sr.rows[0]?.["id"] as number) ?? null;
+                  }
+                  const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                  let slug = baseSlug;
+                  let attempt = 1;
+                  while (true) {
+                    const ex = await readAdapter.executeStructuredQuery(
+                      { dbTarget: "mmcriativos", table: "projects", where: [{ column: "slug", operator: "=", value: slug }], limit: 1 },
+                      "vee:plan:projects:slug-check"
+                    );
+                    if (ex.rows.length === 0) break;
+                    slug = `${baseSlug}-${++attempt}`;
+                  }
+                  const wr = await writeAdapter.executeStructuredWrite({
+                    dbTarget: "mmcriativos",
+                    operation: "INSERT",
+                    table: "projects",
+                    data: { name, slug, client_id: clientId, service_id: serviceId, summary: summary ?? null, status: "active", current_stage: "planning" },
+                    reason: "vee_db_execute_plan:create_project"
+                  });
+                  const newId = wr.after?.["id"] as number;
+                  opResult = { id: newId, slug };
+                  if (!logProjectSlug) logProjectSlug = slug;
+                  break;
+                }
+
+                case "create_task": {
+                  const { project_slug_or_id, title, description, skill_name, competency_name, assigned_to, planned_at, status: taskStatus }
+                    = params as Record<string, string>;
+                  const isNum = /^\d+$/.test(String(project_slug_or_id));
+                  const pr = await readAdapter.executeStructuredQuery(
+                    { dbTarget: "mmcriativos", table: "projects", where: [{ column: isNum ? "id" : "slug", operator: "=", value: isNum ? Number(project_slug_or_id) : project_slug_or_id }], limit: 1 },
+                    "vee:plan:projects"
+                  );
+                  if (!pr.rows[0]) throw new Error(`Project "${project_slug_or_id}" not found`);
+                  const projectId = pr.rows[0]["id"] as number;
+                  let skillId: number | null = null;
+                  if (skill_name) {
+                    const sr = await readAdapter.executeStructuredQuery(
+                      { dbTarget: "mmcriativos", table: "skills", where: [{ column: "name", operator: "LIKE", value: `%${skill_name}%` }], limit: 1 },
+                      "vee:plan:skills"
+                    );
+                    skillId = (sr.rows[0]?.["id"] as number) ?? null;
+                  }
+                  let competencyId: number | null = null;
+                  if (competency_name && skillId) {
+                    const cr = await readAdapter.executeStructuredQuery(
+                      { dbTarget: "mmcriativos", table: "skill_competencies", where: [{ column: "skill_id", operator: "=", value: skillId }, { column: "competency", operator: "LIKE", value: `%${competency_name}%` }], limit: 1 },
+                      "vee:plan:skill_competencies"
+                    );
+                    competencyId = (cr.rows[0]?.["id"] as number) ?? null;
+                  }
+                  const finalStatus = taskStatus ?? "pending";
+                  const completedAt = finalStatus === "done" ? new Date().toISOString() : null;
+                  const tw = await writeAdapter.executeStructuredWrite({
+                    dbTarget: "mmcriativos",
+                    operation: "INSERT",
+                    table: "project_tasks",
+                    data: { project_id: projectId, title, description: description ?? null, skill_id: skillId, skill_competency_id: competencyId, assigned_to: assigned_to ?? null, planned_at: planned_at ?? null, status: finalStatus, completed_at: completedAt },
+                    reason: "vee_db_execute_plan:create_task"
+                  });
+                  opResult = { id: tw.after?.["id"], project_id: projectId, status: finalStatus };
+                  if (!logProjectSlug) logProjectSlug = project_slug_or_id;
+                  break;
+                }
+
+                case "update_task_status": {
+                  const { task_id, status: newStatus } = params as Record<string, string>;
+                  const completedAt = newStatus === "done" ? new Date().toISOString() : null;
+                  await writeAdapter.executeStructuredWrite({
+                    dbTarget: "mmcriativos",
+                    operation: "UPDATE",
+                    table: "project_tasks",
+                    data: { status: newStatus, completed_at: completedAt },
+                    where: [{ column: "id", operator: "=" as const, value: Number(task_id) }],
+                    reason: "vee_db_execute_plan:update_task_status"
+                  });
+                  opResult = { task_id: Number(task_id), status: newStatus };
+                  break;
+                }
+
+                case "set_project_stage": {
+                  const { project_slug_or_id, stage, notes } = params as Record<string, string>;
+                  const isNum = /^\d+$/.test(String(project_slug_or_id));
+                  const pr = await readAdapter.executeStructuredQuery(
+                    { dbTarget: "mmcriativos", table: "projects", where: [{ column: isNum ? "id" : "slug", operator: "=", value: isNum ? Number(project_slug_or_id) : project_slug_or_id }], limit: 1 },
+                    "vee:plan:projects:stage"
+                  );
+                  if (!pr.rows[0]) throw new Error(`Project "${project_slug_or_id}" not found`);
+                  const projId = pr.rows[0]["id"] as number;
+                  const previousStage = pr.rows[0]["current_stage"] as string ?? "planning";
+                  await writeAdapter.executeStructuredWrite({
+                    dbTarget: "mmcriativos",
+                    operation: "UPDATE",
+                    table: "projects",
+                    data: { current_stage: stage },
+                    where: [{ column: "id", operator: "=" as const, value: projId }],
+                    reason: "vee_db_execute_plan:set_project_stage"
+                  });
+                  await writeAdapter.recordProjectEvent({
+                    entityType: "project",
+                    entityId: projId,
+                    actor: "vee",
+                    action: "stage_transition",
+                    payload: { from: previousStage, to: stage, notes: notes ?? null }
+                  });
+                  opResult = { project_id: projId, from: previousStage, to: stage };
+                  if (!logProjectSlug) logProjectSlug = project_slug_or_id;
+                  break;
+                }
+
+                case "list_tasks": {
+                  const { project_slug_or_id, status: statusFilter } = params as Record<string, string>;
+                  const isNum = /^\d+$/.test(String(project_slug_or_id));
+                  const pr = await readAdapter.executeStructuredQuery(
+                    { dbTarget: "mmcriativos", table: "projects", where: [{ column: isNum ? "id" : "slug", operator: "=", value: isNum ? Number(project_slug_or_id) : project_slug_or_id }], limit: 1 },
+                    "vee:plan:projects:list"
+                  );
+                  if (!pr.rows[0]) throw new Error(`Project "${project_slug_or_id}" not found`);
+                  const projId = pr.rows[0]["id"] as number;
+                  const taskWhere: WhereCondition[] = [{ column: "project_id", operator: "=", value: projId }];
+                  if (statusFilter) taskWhere.push({ column: "status", operator: "=", value: statusFilter });
+                  const tr = await readAdapter.executeStructuredQuery(
+                    { dbTarget: "mmcriativos", table: "project_tasks", where: taskWhere },
+                    "vee:plan:project_tasks"
+                  );
+                  opResult = { project: pr.rows[0]["name"], count: tr.rows.length, tasks: tr.rows };
+                  if (!logProjectSlug) logProjectSlug = project_slug_or_id;
+                  break;
+                }
+
+                default:
+                  throw new Error(`Unknown operation: ${op}`);
+              }
+
+              results.push({ op, index: i, status: "ok", result: opResult });
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              results.push({ op, index: i, status: "error", error: msg });
+            }
+          }
+
+          const successCount = results.filter(r => r.status === "ok").length;
+          const errorCount   = results.filter(r => r.status === "error").length;
+
+          await writeAdapter.saveExecutionNote({
+            noteType: "summary",
+            title: plan_title ?? `Plano executado: ${plan.length} operações`,
+            content: `Executadas ${plan.length} operações. Sucesso: ${successCount}, Erros: ${errorCount}.`,
+            toolName: "vee_db_execute_plan",
+            projectSlugOrId: logProjectSlug,
+            meta: { plan_title, results }
+          });
+
+          const payload = {
+            plan_title:   plan_title ?? null,
+            total:        plan.length,
+            success:      successCount,
+            errors:       errorCount,
+            results
+          };
+          return { content: [{ type: "text", text: JSON.stringify(payload, null, 2) }], structuredContent: payload };
+        }
+      })
+  );
+
+  // ─── GitHub Tools — v0.4 ─────��──────────────────────────────────────────────
 
   server.registerTool(
     "vee_github_list_repos",

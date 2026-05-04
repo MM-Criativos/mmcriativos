@@ -225,6 +225,20 @@ const BASE_TABLE_POLICIES_MMCRIATIVOS: Record<string, TablePolicy> = {
     sensitive: false,
     writeMode: "safe_execute"
   },
+  skills: {
+    table: "skills",
+    allowedColumns: ["id", "name", "slug", "created_at", "updated_at"],
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "read_only"
+  },
+  skill_competencies: {
+    table: "skill_competencies",
+    allowedColumns: ["id", "skill_id", "competency", "description", "created_at", "updated_at"],
+    blockedColumns: [],
+    sensitive: false,
+    writeMode: "read_only"
+  },
   appointments: {
     table: "appointments",
     allowedColumns: "*",

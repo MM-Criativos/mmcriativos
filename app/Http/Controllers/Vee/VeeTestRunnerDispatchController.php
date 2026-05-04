@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class VeeTestRunnerDispatchController extends Controller
@@ -90,10 +91,7 @@ class VeeTestRunnerDispatchController extends Controller
             $payload['action'] = 'req_scheduling';
         }
 
-        $webhookUrl = trim((string) config('services.n8n.webhook_test_runner', ''));
-        if ($webhookUrl === '') {
-            $webhookUrl = 'https://n8n.mmcriativos.cloud/webhook/test-runner';
-        }
+        $webhookUrl = $this->resolveTestRunnerWebhookUrl();
 
         $response = Http::timeout(20)
             ->retry(2, 300)
@@ -107,11 +105,28 @@ class VeeTestRunnerDispatchController extends Controller
                 'message' => 'Falha ao disparar webhook do Test Runner.',
                 'webhook_status' => $response->status(),
                 'webhook_body' => $response->body(),
+                'webhook_url' => $webhookUrl,
                 'payload' => $payload,
             ], 502);
         }
 
         $json = $response->json();
+        if (! is_array($json) || ($json['status'] ?? null) !== 'success') {
+            Log::warning('Vee Test Runner dispatch invalid webhook response', [
+                'webhook_url' => $webhookUrl,
+                'http_status' => $response->status(),
+                'body_preview' => Str::limit(trim((string) $response->body()), 500),
+            ]);
+
+            return response()->json([
+                'status' => 'fail',
+                'message' => 'Webhook respondeu sem formato esperado do Test Runner.',
+                'webhook_url' => $webhookUrl,
+                'webhook_status' => $response->status(),
+                'webhook_body' => Str::limit(trim((string) $response->body()), 5000),
+                'payload' => $payload,
+            ], 502);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -249,6 +264,31 @@ class VeeTestRunnerDispatchController extends Controller
 
         if (Str::contains($configured, ['.test', 'localhost', '127.0.0.1'])) {
             return 'https://mmcc.mmcriativos.cloud';
+        }
+
+        if (Str::contains($configured, 'mmcriativos.cloud') && ! Str::contains($configured, 'mmcc.')) {
+            return 'https://mmcc.mmcriativos.cloud';
+        }
+
+        return rtrim($configured, '/');
+    }
+
+    private function resolveTestRunnerWebhookUrl(): string
+    {
+        $default = 'https://n8n.mmcriativos.cloud/webhook/test-runner';
+        $configured = trim((string) config('services.n8n.webhook_test_runner', ''));
+
+        if ($configured === '') {
+            return $default;
+        }
+
+        // Legacy URL format used before the webhook path stabilization.
+        if (Str::contains($configured, '/webhook/WRPPK93a5dttEwzA/webhook/test-runner')) {
+            return $default;
+        }
+
+        if (! Str::contains($configured, '/webhook/test-runner')) {
+            return $default;
         }
 
         return rtrim($configured, '/');
