@@ -28,6 +28,38 @@
     .sidebar a.active-page [data-lucide] {
         stroke: #ff8800;
     }
+
+    /* ── Sidebar scroll fix ────────────────────────────────────
+       Garante que o menu-area ocupe o espaço restante e role
+       quando o conteúdo ultrapassa a altura da tela.
+    ────────────────────────────────────────────────────────── */
+    .sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    .sidebar-menu-area {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    /* scrollbar discreta no sidebar */
+    .sidebar-menu-area::-webkit-scrollbar {
+        width: 4px;
+    }
+    .sidebar-menu-area::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sidebar-menu-area::-webkit-scrollbar-thumb {
+        background: rgba(255,136,0,0.35);
+        border-radius: 4px;
+    }
+    .sidebar-menu-area::-webkit-scrollbar-thumb:hover {
+        background: rgba(255,136,0,0.65);
+    }
 </style>
 
 <aside class="sidebar">
@@ -181,6 +213,16 @@
                     <span>Empresas</span>
                 </a>
             </li>
+
+            @if (in_array(Auth::user()->role, ['admin', 'comercial']))
+            <li>
+                <a href="{{ route('admin.commercial.prospeccao.index') }}"
+                   class="{{ request()->is('admin/mmcloud/prospeccao*') ? 'active-page' : '' }}">
+                    <i data-lucide="crosshair" class="mr-2"></i>
+                    <span>Prospecção</span>
+                </a>
+            </li>
+            @endif
         </ul>
     </div>
 </aside>

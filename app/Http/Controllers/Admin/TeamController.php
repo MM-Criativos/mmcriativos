@@ -83,14 +83,16 @@ class TeamController extends Controller
 
     public function updateRole(Request $request, User $user)
     {
-        $data = $request->validate(['role' => ['required', 'in:admin,user']]);
+        $data = $request->validate(['role' => ['required', 'in:admin,comercial,user']]);
+
         // Evita perder o último admin
-        if ($user->role === 'admin' && $data['role'] === 'user') {
+        if ($user->role === 'admin' && in_array($data['role'], ['user', 'comercial'])) {
             $otherAdmins = User::where('role', 'admin')->where('id', '!=', $user->id)->count();
             if ($otherAdmins === 0) {
                 return back()->with('status', 'É necessário manter pelo menos um administrador.');
             }
         }
+
         $user->role = $data['role'];
         $user->save();
         return back()->with('status', 'Cargo atualizado.');

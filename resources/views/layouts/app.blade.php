@@ -88,14 +88,14 @@ $watch('darkMode', value => {
     {{-- Scripts --}}
     @include('layouts.components.script')
 
-    {{-- Vee Agent Config --}}
+    {{-- Vee Agent Config + Drawer — somente admin --}}
+    @if (auth()->user()?->role === 'admin')
     <script>
         window.VEE_AGENT_URL   = '{{ config('vee.agent_url') }}';
         window.VEE_AGENT_TOKEN = '{{ config('vee.agent_token') }}';
     </script>
-
-    {{-- Vee Drawer --}}
     <x-vee-drawer />
+    @endif
 </body>
 
 </html>

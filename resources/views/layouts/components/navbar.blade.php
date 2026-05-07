@@ -123,12 +123,14 @@
         <!-- 🔹 RIGHT: ACTIONS + PROFILE -->
         <div class="flex items-center gap-4">
 
-            <!-- Vee Button -->
+            {{-- Vee Button — somente admin --}}
+            @if (auth()->user()?->role === 'admin')
             <button @click="$dispatch('open-vee')"
                 class="w-10 h-10 rounded-xl bg-[#ff8800] text-white flex items-center justify-center
                        shadow-sm hover:bg-orange-600 transition" title="Abrir Vee">
                 <i data-lucide="bot" style="stroke:#fff;width:1.125rem;height:1.125rem;"></i>
             </button>
+            @endif
 
             <!-- Theme Toggle -->
             <button id="theme-toggle"

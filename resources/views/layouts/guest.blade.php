@@ -6,35 +6,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? config('app.name', 'Laravel') }}</title>
+    <title>{{ $title ?? 'MM Criativos' }}</title>
 
-    <!-- Favicons -->
+    {{-- Favicons --}}
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/images/favicons/apple-touch-icon.png') }}" />
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/favicons/mmfavicon.png') }}" />
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/favicons/mmfavicon.png') }}" />
     <link rel="manifest" href="{{ asset('assets/images/favicons/site.webmanifest') }}" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    {{-- Google Fonts --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Scripts -->
+    {{-- Auth CSS --}}
+    <link rel="stylesheet" href="{{ asset('assets/css/auth.css') }}">
+
+    {{-- Lucide Icons --}}
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    {{-- Vite (Tailwind) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @stack('styles')
 </head>
 
-<body class="font-sans text-gray-900 antialiased">
-    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-        <div>
-            <a href="/">
-                <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-            </a>
-        </div>
+<body class="mm-guest-body">
 
-        <div class="w-full max-w-7xl mx-auto mt-6 px-6 py-8 bg-white shadow-md overflow-hidden sm:rounded-lg">
-            {{ $slot }}
+    <main class="mm-guest-wrapper">
+        <div class="mm-guest-container">
+            @yield('content')
+            {{ $slot ?? '' }}
         </div>
+    </main>
 
-    </div>
+    <script>
+        if (window.lucide) lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
+
+    @stack('scripts')
 </body>
 
 </html>

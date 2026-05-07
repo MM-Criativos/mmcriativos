@@ -53,6 +53,7 @@ use App\Http\Controllers\Admin\Commercial\PlanController as CommercialPlanContro
 use App\Http\Controllers\Admin\Commercial\BudgetController as CommercialBudgetController;
 use App\Http\Controllers\Admin\Commercial\ExtraController as CommercialExtraController;
 use App\Http\Controllers\Admin\Commercial\EmailTemplateController as CommercialEmailTemplateController;
+use App\Http\Controllers\Admin\Commercial\ProspeccaoController as CommercialProspeccaoController;
 use App\Http\Controllers\Admin\Content\DashboardController as ContentDashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
@@ -396,6 +397,15 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::get('classes', [AdminClasseController::class, 'index'])->name('classes.index');
     Route::get('classes/{classe}/edit', [AdminClasseController::class, 'edit'])->name('classes.edit');
     Route::put('classes/{classe}', [AdminClasseController::class, 'update'])->name('classes.update');
+
+    // Prospecao MM Cloud
+    Route::prefix('mmcloud/prospeccao')->name('commercial.prospeccao.')->middleware('can.commercial')->group(function () {
+        Route::get('/',                   [CommercialProspeccaoController::class, 'index'])->name('index');
+        Route::post('/',                  [CommercialProspeccaoController::class, 'store'])->name('store');
+        Route::patch('{cloudLead}',       [CommercialProspeccaoController::class, 'update'])->name('update');
+        Route::delete('{cloudLead}',      [CommercialProspeccaoController::class, 'destroy'])->name('destroy');
+        Route::patch('{cloudLead}/field', [CommercialProspeccaoController::class, 'updateField'])->name('updateField');
+    });
 
     // Commercial module
     Route::prefix('commercial')->name('commercial.')->group(function () {
