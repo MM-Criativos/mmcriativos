@@ -17,6 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Define explicit web middleware stack to guarantee session + cookies on web routes.
+        $middleware->group('web', [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
+
         // Confia em todos os proxies (Traefik/EasyPanel).
         // Sem isso o Laravel nÃ£o lÃª X-Forwarded-Proto e detecta scheme como
         // HTTP, o que pode invalidar o cookie de sessÃ£o e causar erro 419.
