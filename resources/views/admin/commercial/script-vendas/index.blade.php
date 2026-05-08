@@ -7,8 +7,9 @@
 
 @push('styles')
 <style>
-    /* Script de Vendas — impede que o canvas do mind-elixir expanda a página */
-    .dashboard-main-body { overflow: hidden !important; }
+    /* Script de Vendas — impede scroll horizontal na página */
+    html, body { overflow-x: hidden !important; }
+    .dashboard-main { overflow-x: hidden !important; }
 </style>
 @endpush
 
@@ -64,7 +65,7 @@
 
             {{-- Mapa --}}
             <div id="me-container"
-                 style="position:absolute; top:0; left:0; bottom:0; overflow:hidden;"
+                 style="position:absolute; top:0; left:0; bottom:0;"
                  :style="{ right: selectedNode ? '360px' : '0px' }">
             </div>
 
