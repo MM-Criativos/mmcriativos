@@ -22,7 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // HTTP, o que pode invalidar o cookie de sessÃ£o e causar erro 419.
         $middleware->trustProxies(at: '*');
         $middleware->validateCsrfTokens(except: [
+            // Hotfix auth flows: same 419 pattern observed in production (Page Expired on POST)
             'logout',
+            'register',
+            'forgot-password',
+            'reset-password',
+            'email/verification-notification',
+            'confirm-password',
+            'password',
             'mmcloud/tenants',
             'mmcloud/tenants/*',
             'mmcloud/tenants/*/instances',
