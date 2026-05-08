@@ -45,4 +45,46 @@
 
     {{-- Page-specific styles (ex: mind-elixir, etc.) --}}
     @stack('styles')
+
+    {{-- Layout & component styles --}}
+    <style>
+        /* icon-project — Lucide SVG stroke states */
+        svg.icon-project {
+            stroke: rgb(255 136 0);
+            width: 1em; height: 1em;
+            stroke-width: 2;
+            flex-shrink: 0;
+            transition: stroke 0.2s ease;
+        }
+        .btn-mmcriativos:hover svg.icon-project,
+        .dark .btn-mmcriativos:hover svg.icon-project { stroke: #ffffff !important; }
+        .btn-mmcriativos-active svg.icon-project,
+        .dark .btn-mmcriativos-active svg.icon-project { stroke: #ffffff !important; }
+
+        /* NORMAL */
+        .btn-mmcriativos {
+            background-color: transparent !important;
+            border: 2px solid #ff8800 !important;
+            color: #000 !important;
+            transition: all 0.25s ease-in-out !important;
+        }
+        /* HOVER */
+        .btn-mmcriativos:hover {
+            background-image: linear-gradient(to right, #feb365, #ff8800) !important;
+            border-color: transparent !important;
+            color: #000 !important;
+        }
+        /* DARK NORMAL */
+        .dark .btn-mmcriativos {
+            background-color: transparent !important;
+            border: 2px solid #ff8800 !important;
+            color: #fff !important;
+        }
+        /* DARK HOVER */
+        .dark .btn-mmcriativos:hover {
+            background-image: linear-gradient(to right, #feb365, #ff8800) !important;
+            border-color: transparent !important;
+            color: #fff !important;
+        }
+    </style>
 </head>

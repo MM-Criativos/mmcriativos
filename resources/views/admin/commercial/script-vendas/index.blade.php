@@ -5,13 +5,20 @@
 
 @extends('layouts.app')
 
-@section('content')
-<div x-data="scriptVendas()" x-init="init()">
+@push('styles')
+<style>
+    /* Script de Vendas — impede que o canvas do mind-elixir expanda a página */
+    .dashboard-main-body { overflow: hidden !important; }
+</style>
+@endpush
 
-    <div class="bg-white dark:bg-black shadow-sm sm:rounded-lg" style="overflow:hidden;">
+@section('content')
+<div x-data="scriptVendas()" x-init="init()" style="display:flex; flex-direction:column; min-height:400px; overflow:hidden;">
+
+    <div style="display:flex; flex-direction:column; flex:1; overflow:hidden; background:white; border-radius:0.5rem; box-shadow:0 1px 3px rgba(0,0,0,.1);" class="dark:bg-black">
 
         {{-- ─── Cabeçalho ─────────────────────────────────────────── --}}
-        <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between flex-wrap gap-3">
+        <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between flex-wrap gap-3" style="flex-shrink:0;">
             <div>
                 <h6 class="text-lg font-semibold text-neutral-800 dark:text-white">📞 Script de Vendas</h6>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Árvore de decisão — 1º contato</p>
@@ -52,8 +59,8 @@
             </div>
         </div>
 
-        {{-- ─── Área principal (layout absoluto) ──────────────────── --}}
-        <div style="position:relative; height:calc(100vh - 210px); min-height:460px;">
+        {{-- ─── Área principal (flex fill) ──────────────────────────── --}}
+        <div style="position:relative; flex:1; overflow:hidden;">
 
             {{-- Mapa --}}
             <div id="me-container"
@@ -1652,9 +1659,24 @@
 
                     init() {
                         this.$nextTick(() => {
+                            this.fitHeight();
                             this.initMap();
                             if (window.lucide) lucide.createIcons();
                         });
+                        window.addEventListener('resize', () => this.fitHeight());
+                    },
+
+                    // Ajusta a altura do container ao espaço disponível na viewport
+                    fitHeight() {
+                        const navbar  = document.querySelector('.navbar-header');
+                        const footer  = document.querySelector('.d-footer');
+                        const bodyEl  = document.querySelector('.dashboard-main-body');
+                        if (!navbar || !bodyEl) return;
+                        const cs       = getComputedStyle(bodyEl);
+                        const paddingV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+                        const footerH  = footer ? footer.offsetHeight : 0;
+                        const h = Math.max(400, window.innerHeight - navbar.offsetHeight - paddingV - footerH - 4);
+                        this.$el.style.height = h + 'px';
                     },
 
                     // ── Zoom ──────────────────────────────────────────────────
