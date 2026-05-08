@@ -1,19 +1,61 @@
 ﻿<style>
     /* Keep navbar hard-attached to viewport top */
     .dashboard-main {
+        --dashboard-main-offset: 0px;
         margin-top: 0 !important;
         padding-top: 0 !important;
     }
 
+    @media (min-width: 1200px) {
+        .dashboard-main {
+            --dashboard-main-offset: 13.75rem;
+        }
+    }
+
+    @media (min-width: 1400px) {
+        .dashboard-main {
+            --dashboard-main-offset: 17.1875rem;
+        }
+    }
+
+    @media (min-width: 1650px) {
+        .dashboard-main {
+            --dashboard-main-offset: 19.5rem;
+        }
+    }
+
+    .dashboard-main.active {
+        --dashboard-main-offset: 5.375rem;
+    }
+
     .dashboard-main > .navbar-header {
-        position: sticky !important;
+        position: fixed !important;
         top: 0 !important;
+        left: var(--dashboard-main-offset) !important;
+        right: 0 !important;
+        z-index: 40 !important;
         margin: 0 !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         height: 72px !important;
         display: flex !important;
         align-items: center !important;
+    }
+
+    .dashboard-main-body {
+        padding-top: calc(72px + 0.9375rem) !important;
+    }
+
+    @media (min-width: 1400px) {
+        .dashboard-main-body {
+            padding-top: calc(72px + 1.5rem) !important;
+        }
+    }
+
+    @media (max-width: 1199.98px) {
+        .dashboard-main > .navbar-header {
+            left: 0 !important;
+        }
     }
     /* icon-project â€” Lucide SVG stroke states for navbar */
     svg.icon-project {
