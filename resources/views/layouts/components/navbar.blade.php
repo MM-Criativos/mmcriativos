@@ -1,14 +1,19 @@
 ﻿<style>
     /* Keep navbar hard-attached to viewport top */
-    html, body {
-        margin: 0 !important;
-        padding: 0 !important;
+    .dashboard-main {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
     }
 
     .dashboard-main > .navbar-header {
+        position: sticky !important;
         top: 0 !important;
-        margin-top: 0 !important;
+        margin: 0 !important;
         padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        height: 72px !important;
+        display: flex !important;
+        align-items: center !important;
     }
     /* icon-project â€” Lucide SVG stroke states for navbar */
     svg.icon-project {
@@ -70,7 +75,7 @@
 @endphp
 
 <div class="navbar-header border-b border-[transparent]
-     px-6 h-[108px] flex items-center bg-white dark:bg-[#000]">
+     px-6 h-[72px] flex items-center bg-white dark:bg-[#000]">
 
     <div class="flex items-center justify-between gap-6 w-full">
 
@@ -259,4 +264,6 @@
         });
     });
 </script>
+
+
 
