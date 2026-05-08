@@ -54,7 +54,6 @@ use App\Http\Controllers\Admin\Commercial\BudgetController as CommercialBudgetCo
 use App\Http\Controllers\Admin\Commercial\ExtraController as CommercialExtraController;
 use App\Http\Controllers\Admin\Commercial\EmailTemplateController as CommercialEmailTemplateController;
 use App\Http\Controllers\Admin\Commercial\ProspeccaoController as CommercialProspeccaoController;
-use App\Http\Controllers\Admin\Commercial\ScriptVendasController as CommercialScriptVendasController;
 use App\Http\Controllers\Admin\Content\DashboardController as ContentDashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
@@ -434,9 +433,6 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
 
         // KPI
         Route::get('kpi', [CommercialKpiController::class, 'index'])->name('kpi.index');
-
-        // Script de Vendas
-        Route::get('script-vendas', [CommercialScriptVendasController::class, 'index'])->name('script-vendas.index');
     });
 });
 
