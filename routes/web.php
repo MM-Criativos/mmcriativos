@@ -400,7 +400,7 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::put('classes/{classe}', [AdminClasseController::class, 'update'])->name('classes.update');
 
     // Prospecao MM Cloud
-    Route::prefix('mmcloud/prospeccao')->name('commercial.prospeccao.')->middleware('can.commercial')->group(function () {
+    Route::prefix('mmcloud/prospeccao')->name('commercial.prospeccao.')->middleware('can.prospeccao')->group(function () {
         Route::get('/',                   [CommercialProspeccaoController::class, 'index'])->name('index');
         Route::post('/',                  [CommercialProspeccaoController::class, 'store'])->name('store');
         Route::patch('{cloudLead}',       [CommercialProspeccaoController::class, 'update'])->name('update');

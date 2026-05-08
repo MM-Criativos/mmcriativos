@@ -214,7 +214,7 @@
                 </a>
             </li>
 
-            @if (in_array(Auth::user()->role, ['admin', 'comercial']))
+            @if (in_array(Auth::user()->role, ['admin', 'comercial', 'user']))
             <li>
                 <a href="{{ route('admin.commercial.prospeccao.index') }}"
                    class="{{ request()->is('admin/mmcloud/prospeccao*') ? 'active-page' : '' }}">
@@ -222,13 +222,15 @@
                     <span>Prospecção</span>
                 </a>
             </li>
-            <li>
-                <a href="{{ route('admin.commercial.script-vendas.index') }}"
-                   class="{{ request()->is('admin/commercial/script-vendas*') ? 'active-page' : '' }}">
-                    <i data-lucide="git-branch" class="mr-2"></i>
-                    <span>Script de Vendas</span>
-                </a>
-            </li>
+            @if (in_array(Auth::user()->role, ['admin', 'comercial']))
+                <li>
+                    <a href="{{ route('admin.commercial.script-vendas.index') }}"
+                       class="{{ request()->is('admin/commercial/script-vendas*') ? 'active-page' : '' }}">
+                        <i data-lucide="git-branch" class="mr-2"></i>
+                        <span>Script de Vendas</span>
+                    </a>
+                </li>
+            @endif
             @endif
         </ul>
     </div>

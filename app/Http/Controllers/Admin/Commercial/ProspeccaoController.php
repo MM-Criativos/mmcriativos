@@ -14,7 +14,7 @@ class ProspeccaoController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'approved', 'can.commercial']);
+        $this->middleware(['auth', 'approved', 'can.prospeccao']);
     }
 
     // ─── Index ───────────────────────────────────────────────────

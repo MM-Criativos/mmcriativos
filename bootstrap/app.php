@@ -53,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'approved'       => \App\Http\Middleware\EnsureUserIsApproved::class,
             'vee.internal'   => \App\Http\Middleware\EnsureVeeInternalToken::class,
             'can.commercial' => \App\Http\Middleware\EnsureCanAccessCommercial::class,
+            'can.prospeccao' => \App\Http\Middleware\EnsureCanAccessProspeccao::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
