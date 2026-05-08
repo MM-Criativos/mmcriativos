@@ -6,112 +6,127 @@
 @extends('layouts.app')
 
 @section('content')
-    <div x-data="scriptVendas()" x-init="init()">
+<div x-data="scriptVendas()" x-init="init()">
 
-        <div class="bg-white dark:bg-black overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="bg-white dark:bg-black shadow-sm sm:rounded-lg" style="overflow:hidden;">
 
-            {{-- ─── Cabeçalho ──────────────────────────────────────────── --}}
-            <div
-                class="px-6 py-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between flex-wrap gap-3">
-                <div>
-                    <h6 class="text-lg font-semibold text-neutral-800 dark:text-white">📞 Script de Vendas</h6>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Árvore de decisão — 1º contato com o
-                        prospect</p>
+        {{-- ─── Cabeçalho ─────────────────────────────────────────── --}}
+        <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between flex-wrap gap-3">
+            <div>
+                <h6 class="text-lg font-semibold text-neutral-800 dark:text-white">📞 Script de Vendas</h6>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Árvore de decisão — 1º contato</p>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                {{-- Legenda --}}
+                <div class="hidden xl:flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-700 inline-block"></span> Fluxo</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-600 inline-block"></span> Positivo</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-orange-700 inline-block"></span> Objeção</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-700 inline-block"></span> Instagram</span>
                 </div>
-                <div class="flex items-center gap-4 flex-wrap">
-                    <div class="hidden lg:flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
-                        <span class="flex items-center gap-1.5"><span
-                                class="w-2.5 h-2.5 rounded-full bg-blue-700 inline-block"></span> Fluxo</span>
-                        <span class="flex items-center gap-1.5"><span
-                                class="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span> Positivo</span>
-                        <span class="flex items-center gap-1.5"><span
-                                class="w-2.5 h-2.5 rounded-full bg-orange-700 inline-block"></span> Objeção</span>
-                        <span class="flex items-center gap-1.5"><span
-                                class="w-2.5 h-2.5 rounded-full bg-purple-700 inline-block"></span> Instagram</span>
-                        <span class="flex items-center gap-1.5"><span
-                                class="w-2.5 h-2.5 rounded-full bg-emerald-700 inline-block"></span> Suporte</span>
-                    </div>
-                    <button @click="me && me.toCenter()"
-                        class="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md btn-mmcriativos">
-                        <i data-lucide="maximize-2" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Centralizar</span>
+                {{-- Dica mouse --}}
+                <span class="hidden lg:inline-flex items-center gap-1 text-xs text-neutral-400 dark:text-neutral-600 border border-neutral-200 dark:border-neutral-700 rounded px-2 py-1">
+                    <i data-lucide="mouse" class="w-3 h-3"></i>
+                    Meio=arrastar · Scroll=zoom · Dir=menu
+                </span>
+                {{-- Zoom --}}
+                <div class="flex items-center gap-1">
+                    <button @click="zoomOut()" title="Zoom Out"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-md btn-mmcriativos">
+                        <i data-lucide="zoom-out" class="w-4 h-4"></i>
+                    </button>
+                    <button @click="zoomReset()" title="Reset zoom"
+                        class="inline-flex items-center justify-center px-2 h-8 text-xs rounded-md btn-mmcriativos"
+                        x-text="Math.round((zoomLevel||1)*100)+'%'">100%</button>
+                    <button @click="zoomIn()" title="Zoom In"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-md btn-mmcriativos">
+                        <i data-lucide="zoom-in" class="w-4 h-4"></i>
                     </button>
                 </div>
-            </div>
-
-            {{-- ─── Área principal: Mapa + Painel ───────────────────────── --}}
-            <div class="flex" style="height: calc(100vh - 205px); min-height: 480px;">
-
-                {{-- Mapa — overflow controlado pelo próprio mind-elixir --}}
-                <div id="me-container" class="flex-1" style="position:relative;"></div>
-
-                {{-- Painel lateral --}}
-                <div x-show="selectedNode" x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 translate-x-3" x-transition:enter-end="opacity-100 translate-x-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 translate-x-3"
-                    style="width:360px; flex-shrink:0; display:flex; flex-direction:column; overflow:hidden;"
-                    class="border-l border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
-
-                    {{-- Header do painel --}}
-                    <div class="px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 flex items-start gap-3"
-                        style="flex-shrink:0;">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-orange-500 mb-1"
-                                x-text="selectedNode ? selectedNode.category : ''"></p>
-                            <h3 class="font-semibold text-sm text-neutral-800 dark:text-white leading-snug"
-                                x-text="selectedNode ? selectedNode.topic.replace(/\n/g,' ') : ''"></h3>
-                        </div>
-                        <button @click="selectedNode = null"
-                            class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition mt-0.5">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-
-                    {{-- Conteúdo --}}
-                    <div class="px-5 py-4" style="flex:1; overflow-y:auto;">
-                        <template x-if="selectedNode && selectedNode.content && selectedNode.content.length > 0">
-                            <div>
-                                <template x-for="(block, bi) in selectedNode.content" :key="bi">
-                                    <div style="margin-bottom:1.25rem;">
-                                        <template x-if="block.label">
-                                            <p class="text-[11px] font-bold uppercase tracking-wider mb-2"
-                                                :class="block.labelColor || 'text-neutral-400'" x-text="block.label"></p>
-                                        </template>
-                                        <template x-for="(line, li) in (block.lines || [])" :key="li">
-                                            <p class="text-sm text-neutral-700 dark:text-neutral-300"
-                                                style="line-height:1.65; margin-bottom:0.15rem;" x-text="line || ' '"></p>
-                                        </template>
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
-                        <template x-if="!selectedNode || !selectedNode.content || selectedNode.content.length === 0">
-                            <p class="text-sm text-neutral-400 italic">Nenhum conteúdo para este nó.</p>
-                        </template>
-                    </div>
-
-                    {{-- Tags --}}
-                    <div x-show="selectedNode && selectedNode.tags && selectedNode.tags.length"
-                        class="px-5 py-3 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap gap-1.5"
-                        style="flex-shrink:0;">
-                        <template x-if="selectedNode && selectedNode.tags">
-                            <template x-for="tag in selectedNode.tags" :key="tag">
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300"
-                                    x-text="tag"></span>
-                            </template>
-                        </template>
-                    </div>
-                </div>
+                {{-- Centralizar --}}
+                <button @click="center()"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-md btn-mmcriativos">
+                    <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Centralizar</span>
+                </button>
             </div>
         </div>
 
-        <p x-show="!selectedNode" class="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-600">
-            💡 Clique em qualquer nó para ver o conteúdo do script
-        </p>
+        {{-- ─── Área principal (layout absoluto) ──────────────────── --}}
+        <div style="position:relative; height:calc(100vh - 210px); min-height:460px;">
 
+            {{-- Mapa --}}
+            <div id="me-container"
+                 style="position:absolute; top:0; left:0; bottom:0; overflow:hidden;"
+                 :style="{ right: selectedNode ? '360px' : '0px' }">
+            </div>
+
+            {{-- Painel lateral --}}
+            <div x-show="selectedNode"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-x-4"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 translate-x-4"
+                 style="position:absolute; top:0; right:0; width:360px; bottom:0; display:flex; flex-direction:column; overflow:hidden;"
+                 class="border-l border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
+
+                {{-- Header do painel --}}
+                <div class="px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 flex items-start gap-3" style="flex-shrink:0;">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-orange-500 mb-1"
+                           x-text="selectedNode ? selectedNode.category : ''"></p>
+                        <h3 class="font-semibold text-sm text-neutral-800 dark:text-white leading-snug"
+                            x-text="selectedNode ? selectedNode.topic.replace(/\n/g,' ') : ''"></h3>
+                    </div>
+                    <button @click="selectedNode = null"
+                            class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition mt-0.5">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                {{-- Conteúdo --}}
+                <div class="px-5 py-4" style="flex:1; overflow-y:auto;">
+                    <template x-if="selectedNode && selectedNode.content && selectedNode.content.length > 0">
+                        <div>
+                            <template x-for="(block, bi) in selectedNode.content" :key="bi">
+                                <div style="margin-bottom:1.25rem;">
+                                    <template x-if="block.label">
+                                        <p class="text-[11px] font-bold uppercase tracking-wider mb-2"
+                                           :class="block.labelColor || 'text-neutral-400'"
+                                           x-text="block.label"></p>
+                                    </template>
+                                    <template x-for="(line, li) in (block.lines || [])" :key="li">
+                                        <p class="text-sm text-neutral-700 dark:text-neutral-300"
+                                           style="line-height:1.65; margin-bottom:0.15rem;"
+                                           x-text="line || ' '"></p>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <template x-if="!selectedNode || !selectedNode.content || selectedNode.content.length === 0">
+                        <p class="text-sm text-neutral-400 italic">Nenhum conteúdo para este nó.</p>
+                    </template>
+                </div>
+
+                {{-- Tags --}}
+                <div x-show="selectedNode && selectedNode.tags && selectedNode.tags.length"
+                     class="px-5 py-3 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap gap-1.5"
+                     style="flex-shrink:0;">
+                    <template x-if="selectedNode && selectedNode.tags">
+                        <template x-for="tag in selectedNode.tags" :key="tag">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300"
+                                  x-text="tag"></span>
+                        </template>
+                    </template>
+                </div>
+            </div>
+        </div>
     </div>
+
+</div>
 
     @push('scripts')
         {{-- mind-elixir IIFE local: inicia o CSS automaticamente, sem CDN --}}
@@ -1633,6 +1648,7 @@
                 return {
                     me: null,
                     selectedNode: null,
+                    zoomLevel: 1,
 
                     init() {
                         this.$nextTick(() => {
@@ -1641,54 +1657,116 @@
                         });
                     },
 
+                    // ── Zoom ──────────────────────────────────────────────────
+                    _canvas() {
+                        return document.querySelector('#me-container .map-canvas');
+                    },
+                    zoomIn() {
+                        const c = this._canvas(); if (!c || !this.me) return;
+                        this.zoomLevel = Math.min(3, (this.zoomLevel || 1) * 1.25);
+                        this.me.scaleVal = this.zoomLevel;
+                        c.style.transform = `scale(${this.zoomLevel})`;
+                    },
+                    zoomOut() {
+                        const c = this._canvas(); if (!c || !this.me) return;
+                        this.zoomLevel = Math.max(0.15, (this.zoomLevel || 1) * 0.8);
+                        this.me.scaleVal = this.zoomLevel;
+                        c.style.transform = `scale(${this.zoomLevel})`;
+                    },
+                    zoomReset() {
+                        const c = this._canvas(); if (!c || !this.me) return;
+                        this.zoomLevel = 1;
+                        this.me.scaleVal = 1;
+                        c.style.transform = 'scale(1)';
+                        this.me.toCenter();
+                    },
+                    center() {
+                        if (this.me) this.me.toCenter();
+                    },
+
                     initMap() {
                         if (typeof MindElixir === 'undefined') {
-                            console.error('MindElixir não carregou. Verifique o CDN.');
+                            console.error('MindElixir não carregou.');
                             return;
                         }
 
                         const isDark = document.documentElement.classList.contains('dark');
-
                         const DIRECTION = (MindElixir.SIDE !== undefined) ? MindElixir.SIDE : 2;
+                        const self = this;
 
                         const me = new MindElixir({
                             el: '#me-container',
                             direction: DIRECTION,
                             data: SCRIPT_DATA,
                             draggable: true,
-                            editable: true,          // editar texto dos nós (duplo clique)
-                            contextMenu: true,       // menu de contexto (botão direito)
-                            toolBar: true,           // barra de zoom/centralizar
-                            nodeMenu: true,          // menu ao selecionar nó
-                            keypress: true,          // atalhos de teclado
-                            allowUndo: true,         // Ctrl+Z
-                            mouseSelectionButton: 2, // arrastar fundo com botão esquerdo
+                            editable: true,
+                            contextMenu: true,
+                            toolBar: false,
+                            nodeMenu: false,
+                            keypress: true,
+                            allowUndo: true,
                             theme: {
                                 name: 'mmcloud',
                                 palette: ['#f97316', '#1d4ed8', '#15803d', '#6d28d9', '#b91c1c'],
                                 cssVar: {
-                                    '--main-color': isDark ? '#ffffff' : '#111827',
-                                    '--main-bgcolor': isDark ? '#1e293b' : '#e2e8f0',
-                                    '--color': isDark ? '#e2e8f0' : '#374151',
-                                    '--bgcolor': isDark ? '#0f172a' : '#ffffff',
-                                    '--selected-color': '#ffffff',
-                                    '--selected-bgcolor': '#f97316',
-                                    '--root-color': '#ffffff',
-                                    '--root-bgcolor': '#ea580c',
+                                    '--main-color':          isDark ? '#ffffff'  : '#111827',
+                                    '--main-bgcolor':        isDark ? '#1e293b'  : '#e2e8f0',
+                                    '--color':               isDark ? '#e2e8f0'  : '#374151',
+                                    '--bgcolor':             isDark ? '#0f172a'  : '#f8fafc',
+                                    '--panel-color':         isDark ? '#f1f5f9'  : '#374151',
+                                    '--panel-bgcolor':       isDark ? '#1e293b'  : '#ffffff',
+                                    '--panel-border-color':  isDark ? '#334155'  : '#e2e8f0',
+                                    '--selected-color':      '#ffffff',
+                                    '--selected-bgcolor':    '#f97316',
+                                    '--root-color':          '#ffffff',
+                                    '--root-bgcolor':        '#ea580c',
                                 }
                             }
                         });
 
                         me.bus.addListener('selectNode', (nodeObj) => {
                             const reg = NODE_REGISTRY[nodeObj.id];
-                            this.selectedNode = reg || null;
-                            this.$nextTick(() => {
-                                if (window.lucide) lucide.createIcons();
-                            });
+                            self.selectedNode = reg || null;
+                            self.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
                         });
 
                         me.init(SCRIPT_DATA);
-                        setTimeout(() => me.toCenter(), 150);
+
+                        // Centralizar após render
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            me.toCenter();
+                            self.zoomLevel = me.scaleVal || 1;
+                        }));
+
+                        // ── Botão do meio = arrastar ──────────────────────────
+                        const el = document.getElementById('me-container');
+                        let pan = { on: false, x0: 0, y0: 0, sl: 0, st: 0 };
+
+                        el.addEventListener('mousedown', e => {
+                            if (e.button !== 1) return;
+                            pan = { on: true, x0: e.clientX, y0: e.clientY,
+                                    sl: el.scrollLeft, st: el.scrollTop };
+                            el.style.cursor = 'grabbing';
+                            e.preventDefault();
+                        });
+                        document.addEventListener('mousemove', e => {
+                            if (!pan.on) return;
+                            el.scrollLeft = pan.sl - (e.clientX - pan.x0);
+                            el.scrollTop  = pan.st - (e.clientY - pan.y0);
+                        });
+                        document.addEventListener('mouseup', e => {
+                            if (e.button === 1) { pan.on = false; el.style.cursor = ''; }
+                        });
+
+                        // ── Scroll do mouse = zoom ─────────────────────────────
+                        el.addEventListener('wheel', e => {
+                            e.preventDefault();
+                            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+                            self.zoomLevel = Math.max(0.15, Math.min(3, (me.scaleVal || 1) * factor));
+                            me.scaleVal = self.zoomLevel;
+                            const c = el.querySelector('.map-canvas');
+                            if (c) c.style.transform = `scale(${self.zoomLevel})`;
+                        }, { passive: false });
 
                         this.me = me;
                     }
