@@ -222,6 +222,13 @@
                     <span>Prospecção</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('admin.commercial.script-vendas.index') }}"
+                   class="{{ request()->is('admin/commercial/script-vendas*') ? 'active-page' : '' }}">
+                    <i data-lucide="git-branch" class="mr-2"></i>
+                    <span>Script de Vendas</span>
+                </a>
+            </li>
             @endif
         </ul>
     </div>

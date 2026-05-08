@@ -254,9 +254,10 @@
                             </a>
                         </li>
                         <li>
-                            <form method="POST" action="{{ route('logout') }}">
+                            <form method="POST" action="{{ route('logout') }}" class="js-logout-form">
                                 @csrf
                                 <button type="submit"
+                                    data-logout-btn
                                     class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition w-full text-left">
                                     <i data-lucide="arrow-left" class="icon-project"></i>
                                     Log Out
@@ -279,6 +280,28 @@
         const iconClosed = document.getElementById('iconClosed');
 
         const body = document.body;
+
+        // Prevent duplicate logout POSTs that can trigger a secondary 419
+        document.querySelectorAll('.js-logout-form').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                if (form.dataset.submitting === '1') {
+                    event.preventDefault();
+                    return;
+                }
+
+                form.dataset.submitting = '1';
+
+                const button = form.querySelector('[data-logout-btn]');
+                if (button) {
+                    button.disabled = true;
+                    button.setAttribute('aria-disabled', 'true');
+                }
+            });
+        });
+
+        if (!toggleBtn || !iconOpen || !iconClosed) {
+            return;
+        }
 
         toggleBtn.addEventListener('click', () => {
 

@@ -42,4 +42,7 @@
 
     {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Page-specific styles --}}
+    @stack('styles')
 </head>

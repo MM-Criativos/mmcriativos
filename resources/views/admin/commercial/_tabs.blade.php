@@ -47,4 +47,10 @@
             KPI
         </a>
     @endif
+    @if (Route::has('admin.commercial.script-vendas.index'))
+        <a href="{{ route('admin.commercial.script-vendas.index') }}"
+            class="px-3 py-2 bg-orange-600 text-black dark:text-white rounded border border-transparent font-semibold text-xs uppercase tracking-widest hover:bg-white hover:text-orange-600 hover:border-orange-600 hover:border-solid {{ request()->is('admin/commercial/script-vendas*') ? '' : 'bg-white text-orange-600 border-orange-600 border-solid dark:bg-dark-800 dark:white' }}">
+            Script de Vendas
+        </a>
+    @endif
 </div>
