@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -44,7 +45,15 @@ class MmcloudTenantProvisioningService
             $this->throwValidationError($exception, 'domain');
         }
 
-        return $response->json() ?? [];
+        $result = $response->json() ?? [];
+
+        if (! is_array($result) || ! isset($result['slug']) || ! isset($result['api_token'])) {
+            throw ValidationException::withMessages([
+                'domain' => 'Resposta invalida ao criar tenant no MM Criativos Cloud. Verifique MMCC_API_URL e redirecionamentos.',
+            ]);
+        }
+
+        return $result;
     }
 
     public function showTenant(string|int $tenant): array
@@ -147,6 +156,13 @@ class MmcloudTenantProvisioningService
         return Http::baseUrl($url)
             ->withOptions([
                 'verify' => ! $skipVerify,
+                'allow_redirects' => [
+                    'max' => 5,
+                    'strict' => true,
+                    'referer' => true,
+                    'protocols' => ['http', 'https'],
+                    'track_redirects' => true,
+                ],
             ])
             ->withHeaders([
                 'X-MMCloud-External-Secret' => $secret,
@@ -163,11 +179,26 @@ class MmcloudTenantProvisioningService
 
     private function throwValidationError(RequestException $exception, string $field): never
     {
+        $status = $exception->response?->status();
         $message = $exception->response?->json('message');
 
         if (! $message) {
-            $message = 'Erro ao comunicar com o MM Criativos Cloud.';
+            $rawBody = trim((string) $exception->response?->body());
+            $message = $rawBody !== '' ? Str::limit($rawBody, 220) : 'Erro ao comunicar com o MM Criativos Cloud.';
         }
+
+        if ($status) {
+            $message = "[MMCC {$status}] {$message}";
+        }
+
+        Log::warning('MMCloud API request failed', [
+            'status' => $status,
+            'field' => $field,
+            'url' => $exception->request?->url(),
+            'method' => $exception->request?->method(),
+            'redirect_history' => $exception->response?->header('X-Guzzle-Redirect-History'),
+            'redirect_status_history' => $exception->response?->header('X-Guzzle-Redirect-Status-History'),
+        ]);
 
         throw ValidationException::withMessages([
             $field => $message,
