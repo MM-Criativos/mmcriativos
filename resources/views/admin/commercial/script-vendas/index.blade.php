@@ -40,10 +40,10 @@
             </div>
 
             {{-- ─── Área principal: Mapa + Painel ───────────────────────── --}}
-            <div class="flex" style="height: calc(100vh - 175px); min-height: 520px;">
+            <div class="flex" style="height: calc(100vh - 205px); min-height: 480px;">
 
-                {{-- Mapa --}}
-                <div id="me-container" class="flex-1" style="position:relative; overflow:hidden;"></div>
+                {{-- Mapa — overflow controlado pelo próprio mind-elixir --}}
+                <div id="me-container" class="flex-1" style="position:relative;"></div>
 
                 {{-- Painel lateral --}}
                 <div x-show="selectedNode" x-transition:enter="transition ease-out duration-200"
@@ -1656,11 +1656,13 @@
                             direction: DIRECTION,
                             data: SCRIPT_DATA,
                             draggable: true,
-                            contextMenu: false,
-                            toolBar: false,
-                            nodeMenu: false,
-                            keypress: false,
-                            allowUndo: false,
+                            editable: true,          // editar texto dos nós (duplo clique)
+                            contextMenu: true,       // menu de contexto (botão direito)
+                            toolBar: true,           // barra de zoom/centralizar
+                            nodeMenu: true,          // menu ao selecionar nó
+                            keypress: true,          // atalhos de teclado
+                            allowUndo: true,         // Ctrl+Z
+                            mouseSelectionButton: 2, // arrastar fundo com botão esquerdo
                             theme: {
                                 name: 'mmcloud',
                                 palette: ['#f97316', '#1d4ed8', '#15803d', '#6d28d9', '#b91c1c'],
