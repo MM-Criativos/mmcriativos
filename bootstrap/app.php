@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->validateCsrfTokens(except: [
             'mmcloud/tenants',
+            'mmcloud/tenants/*',
             'mmcloud/tenants/*/instances',
         ]);
 
