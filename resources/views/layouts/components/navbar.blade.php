@@ -1,5 +1,16 @@
-<style>
-    /* icon-project — Lucide SVG stroke states for navbar */
+﻿<style>
+    /* Keep navbar hard-attached to viewport top */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .dashboard-main > .navbar-header {
+        top: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* icon-project â€” Lucide SVG stroke states for navbar */
     svg.icon-project {
         stroke: rgb(255 136 0);
         width: 1em; height: 1em;
@@ -17,7 +28,7 @@
     }
 
     /* --------------------------------------
-   NAVBAR TAB BUTTON (botões)
+   NAVBAR TAB BUTTON (botÃµes)
 --------------------------------------- */
 
     .navbar-tab-btn {
@@ -34,7 +45,7 @@
         color: #fff;
     }
 
-    /* HOVER – igual para light e dark */
+    /* HOVER â€“ igual para light e dark */
     .navbar-tab-btn:hover,
     .dark .navbar-tab-btn:hover {
         background-color: #ff8800 !important;
@@ -42,7 +53,7 @@
         color: #fff !important;
     }
 
-    /* ACTIVE – igual para light e dark */
+    /* ACTIVE â€“ igual para light e dark */
     .navbar-tab-active,
     .dark .navbar-tab-active {
         background-color: #ff8800 !important;
@@ -64,18 +75,18 @@
     <div class="flex items-center justify-between gap-6 w-full">
 
 
-        <!-- 🔹 LEFT: TITLE + SIDEBAR BUTTON -->
+        <!-- ðŸ”¹ LEFT: TITLE + SIDEBAR BUTTON -->
         <div class="flex items-center gap-4">
             <!-- Sidebar Toggle -->
             <button type="button" id="sidebarToggle"
                 class="sidebar-toggle p-2 text-neutral-600 dark:text-neutral-300 hover:text-[#ff8800]
             transition relative w-8 h-8 flex items-center justify-center">
 
-                <!-- Ícone menu aberto -->
+                <!-- Ãcone menu aberto -->
                 <i id="iconOpen"
                     data-lucide="menu" class="icon-project text-2xl absolute transition-all duration-300 ease-in-out"></i>
 
-                <!-- Ícone menu fechado -->
+                <!-- Ãcone menu fechado -->
                 <i id="iconClosed"
                     data-lucide="menu" class="icon-project text-2xl absolute opacity-0 scale-[0.6] transition-all duration-300 ease-in-out"></i>
             </button>
@@ -100,7 +111,7 @@
                 </p>
             </div>
 
-            <!-- 🔸 NAV TABS -->
+            <!-- ðŸ”¸ NAV TABS -->
             @if (isset($navbarTabs))
                 <div class="flex items-center gap-3 mt-2">
 
@@ -120,10 +131,10 @@
 
         </div>
 
-        <!-- 🔹 RIGHT: ACTIONS + PROFILE -->
+        <!-- ðŸ”¹ RIGHT: ACTIONS + PROFILE -->
         <div class="flex items-center gap-4">
 
-            {{-- Vee Button — somente admin --}}
+            {{-- Vee Button â€” somente admin --}}
             @if (auth()->user()?->role === 'admin')
             <button @click="$dispatch('open-vee')"
                 class="w-10 h-10 rounded-xl bg-[#ff8800] text-white flex items-center justify-center
@@ -186,7 +197,7 @@
                         <li>
                             <a href="{{ route('admin.settings.index') }}"
                                 class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
-                                <i data-lucide="settings-2" class="icon-project"></i> Configurações
+                                <i data-lucide="settings-2" class="icon-project"></i> ConfiguraÃ§Ãµes
                             </a>
                         </li>
                         <li>
@@ -230,7 +241,7 @@
             const isCollapsed = body.classList.contains('sidebar-collapsed');
 
             if (isCollapsed) {
-                // ANIMAÇÃO PARA FECHAR
+                // ANIMAÃ‡ÃƒO PARA FECHAR
                 iconOpen.classList.add("icon-squash");
                 iconOpen.classList.remove("icon-stretch");
 
@@ -238,7 +249,7 @@
                 iconClosed.classList.remove("icon-squash");
 
             } else {
-                // ANIMAÇÃO PARA ABRIR
+                // ANIMAÃ‡ÃƒO PARA ABRIR
                 iconOpen.classList.add("icon-stretch");
                 iconOpen.classList.remove("icon-squash");
 
@@ -248,3 +259,4 @@
         });
     });
 </script>
+
