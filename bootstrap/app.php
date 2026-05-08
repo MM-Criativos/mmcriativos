@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,9 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Confia em todos os proxies (Traefik/EasyPanel).
-        // Sem isso o Laravel não lê X-Forwarded-Proto e detecta scheme como
-        // HTTP, o que pode invalidar o cookie de sessão e causar erro 419.
+        // Sem isso o Laravel nÃ£o lÃª X-Forwarded-Proto e detecta scheme como
+        // HTTP, o que pode invalidar o cookie de sessÃ£o e causar erro 419.
         $middleware->trustProxies(at: '*');
+        $middleware->validateCsrfTokens(except: [
+            'mmcloud/tenants',
+        ]);
 
         // Aliases customizados
         $middleware->alias([
@@ -81,3 +84,4 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('vee:platform-health --suite=weekly')->sundays()->at('06:30');
     })
     ->create();
+
