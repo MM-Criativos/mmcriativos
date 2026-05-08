@@ -43,6 +43,6 @@
     {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Page-specific styles --}}
+    {{-- Page-specific styles (ex: mind-elixir, etc.) --}}
     @stack('styles')
 </head>
