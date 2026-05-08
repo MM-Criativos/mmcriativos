@@ -24,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'mmcloud/tenants',
             'mmcloud/tenants/*',
             'mmcloud/tenants/*/instances',
+            'admin/mmcloud/prospeccao',
+            'admin/mmcloud/prospeccao/*',
         ]);
 
         // Aliases customizados
