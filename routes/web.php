@@ -71,7 +71,7 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 | Diagnostic / Cookie debug
 |------------------------------------------------------------------
 */
-Route::middleware('web')->get('/cookie-debug', function (Request $request) {
+Route::get('/cookie-debug', function (Request $request) {
     session()->put('debug_cookie', now()->toDateTimeString());
 
     return response()->json([
@@ -87,7 +87,7 @@ Route::middleware('web')->get('/cookie-debug', function (Request $request) {
 |------------------------------------------------------------------
 */
 
-Route::middleware(['web', 'guest'])->group(function () {
+Route::middleware(['guest'])->group(function () {
 
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
@@ -117,7 +117,7 @@ Route::middleware(['web', 'guest'])->group(function () {
 | Authenticated
 |------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
@@ -449,4 +449,3 @@ Route::name('public.')->group(function () {
     Route::post('briefing/qualitative/{project}/save', [PublicBriefingQualitativeController::class, 'save'])
         ->name('briefing.qualitative.save');
 });
-
