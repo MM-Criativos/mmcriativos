@@ -16,10 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // 👇 VANILLA: NÃO registra cookies, NÃO mexe em web,
-        // NÃO prepend, NÃO append nada aqui.
+        // Confia em todos os proxies (Traefik/EasyPanel).
+        // Sem isso o Laravel não lê X-Forwarded-Proto e detecta scheme como
+        // HTTP, o que pode invalidar o cookie de sessão e causar erro 419.
+        $middleware->trustProxies(at: '*');
 
-        // Apenas aliases customizados
+        // Aliases customizados
         $middleware->alias([
             'approved'       => \App\Http\Middleware\EnsureUserIsApproved::class,
             'vee.internal'   => \App\Http\Middleware\EnsureVeeInternalToken::class,
