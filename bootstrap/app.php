@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->validateCsrfTokens(except: [
             // Hotfix auth flows: same 419 pattern observed in production (Page Expired on POST)
+            'login',
             'logout',
             'register',
             'forgot-password',
