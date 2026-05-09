@@ -240,10 +240,15 @@ const SdrCall = (() => {
     }
 
     function substitute(text) {
+        const c = state.prospect;
+        // Suporta {contact|fallback} — usa o valor real se existir, senão usa o fallback
         return (text || '')
-            .replace(/\{company\}/g,  state.prospect.company  || '')
-            .replace(/\{contact\}/g,  state.prospect.contact  || '')
-            .replace(/\{sdr_name\}/g, state.prospect.sdrName  || '');
+            .replace(/\{company\|([^}]*)\}/g,  (_, fb) => c.company  || fb)
+            .replace(/\{contact\|([^}]*)\}/g,  (_, fb) => c.contact  || fb)
+            .replace(/\{sdr_name\|([^}]*)\}/g, (_, fb) => c.sdrName  || fb)
+            .replace(/\{company\}/g,  c.company  || '')
+            .replace(/\{contact\}/g,  c.contact  || '')
+            .replace(/\{sdr_name\}/g, c.sdrName  || '');
     }
 
     function esc(s) {

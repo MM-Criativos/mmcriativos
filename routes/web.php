@@ -146,7 +146,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('logout');
 });
 
-// Site pÃºblico
+// Site público
 Route::get('/', function () {
     return view('pages.index');
 })->name('home');
@@ -160,13 +160,12 @@ Route::post('/contact', [ContactFormController::class, 'send'])->name('contact.s
 
 
 
-// ConteÃºdos dinÃ¢micos para o holo-modal
 // Conteúdos dinâmicos para o holo-modal
 Route::get('/modal-content/{type}/{slug}', [ModalController::class, 'content'])->name('modal.content');
 Route::get('/modal-process/{projectProcess}', [ModalController::class, 'process'])->name('modal.process');
 
 
-// Rotas padrÃ£o do Breeze (dashboard e profile protegidos)
+// Rotas padrão do Breeze (dashboard e profile protegidos)
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['verified', 'approved', 'auth'])
     ->name('dashboard');
@@ -199,7 +198,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// PÃ¡gina de pendÃªncia de aprovaÃ§Ã£o
+// Página de pendência de aprovação
 Route::get('/pending-approval', function () {
     return view('auth.pending');
 })->name('pending.approval');
@@ -216,19 +215,16 @@ Route::get('projects/{project}/planning/qualitative/create', [ProjectPlanningQua
     ->name('admin.projects.planning.qualitative.create');
 
 // Public signed route for client briefing view (no auth).
-// The GET view requires a signed URL, but the POST that saves the form
-// should not require the signature — it only needs CSRF protection.
 Route::get('briefing/{project}/perception', [PublicBriefingController::class, 'perception'])
     ->middleware('signed')
-    ->name('public.briefing.perception'); // Allow form submission without URL signature (CSRF handled in the form)
+    ->name('public.briefing.perception');
 Route::post('briefing/{project}/perception', [PublicBriefingController::class, 'savePerception'])
     ->name('public.briefing.perception.save');
 
 // Admin painel (usa auth do Breeze)
 Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard pode continuar usando /dashboard padrÃ£o; aqui focamos nos CRUDs
 
-    // ServiÃ§os
+    // Serviços
     Route::resource('services', AdminServiceController::class);
     Route::put('services/{service}/info', [AdminServiceInfoController::class, 'update'])->name('services.info.update');
     Route::resource('services.benefits', AdminServiceBenefitController::class)
@@ -284,18 +280,16 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
     Route::get('layout/price', [AdminPriceController::class, 'edit'])->name('layout.price.edit');
     Route::put('layout/price', [AdminPriceController::class, 'update'])->name('layout.price.update');
 
-    // Content module (Serviços e Habilidades)
+    // Content module
     Route::prefix('content')->name('content.')->group(function () {
         Route::get('/', [ContentDashboardController::class, 'index'])->name('dashboard');
     });
 
     // Projects
-    // Sub-sections: progress (em andamento) and completed (concluídos)
     Route::prefix('projects')->name('projects.')->group(function () {
         Route::get('progress', [AdminProjectController::class, 'progress'])->name('progress.index');
         Route::get('completed', [AdminProjectController::class, 'completed'])->name('completed.index');
         Route::get('{project}/steps', [AdminProjectController::class, 'steps'])->name('steps.show');
-        // Planning: scale responses
         Route::post('{project}/planning/scale', [AdminProjectPlanningController::class, 'saveScale'])
             ->name('planning.scale.save');
         Route::post('{project}/planning/scale/email', [AdminProjectPlanningController::class, 'sendScaleEmail'])
@@ -304,8 +298,6 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
             ->name('planning.interpretation.save');
         Route::post('{project}/planning/kickoff', [AdminProjectPlanningController::class, 'saveKickoff'])
             ->name('planning.kickoff.save');
-
-        // Planning: qualitative questionnaire
         Route::get('{project}/planning/qualitative/edit', [ProjectPlanningQualitativeController::class, 'edit'])
             ->name('planning.qualitative.edit');
         Route::get('{project}/planning/qualitative/templates', [ProjectPlanningQualitativeController::class, 'templates'])
@@ -316,7 +308,6 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
             ->name('planning.qualitative.save');
         Route::post('{project}/planning/qualitative/email', [ProjectPlanningQualitativeController::class, 'sendEmail'])
             ->name('planning.qualitative.email');
-
         Route::post('{project}/tasks', [AdminProjectTaskController::class, 'store'])->name('tasks.store');
     });
     Route::resource('projects', AdminProjectController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
@@ -332,7 +323,6 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
         ->name('projects.challenges.updateAll');
     Route::put('/projects/{project}/solutions/update-all', [AdminProjectSolutionController::class, 'updateAll'])
         ->name('projects.solutions.updateAll');
-
 
     // Projects: processes (pivot) and images
     Route::post('projects/{project}/processes', [AdminProjectProcessController::class, 'store'])->name('projects.processes.store');
@@ -435,6 +425,9 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
 
         // KPI
         Route::get('kpi', [CommercialKpiController::class, 'index'])->name('kpi.index');
+
+        // SDR — dashboard de performance
+        Route::get('sdr/dashboard',        [CommercialSdrCallController::class, 'dashboard'])->name('sdr.dashboard');
 
         // SDR — editor de script (textos e fluxo)
         Route::get('sdr/editor',           [CommercialSdrCallController::class, 'editor'])->name('sdr.editor');

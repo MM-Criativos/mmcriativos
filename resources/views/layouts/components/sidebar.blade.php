@@ -118,7 +118,6 @@
                     <span>Clientes</span>
                 </a>
                 <ul class="sidebar-submenu">
-                    {{-- <li><a href="{{ route('admin.projects.index') }}">Resumo</a></li> --}}
                     <li><a href="{{ route('admin.clients.create') }}">Adicionar Clientes</a></li>
                     <li><a href="{{ route('admin.clients.index') }}">Clientes</a></li>
                 </ul>
@@ -160,13 +159,6 @@
                     <span>KPIs</span>
                 </a>
             </li>
-
-            {{-- <li>
-                <a href="{{ route('admin.commercial.dashboard') }}">
-                    <iconify-icon icon="mdi:chart-bar" class="menu-icon"></iconify-icon>
-                    <span>Resumo Comercial</span>
-                </a>
-            </li> --}}
 
             <li class="sidebar-menu-group-title">Site MM Criativos</li>
 
@@ -220,6 +212,13 @@
                    class="{{ request()->is('admin/mmcloud/prospeccao*') ? 'active-page' : '' }}">
                     <i data-lucide="crosshair" class="mr-2"></i>
                     <span>Prospecção</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.commercial.sdr.dashboard') }}"
+                   class="{{ request()->is('admin/commercial/sdr/dashboard*') ? 'active-page' : '' }}">
+                    <i data-lucide="bar-chart-2" class="mr-2"></i>
+                    <span>Dashboard SDR</span>
                 </a>
             </li>
             <li>
