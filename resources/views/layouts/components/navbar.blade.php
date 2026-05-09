@@ -28,7 +28,7 @@
         --dashboard-main-offset: 5.375rem;
     }
 
-    .dashboard-main > .navbar-header {
+    .dashboard-main>.navbar-header {
         position: fixed !important;
         top: 0 !important;
         left: var(--dashboard-main-offset) !important;
@@ -53,14 +53,16 @@
     }
 
     @media (max-width: 1199.98px) {
-        .dashboard-main > .navbar-header {
+        .dashboard-main>.navbar-header {
             left: 0 !important;
         }
     }
+
     /* icon-project â€” Lucide SVG stroke states for navbar */
     svg.icon-project {
         stroke: rgb(255 136 0);
-        width: 1em; height: 1em;
+        width: 1em;
+        height: 1em;
         stroke-width: 2;
         flex-shrink: 0;
         transition: stroke 0.15s ease;
@@ -130,12 +132,12 @@
             transition relative w-8 h-8 flex items-center justify-center">
 
                 <!-- Ãcone menu aberto -->
-                <i id="iconOpen"
-                    data-lucide="menu" class="icon-project text-2xl absolute transition-all duration-300 ease-in-out"></i>
+                <i id="iconOpen" data-lucide="menu"
+                    class="icon-project text-2xl absolute transition-all duration-300 ease-in-out"></i>
 
                 <!-- Ãcone menu fechado -->
-                <i id="iconClosed"
-                    data-lucide="menu" class="icon-project text-2xl absolute opacity-0 scale-[0.6] transition-all duration-300 ease-in-out"></i>
+                <i id="iconClosed" data-lucide="menu"
+                    class="icon-project text-2xl absolute opacity-0 scale-[0.6] transition-all duration-300 ease-in-out"></i>
             </button>
 
 
@@ -169,7 +171,8 @@
                 {{ $tab['active'] ? 'navbar-tab-active' : '' }}"
                             title="{{ $tab['label'] }}"> {{-- Tooltip natural --}}
 
-                            <i data-lucide="{{ $tab['icon'] }}" class="icon-project" style="width:1.125rem;height:1.125rem;"></i>
+                            <i data-lucide="{{ $tab['icon'] }}" class="icon-project"
+                                style="width:1.125rem;height:1.125rem;"></i>
                         </a>
                     @endforeach
 
@@ -183,11 +186,12 @@
 
             {{-- Vee Button â€” somente admin --}}
             @if (auth()->user()?->role === 'admin')
-            <button @click="$dispatch('open-vee')"
-                class="w-10 h-10 rounded-xl bg-[#ff8800] text-white flex items-center justify-center
-                       shadow-sm hover:bg-orange-600 transition" title="Abrir Vee">
-                <i data-lucide="bot" style="stroke:#fff;width:1.125rem;height:1.125rem;"></i>
-            </button>
+                <button @click="$dispatch('open-vee')"
+                    class="w-10 h-10 rounded-xl bg-[#ff8800] text-white flex items-center justify-center
+                       shadow-sm hover:bg-orange-600 transition"
+                    title="Abrir Vee">
+                    <i data-lucide="bot" style="stroke:#fff;width:1.125rem;height:1.125rem;"></i>
+                </button>
             @endif
 
             <!-- Theme Toggle -->
@@ -244,7 +248,7 @@
                         <li>
                             <a href="{{ route('admin.settings.index') }}"
                                 class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition">
-                                <i data-lucide="settings-2" class="icon-project"></i> ConfiguraÃ§Ãµes
+                                <i data-lucide="settings-2" class="icon-project"></i> Configurações
                             </a>
                         </li>
                         <li>
@@ -256,8 +260,7 @@
                         <li>
                             <form method="POST" action="{{ route('logout') }}" class="js-logout-form">
                                 @csrf
-                                <button type="submit"
-                                    data-logout-btn
+                                <button type="submit" data-logout-btn
                                     class="flex items-center gap-3 text-neutral-700 dark:text-neutral-200 hover:text-[#ff8800] dark:hover:text-[#ff8800] transition w-full text-left">
                                     <i data-lucide="arrow-left" class="icon-project"></i>
                                     Log Out
@@ -329,6 +332,3 @@
         });
     });
 </script>
-
-
-
