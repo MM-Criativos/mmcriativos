@@ -112,6 +112,22 @@
                         </select>
                     </div>
 
+                    {{-- Segmento --}}
+                    <div class="min-w-[180px]">
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Segmento</label>
+                        <select name="segmento"
+                            class="w-full text-sm border-gray-300 dark:border-neutral-700 dark:bg-neutral-800 rounded">
+                            <option value="">Todos</option>
+                            @foreach ($segmentoGrouped as $categoria => $opcoes)
+                                <optgroup label="{{ $categoria }}">
+                                    @foreach ($opcoes as $v => $l)
+                                        <option value="{{ $v }}" @selected(request('segmento') === $v)>{{ $l }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    </div>
+
                     {{-- Status --}}
                     <div class="min-w-[140px]">
                         <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Status</label>
@@ -165,6 +181,7 @@
                                     <tr
                                         class="text-left text-gray-500 dark:text-gray-400 border-b border-neutral-200 dark:border-neutral-700">
                                         <th class="py-2 pr-3 font-medium">Empresa</th>
+                                        <th class="py-2 pr-3 font-medium">Segmento</th>
                                         <th class="py-2 pr-3 font-medium">Status</th>
                                         <th class="py-2 pr-3 font-medium">Etapa</th>
                                         <th class="py-2 pr-3 font-medium">Responsável</th>
@@ -191,6 +208,11 @@
                                                     class="text-left hover:text-orange-500 transition truncate w-full">
                                                     {{ $lead->empresa }}
                                                 </button>
+                                            </td>
+
+                                            {{-- Segmento --}}
+                                            <td class="py-3 pr-3 text-gray-600 dark:text-gray-400 text-xs whitespace-nowrap">
+                                                {{ $lead->segmento?->label() ?? '—' }}
                                             </td>
 
                                             {{-- Status (inline click) --}}
@@ -514,6 +536,22 @@
                                 placeholder="Nome da empresa ou perfil">
                         </div>
 
+                        {{-- Segmento --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Segmento</label>
+                            <select name="segmento" x-model="form.segmento"
+                                class="w-full text-sm border-gray-300 dark:border-neutral-700 dark:bg-neutral-800 rounded">
+                                <option value="">— Selecione —</option>
+                                @foreach ($segmentoGrouped as $categoria => $opcoes)
+                                    <optgroup label="{{ $categoria }}">
+                                        @foreach ($opcoes as $v => $l)
+                                            <option value="{{ $v }}">{{ $l }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                        </div>
+
                         {{-- Status + Etapa --}}
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -622,6 +660,7 @@
                 return [
                     'id' => $l->id,
                     'empresa' => $l->empresa,
+                    'segmento' => $l->segmento?->value,
                     'status' => $l->status->value,
                     'etapa' => $l->etapa->value,
                     'responsavel_id' => $l->responsavel_id,
@@ -646,6 +685,7 @@
 
                     form: {
                         empresa: '',
+                        segmento: '',
                         status: 'nao_iniciado',
                         etapa: 'novo_lead',
                         responsavel_id: '',
@@ -664,6 +704,7 @@
                             @foreach (old() as $k => $v)
                                 @if (in_array($k, [
                                         'empresa',
+                                        'segmento',
                                         'status',
                                         'etapa',
                                         'responsavel_id',
@@ -688,6 +729,7 @@
                             const l = window.__leads[id];
                             this.editingId = id;
                             this.form.empresa = l.empresa ?? '';
+                            this.form.segmento = l.segmento ?? '';
                             this.form.status = l.status ?? 'nao_iniciado';
                             this.form.etapa = l.etapa ?? 'novo_lead';
                             this.form.responsavel_id = l.responsavel_id ?? '';
@@ -699,6 +741,7 @@
                         } else {
                             this.editingId = null;
                             this.form.empresa = '';
+                            this.form.segmento = '';
                             this.form.status = 'nao_iniciado';
                             this.form.etapa = 'novo_lead';
                             this.form.responsavel_id = '';

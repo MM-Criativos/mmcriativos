@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CloudLeadEtapa;
+use App\Enums\CloudLeadSegmento;
 use App\Enums\CloudLeadStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,6 +18,7 @@ class CloudLead extends Model
 
     protected $fillable = [
         'empresa',
+        'segmento',
         'status',
         'etapa',
         'responsavel_id',
@@ -29,8 +31,9 @@ class CloudLead extends Model
     ];
 
     protected $casts = [
-        'status' => CloudLeadStatus::class,
-        'etapa'  => CloudLeadEtapa::class,
+        'status'   => CloudLeadStatus::class,
+        'etapa'    => CloudLeadEtapa::class,
+        'segmento' => CloudLeadSegmento::class,
     ];
 
     // ─── Relationships ───────────────────────────────────────────
@@ -62,6 +65,10 @@ class CloudLead extends Model
 
         if ($request->filled('responsavel_id')) {
             $query->where('responsavel_id', $request->integer('responsavel_id'));
+        }
+
+        if ($request->filled('segmento')) {
+            $query->where('segmento', $request->string('segmento'));
         }
 
         if ($request->filled('busca')) {

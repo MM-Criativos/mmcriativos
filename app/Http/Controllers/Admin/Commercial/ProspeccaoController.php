@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Commercial;
 
 use App\Enums\CloudLeadEtapa;
+use App\Enums\CloudLeadSegmento;
 use App\Enums\CloudLeadStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProspeccaoRequest;
@@ -32,13 +33,15 @@ class ProspeccaoController extends Controller
             $query->where('responsavel_id', $user->id);
         }
 
-        $leads       = $query->paginate(10)->withQueryString();
-        $users       = User::where('is_approved', true)->orderBy('name')->get();
-        $statusOpts  = CloudLeadStatus::options();
-        $etapaOpts   = CloudLeadEtapa::options();
+        $leads           = $query->paginate(10)->withQueryString();
+        $users           = User::where('is_approved', true)->orderBy('name')->get();
+        $statusOpts      = CloudLeadStatus::options();
+        $etapaOpts       = CloudLeadEtapa::options();
+        $segmentoGrouped = CloudLeadSegmento::groupedOptions();
+        $segmentoOpts    = CloudLeadSegmento::options();
 
         return view('admin.commercial.prospeccao.index', compact(
-            'leads', 'users', 'statusOpts', 'etapaOpts'
+            'leads', 'users', 'statusOpts', 'etapaOpts', 'segmentoGrouped', 'segmentoOpts'
         ));
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CloudLeadEtapa;
+use App\Enums\CloudLeadSegmento;
 use App\Enums\CloudLeadStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
@@ -18,6 +19,7 @@ class ProspeccaoRequest extends FormRequest
     {
         return [
             'empresa'            => ['required', 'string', 'max:255'],
+            'segmento'           => ['nullable', new Enum(CloudLeadSegmento::class)],
             'status'             => ['required', new Enum(CloudLeadStatus::class)],
             'etapa'              => ['required', new Enum(CloudLeadEtapa::class)],
             'responsavel_id'     => ['nullable', 'exists:users,id'],
