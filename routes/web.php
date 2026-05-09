@@ -436,9 +436,9 @@ Route::middleware(['auth', 'approved'])->prefix('admin')->name('admin.')->group(
         // KPI
         Route::get('kpi', [CommercialKpiController::class, 'index'])->name('kpi.index');
 
-        // Script de Vendas (editor de fluxo SDR)
-        Route::get('script-vendas', [CommercialScriptVendasController::class, 'index'])->name('script-vendas.index');
-        Route::post('script-vendas/save', [CommercialScriptVendasController::class, 'save'])->name('script-vendas.save');
+        // SDR — editor de script (textos e fluxo)
+        Route::get('sdr/editor',           [CommercialSdrCallController::class, 'editor'])->name('sdr.editor');
+        Route::post('sdr/editor/save',     [CommercialSdrCallController::class, 'editorSave'])->name('sdr.editor.save');
 
         // SDR — sessões de call
         Route::post('sdr/call/start',      [CommercialSdrCallController::class, 'start'])->name('sdr.call.start');

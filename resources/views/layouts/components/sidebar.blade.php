@@ -222,6 +222,13 @@
                     <span>Prospecção</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('admin.commercial.sdr.editor') }}"
+                   class="{{ request()->is('admin/commercial/sdr/editor*') ? 'active-page' : '' }}">
+                    <i data-lucide="phone-call" class="mr-2"></i>
+                    <span>Guia SDR</span>
+                </a>
+            </li>
             @endif
         </ul>
     </div>
