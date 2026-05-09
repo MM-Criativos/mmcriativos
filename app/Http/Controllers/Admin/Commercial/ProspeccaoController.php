@@ -32,7 +32,7 @@ class ProspeccaoController extends Controller
             $query->where('responsavel_id', $user->id);
         }
 
-        $leads       = $query->paginate(20)->withQueryString();
+        $leads       = $query->paginate(10)->withQueryString();
         $users       = User::where('is_approved', true)->orderBy('name')->get();
         $statusOpts  = CloudLeadStatus::options();
         $etapaOpts   = CloudLeadEtapa::options();
