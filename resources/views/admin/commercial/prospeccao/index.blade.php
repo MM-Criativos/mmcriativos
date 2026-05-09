@@ -339,6 +339,18 @@
                                             {{-- Ações --}}
                                             <td class="py-3">
                                                 <div class="flex items-center gap-2">
+                                                    {{-- Call SDR --}}
+                                                    <button onclick="SdrCall.open({
+                                                        leadId:   {{ $lead->id }},
+                                                        company:  '{{ addslashes($lead->empresa) }}',
+                                                        contact:  '{{ addslashes($lead->tomador_de_decisao ?? '') }}',
+                                                        sdrName:  '{{ addslashes(auth()->user()->name) }}'
+                                                    })"
+                                                        class="inline-flex items-center px-3 py-2 rounded-lg bg-green-700 hover:bg-green-600 text-white transition"
+                                                        title="Iniciar Call">
+                                                        📞
+                                                    </button>
+
                                                     @if ($canEdit)
                                                         <button @click="openDrawer({{ $lead->id }})"
                                                             class="inline-flex items-center px-3 py-2 rounded-lg btn-mmcriativos"
@@ -742,4 +754,5 @@
         </script>
 
     </div>
+@include('admin.commercial.prospeccao.call-modal')
 @endsection
