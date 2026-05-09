@@ -379,6 +379,18 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        {{-- Paginação --}}
+                        @if ($leads->hasPages())
+                            <div class="mt-4 flex items-center justify-between">
+                                <p class="text-xs text-gray-400 dark:text-gray-500">
+                                    Exibindo {{ $leads->firstItem() }}–{{ $leads->lastItem() }} de {{ $leads->total() }} leads
+                                </p>
+                                <div>
+                                    {{ $leads->links() }}
+                                </div>
+                            </div>
+                        @endif
                     @endif
                 </div>
 
@@ -390,7 +402,7 @@
                         @endphp
                         @foreach ($etapas as $etapa)
                             @php
-                                $col = $leads->filter(fn($l) => $l->etapa->value === $etapa->value);
+                                $col = $leads->getCollection()->filter(fn($l) => $l->etapa->value === $etapa->value);
                             @endphp
                             <div class="w-56 flex-shrink-0">
                                 {{-- Header da coluna --}}
@@ -606,7 +618,7 @@
 
         {{-- Dados dos leads para o Alpine --}}
         @php
-            $leadsForJs = $leads->keyBy('id')->map(function ($l) {
+            $leadsForJs = $leads->getCollection()->keyBy('id')->map(function ($l) {
                 return [
                     'id' => $l->id,
                     'empresa' => $l->empresa,
