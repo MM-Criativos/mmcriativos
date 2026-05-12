@@ -192,6 +192,62 @@
     background: #fff;
 }
 
+.mm-form-input-password {
+    padding-right: 46px;
+}
+
+.mm-password-field {
+    position: relative;
+    width: 100%;
+}
+
+.mm-password-field .mm-form-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mm-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.mm-password-toggle:hover {
+    color: #111827;
+}
+
+.mm-password-toggle:focus-visible {
+    outline: 2px solid #ff8800;
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+.mm-password-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.mm-password-icon-hide {
+    display: none;
+}
+
+.mm-password-toggle.is-visible .mm-password-icon-show {
+    display: none;
+}
+
+.mm-password-toggle.is-visible .mm-password-icon-hide {
+    display: block;
+}
+
 .mm-form-input:focus {
     border-color: #ff8800;
     box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.15);

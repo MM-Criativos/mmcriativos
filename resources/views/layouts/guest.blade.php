@@ -43,6 +43,23 @@
         if (window.lucide) lucide.createIcons();
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
+
+            const toggles = document.querySelectorAll('[data-toggle-password]');
+            toggles.forEach((toggle) => {
+                toggle.addEventListener('click', () => {
+                    const targetId = toggle.getAttribute('data-toggle-password');
+                    const input = document.getElementById(targetId);
+                    if (!input) {
+                        return;
+                    }
+
+                    const showPassword = input.type === 'password';
+                    input.type = showPassword ? 'text' : 'password';
+                    toggle.classList.toggle('is-visible', showPassword);
+                    toggle.setAttribute('aria-pressed', showPassword ? 'true' : 'false');
+                    toggle.setAttribute('aria-label', showPassword ? 'Ocultar senha' : 'Mostrar senha');
+                });
+            });
         });
     </script>
 
