@@ -204,6 +204,27 @@ export class N8nRestAdapter {
     }
   }
 
+  async createWorkflow(workflowPayload: Record<string, unknown>): Promise<Record<string, unknown>> {
+    this.assertConfigured();
+
+    if (!workflowPayload || typeof workflowPayload !== "object") {
+      throw new Error("workflow payload must be an object.");
+    }
+
+    const creatablePayload: Record<string, unknown> = {
+      name: workflowPayload["name"],
+      nodes: workflowPayload["nodes"] ?? [],
+      connections: workflowPayload["connections"] ?? {},
+      settings: workflowPayload["settings"] ?? {},
+      staticData: workflowPayload["staticData"] ?? null
+    };
+
+    return this.requestJson<Record<string, unknown>>(`/workflows`, {
+      method: "POST",
+      body: creatablePayload
+    });
+  }
+
   async updateWorkflow(workflowId: string, workflowPayload: Record<string, unknown>): Promise<Record<string, unknown>> {
     this.assertConfigured();
 

@@ -415,6 +415,7 @@ function resolveWriteAdapter(dbTarget?: DbTarget): { target: DbTarget; adapter: 
 const capabilityCatalog: CapabilityDescriptor[] = [
   { name: "vee_health", phase: "v0.1", permission: "read_only", status: "enabled" },
   { name: "vee_list_capabilities", phase: "v0.1", permission: "read_only", status: "enabled" },
+  { name: "vee_n8n_create_workflow", phase: "v0.2", permission: "approval_required", status: "enabled" },
   { name: "vee_n8n_list_workflows", phase: "v0.1", permission: "read_only", status: "enabled" },
   { name: "vee_n8n_get_workflow", phase: "v0.1", permission: "read_only", status: "enabled" },
   { name: "vee_n8n_preview_workflow_diff", phase: "v0.2", permission: "read_only", status: "enabled" },
@@ -7301,6 +7302,82 @@ function createServer(): McpServer {
             content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
             structuredContent: payload
           };
+        }
+      })
+  );
+
+  server.registerTool(
+    "vee_n8n_create_workflow",
+    {
+      title: "Vee n8n Create Workflow",
+      description: "Creates a new workflow in n8n. Requires N8N_WRITE_ENABLED=true. Uses approval flow when autoRequestApproval is true (default).",
+      inputSchema: {
+        changeSummary: z.string().min(5).describe("Short summary of what this workflow does"),
+        workflow: z.record(z.string(), z.unknown()).describe("Full n8n workflow JSON payload (name, nodes, connections, settings)"),
+        autoRequestApproval: z.boolean().optional().describe("When true (default), creates a pending approval. When false, requires approvalId."),
+        approvalId: z.string().optional().describe("Existing approval ID to execute directly")
+      }
+    },
+    async ({ changeSummary, workflow, autoRequestApproval = true, approvalId }) =>
+      runAuditedTool({
+        toolName: "vee_n8n_create_workflow",
+        permission: "approval_required",
+        isWrite: true,
+        args: { changeSummary, approvalId },
+        errorContext: "Failed to create n8n workflow",
+        handler: async () => {
+          assertN8nWriteAllowed();
+
+          if (approvalId) {
+            const approval = await veeControlAdapter.getApproval(approvalId);
+            if (approval.status === "pending") return buildApprovalPendingResult(approvalId);
+            if (approval.status === "rejected") return buildApprovalRejectedResult(approvalId);
+            if (approval.status === "executed") return buildApprovalExecutedResult(approvalId);
+            if (approval.status !== "approved") {
+              throw new Error(`Approval ${approvalId} has unsupported status '${approval.status}'.`);
+            }
+
+            const reqPayload = approval.request_payload as Record<string, unknown>;
+            const wf = ensureWorkflowRecord(reqPayload.workflow, `Approval ${approvalId}.workflow`);
+            const created = await n8nAdapter.createWorkflow(wf);
+
+            await veeControlAdapter.markApprovalExecuted(approvalId, {
+              n8n_created_id: String(created.id ?? ""),
+              n8n_name: String(created.name ?? "")
+            });
+
+            const payload = {
+              ok: true,
+              approval_id: approvalId,
+              status: "executed",
+              workflowId: String(created.id ?? ""),
+              name: String(created.name ?? ""),
+              changeSummary
+            };
+            return {
+              content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }],
+              structuredContent: payload
+            };
+          }
+
+          if (!autoRequestApproval) {
+            throw new Error("approvalId is required when autoRequestApproval is false.");
+          }
+
+          const wfRecord = ensureWorkflowRecord(workflow, "workflow");
+          const approval = await veeControlAdapter.createApproval({
+            action_name: "vee_n8n_create_workflow",
+            tool_name: "vee_n8n_create_workflow",
+            summary: changeSummary,
+            request_payload: { workflow: wfRecord, change_summary: changeSummary },
+            meta: { source: "vee-mcp-server", requested_at: new Date().toISOString() }
+          });
+
+          return buildApprovalCreationResult({
+            approvalId: approval.approval_id,
+            status: approval.status,
+            message: `Approval ${approval.approval_id} created for new workflow "${String(wfRecord.name ?? "")}".""`
+          });
         }
       })
   );
