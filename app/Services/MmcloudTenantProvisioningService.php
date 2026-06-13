@@ -30,13 +30,17 @@ class MmcloudTenantProvisioningService
         return $response->json() ?? ['data' => [], 'meta' => []];
     }
 
-    public function createTenant(string $name, string $domain): array
+    public function createTenant(string $name, string $domain, ?int $productId = null): array
     {
         $payload = [
             'name' => $name,
             'slug' => $this->buildSlug($domain),
             'status' => 'trial',
         ];
+
+        if ($productId !== null) {
+            $payload['product_id'] = $productId;
+        }
 
         try {
             $response = $this->client()->post('/api/external/tenants', $payload);

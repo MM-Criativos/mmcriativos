@@ -206,6 +206,14 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ route('mmcloud.products.index') }}"
+                   class="{{ request()->is('mmcloud/products*') ? 'active-page' : '' }}">
+                    <i data-lucide="package" class="mr-2"></i>
+                    <span>Produtos</span>
+                </a>
+            </li>
+
             @if (in_array(Auth::user()->role, ['admin', 'comercial', 'user']))
             <li>
                 <a href="{{ route('admin.commercial.prospeccao.index') }}"

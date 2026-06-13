@@ -48,6 +48,7 @@ use App\Http\Controllers\Site\PublicBudgetController;
 use App\Http\Controllers\Vee\VeeTestRunnerDispatchController;
 use App\Http\Controllers\Admin\Commercial\KpiController as CommercialKpiController;
 use App\Http\Controllers\SuperAdminTenantController;
+use App\Http\Controllers\SuperAdminProductController;
 use App\Http\Controllers\Admin\Commercial\DashboardController as CommercialDashboardController;
 use App\Http\Controllers\Admin\Commercial\PlanController as CommercialPlanController;
 use App\Http\Controllers\Admin\Commercial\BudgetController as CommercialBudgetController;
@@ -190,6 +191,17 @@ Route::middleware(['verified', 'approved', 'auth'])->prefix('mmcloud/tenants')->
         ->name('instances.store');
     Route::post('{tenant}/regenerate-api-token', [SuperAdminTenantController::class, 'regenerateApiToken'])
         ->name('regenerate-api-token');
+});
+
+Route::middleware(['verified', 'approved', 'auth'])->prefix('mmcloud/products')->name('mmcloud.products.')->group(function () {
+    Route::get('/', [SuperAdminProductController::class, 'index'])->name('index');
+    Route::get('create', [SuperAdminProductController::class, 'create'])->name('create');
+    Route::post('/', [SuperAdminProductController::class, 'store'])->name('store');
+    Route::get('{productId}/edit', [SuperAdminProductController::class, 'edit'])->name('edit');
+    Route::put('{productId}', [SuperAdminProductController::class, 'update'])->name('update');
+    Route::delete('{productId}', [SuperAdminProductController::class, 'destroy'])->name('destroy');
+    Route::post('{productId}/tenants', [SuperAdminProductController::class, 'assignTenant'])->name('tenants.assign');
+    Route::delete('{productId}/tenants/{tenantId}', [SuperAdminProductController::class, 'unassignTenant'])->name('tenants.unassign');
 });
 
 Route::middleware('auth')->group(function () {

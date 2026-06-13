@@ -51,6 +51,22 @@
                         @enderror
                     </div>
 
+                    @if(!empty($products))
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Produto (opcional)</label>
+                        <select name="product_id"
+                            class="mt-1 block w-full border border-neutral-200 rounded-xl px-4 py-2 text-sm bg-white dark:bg-neutral-800 dark:border-neutral-700 focus:border-[#ff8800] focus:ring-0">
+                            <option value="">Sem produto (fallback)</option>
+                            @foreach($products as $product)
+                                <option value="{{ $product['id'] }}" @selected(old('product_id') == $product['id'])>
+                                    {{ $product['name'] }}
+                                    @if($product['status'] === 'inactive') (inativo) @endif
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
+
                     <button type="submit"
                         class="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 bg-gradient-to-r from-[#feb365] to-[#ff8800] text-white font-semibold">
                         <i data-lucide="cloud-upload" class="icon-project"></i>

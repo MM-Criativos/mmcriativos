@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\MmcloudProductService;
 use App\Services\MmcloudTenantProvisioningService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +11,8 @@ use Illuminate\Validation\ValidationException;
 class SuperAdminTenantController extends Controller
 {
     public function __construct(
-        private MmcloudTenantProvisioningService $tenantProvisioning
+        private MmcloudTenantProvisioningService $tenantProvisioning,
+        private MmcloudProductService $products,
     ) {}
 
     public function index(Request $request)
@@ -70,7 +72,14 @@ class SuperAdminTenantController extends Controller
     {
         $this->ensureSuperAdmin($request);
 
-        return view('mmcloud.create');
+        try {
+            $productsResponse = $this->products->list();
+            $products = $productsResponse['data'] ?? [];
+        } catch (\Throwable) {
+            $products = [];
+        }
+
+        return view('mmcloud.create', compact('products'));
     }
 
     public function store(Request $request)
@@ -85,14 +94,16 @@ class SuperAdminTenantController extends Controller
         ]);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'domain' => ['required', 'string', 'max:255'],
+            'name'       => ['required', 'string', 'max:255'],
+            'domain'     => ['required', 'string', 'max:255'],
+            'product_id' => ['nullable', 'integer'],
         ]);
 
         try {
             $tenant = $this->tenantProvisioning->createTenant(
                 $data['name'],
-                $data['domain']
+                $data['domain'],
+                isset($data['product_id']) ? (int) $data['product_id'] : null,
             );
         } catch (ValidationException $e) {
             return back()
@@ -135,8 +146,16 @@ class SuperAdminTenantController extends Controller
                 ]);
         }
 
+        try {
+            $productsResponse = $this->products->list();
+            $productsList = $productsResponse['data'] ?? [];
+        } catch (\Throwable) {
+            $productsList = [];
+        }
+
         return view('mmcloud.edit', [
-            'tenant' => $tenantData,
+            'tenant'   => $tenantData,
+            'products' => $productsList,
         ]);
     }
 
@@ -145,10 +164,18 @@ class SuperAdminTenantController extends Controller
         $this->ensureSuperAdmin($request);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255'],
-            'status' => ['required', 'in:active,suspended,trial'],
+            'name'       => ['required', 'string', 'max:255'],
+            'slug'       => ['required', 'string', 'max:255'],
+            'status'     => ['required', 'in:active,suspended,trial'],
+            'product_id' => ['nullable', 'integer'],
         ]);
+
+        // Normalizar: se product_id vier como string vazia, converter para null explicitamente
+        if (array_key_exists('product_id', $data)) {
+            $data['product_id'] = $data['product_id'] !== null && $data['product_id'] !== ''
+                ? (int) $data['product_id']
+                : null;
+        }
 
         try {
             $updated = $this->tenantProvisioning->updateTenant($tenant, $data);
