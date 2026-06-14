@@ -83,6 +83,18 @@
                                    class="w-full border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-2 text-sm bg-white dark:bg-neutral-800 dark:text-white focus:border-[#ff8800] focus:ring-0 focus:outline-none">
                         </div>
 
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                                Modalidade
+                            </label>
+                            <select name="modality_mode"
+                                    class="w-full border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-2 text-sm bg-white dark:bg-neutral-800 dark:text-white focus:border-[#ff8800] focus:ring-0 focus:outline-none">
+                                <option value="full"   {{ old('modality_mode', 'full') === 'full'   ? 'selected' : '' }}>Completa (padrão)</option>
+                                <option value="health" {{ old('modality_mode') === 'health' ? 'selected' : '' }}>Saúde (fisioterapia, clínica)</option>
+                            </select>
+                            <p class="text-xs text-neutral-400 mt-1">Define o formulário de modalidade e habilita a ficha de paciente.</p>
+                        </div>
+
                     </div>
                 </div>
 

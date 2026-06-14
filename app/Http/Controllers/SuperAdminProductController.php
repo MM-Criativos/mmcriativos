@@ -51,20 +51,38 @@ class SuperAdminProductController extends Controller
         $this->ensureSuperAdmin($request);
 
         $data = $request->validate([
-            'name'            => ['required', 'string', 'max:255'],
-            'slug'            => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/'],
-            'display_name'    => ['nullable', 'string', 'max:255'],
-            'tagline'         => ['nullable', 'string', 'max:500'],
-            'status'          => ['required', 'in:active,inactive'],
-            'primary_color'   => ['nullable', 'string', 'max:20'],
-            'secondary_color' => ['nullable', 'string', 'max:20'],
-            'accent_color'    => ['nullable', 'string', 'max:20'],
-            'features'        => ['nullable', 'array'],
-            'features.*'      => ['string'],
-            'logo_primary'    => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
-            'logo_icon'       => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
-            'favicon'         => ['nullable', 'file', 'mimes:png,jpg,jpeg,ico', 'max:1024'],
+            'name'              => ['required', 'string', 'max:255'],
+            'slug'              => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/'],
+            'display_name'      => ['nullable', 'string', 'max:255'],
+            'tagline'           => ['nullable', 'string', 'max:500'],
+            'status'            => ['required', 'in:active,inactive'],
+            'primary_color'     => ['nullable', 'string', 'max:20'],
+            'secondary_color'   => ['nullable', 'string', 'max:20'],
+            'accent_color'      => ['nullable', 'string', 'max:20'],
+            'modality_mode'     => ['nullable', 'in:full,health'],
+            'features'          => ['nullable', 'array'],
+            'features.*'        => ['string'],
+            'logo_primary'      => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'logo_icon'         => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'favicon'           => ['nullable', 'file', 'mimes:png,jpg,jpeg,ico', 'max:1024'],
+            'vocab_keys'        => ['nullable', 'array'],
+            'vocab_keys.*'      => ['nullable', 'string', 'max:100'],
+            'vocab_values'      => ['nullable', 'array'],
+            'vocab_values.*'    => ['nullable', 'string', 'max:500'],
+            'customer_fields'   => ['nullable', 'array'],
+            'customer_fields.*' => ['nullable', 'boolean'],
         ]);
+
+        // Montar vocabulary a partir dos arrays paralelos de chaves/valores
+        $vocabulary = [];
+        foreach ($data['vocab_keys'] ?? [] as $i => $key) {
+            $key = trim((string) $key);
+            if ($key !== '') {
+                $vocabulary[$key] = $data['vocab_values'][$i] ?? '';
+            }
+        }
+        $data['vocabulary'] = $vocabulary ?: null;
+        unset($data['vocab_keys'], $data['vocab_values']);
 
         try {
             $payload = collect($data)->except(['logo_primary', 'logo_icon', 'favicon'])->toArray();
@@ -122,20 +140,37 @@ class SuperAdminProductController extends Controller
         $this->ensureSuperAdmin($request);
 
         $data = $request->validate([
-            'name'            => ['required', 'string', 'max:255'],
-            'slug'            => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/'],
-            'display_name'    => ['nullable', 'string', 'max:255'],
-            'tagline'         => ['nullable', 'string', 'max:500'],
-            'status'          => ['required', 'in:active,inactive'],
-            'primary_color'   => ['nullable', 'string', 'max:20'],
-            'secondary_color' => ['nullable', 'string', 'max:20'],
-            'accent_color'    => ['nullable', 'string', 'max:20'],
-            'features'        => ['nullable', 'array'],
-            'features.*'      => ['string'],
-            'logo_primary'    => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
-            'logo_icon'       => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
-            'favicon'         => ['nullable', 'file', 'mimes:png,jpg,jpeg,ico', 'max:1024'],
+            'name'              => ['required', 'string', 'max:255'],
+            'slug'              => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/'],
+            'display_name'      => ['nullable', 'string', 'max:255'],
+            'tagline'           => ['nullable', 'string', 'max:500'],
+            'status'            => ['required', 'in:active,inactive'],
+            'primary_color'     => ['nullable', 'string', 'max:20'],
+            'secondary_color'   => ['nullable', 'string', 'max:20'],
+            'accent_color'      => ['nullable', 'string', 'max:20'],
+            'modality_mode'     => ['nullable', 'in:full,health'],
+            'features'          => ['nullable', 'array'],
+            'features.*'        => ['string'],
+            'logo_primary'      => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'logo_icon'         => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'favicon'           => ['nullable', 'file', 'mimes:png,jpg,jpeg,ico', 'max:1024'],
+            'vocab_keys'        => ['nullable', 'array'],
+            'vocab_keys.*'      => ['nullable', 'string', 'max:100'],
+            'vocab_values'      => ['nullable', 'array'],
+            'vocab_values.*'    => ['nullable', 'string', 'max:500'],
+            'customer_fields'   => ['nullable', 'array'],
+            'customer_fields.*' => ['nullable', 'boolean'],
         ]);
+
+        $vocabulary = [];
+        foreach ($data['vocab_keys'] ?? [] as $i => $key) {
+            $key = trim((string) $key);
+            if ($key !== '') {
+                $vocabulary[$key] = $data['vocab_values'][$i] ?? '';
+            }
+        }
+        $data['vocabulary'] = $vocabulary ?: null;
+        unset($data['vocab_keys'], $data['vocab_values']);
 
         try {
             $payload = collect($data)->except(['logo_primary', 'logo_icon', 'favicon'])->toArray();
