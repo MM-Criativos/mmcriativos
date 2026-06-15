@@ -96,6 +96,18 @@ class MmcloudTenantProvisioningService
         return $response->json() ?? [];
     }
 
+    public function listTenantPlans(string $tenantSlug): array
+    {
+        try {
+            $response = $this->client()->get("/api/external/tenants/{$tenantSlug}/plans");
+            $response->throw();
+        } catch (RequestException $exception) {
+            $this->throwValidationError($exception, 'mmcloud');
+        }
+
+        return $response->json() ?? ['plans' => []];
+    }
+
     public function createTenantInstance(string|int $tenant, array $payload): array
     {
         $tenantData = $this->showTenant($tenant);

@@ -121,6 +121,56 @@
                     </form>
                 </div>
             </div>
+
+            {{-- Planos do tenant --}}
+            <div class="mt-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+                    <h2 class="text-base font-semibold text-neutral-900 dark:text-white">Planos cadastrados</h2>
+                    <p class="text-xs text-neutral-500 mt-0.5">Planos e ofertas configurados pelo tenant no painel deles.</p>
+                </div>
+
+                @if(empty($tenantPlans))
+                    <div class="px-6 py-8 text-center text-sm text-neutral-400">
+                        Nenhum plano cadastrado ainda.
+                    </div>
+                @else
+                    <div class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                        @foreach($tenantPlans as $plan)
+                            <div class="px-6 py-4 flex items-center justify-between gap-4">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
+                                        {{ $plan['name'] ?? '—' }}
+                                    </p>
+                                    @if(!empty($plan['description']))
+                                        <p class="text-xs text-neutral-500 mt-0.5 truncate">{{ $plan['description'] }}</p>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-3 shrink-0 text-right">
+                                    @php
+                                        $priceType = $plan['price_type'] ?? '';
+                                        $price = match($priceType) {
+                                            'fixed', 'recurring' => $plan['price'] !== null ? 'R$ ' . number_format((float)$plan['price'], 2, ',', '.') : null,
+                                            'starting_from'      => $plan['price_min'] !== null ? 'A partir de R$ ' . number_format((float)$plan['price_min'], 2, ',', '.') : null,
+                                            'range'              => ($plan['price_min'] !== null && $plan['price_max'] !== null)
+                                                                        ? 'R$ ' . number_format((float)$plan['price_min'], 2, ',', '.') . ' – ' . number_format((float)$plan['price_max'], 2, ',', '.')
+                                                                        : null,
+                                            'on_evaluation'      => 'Sob orçamento',
+                                            default              => null,
+                                        };
+                                    @endphp
+                                    @if($price)
+                                        <span class="text-sm font-semibold text-neutral-700 dark:text-neutral-300">{{ $price }}</span>
+                                    @endif
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                                        {{ ($plan['active'] ?? false) ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-500' }}">
+                                        {{ ($plan['active'] ?? false) ? 'Ativo' : 'Inativo' }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 

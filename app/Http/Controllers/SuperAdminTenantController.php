@@ -153,9 +153,21 @@ class SuperAdminTenantController extends Controller
             $productsList = [];
         }
 
+        $tenantPlans = [];
+        try {
+            $slug = $tenantData['slug'] ?? '';
+            if ($slug) {
+                $plansResponse = $this->tenantProvisioning->listTenantPlans($slug);
+                $tenantPlans = $plansResponse['plans'] ?? [];
+            }
+        } catch (\Throwable) {
+            $tenantPlans = [];
+        }
+
         return view('mmcloud.edit', [
-            'tenant'   => $tenantData,
-            'products' => $productsList,
+            'tenant'      => $tenantData,
+            'products'    => $productsList,
+            'tenantPlans' => $tenantPlans,
         ]);
     }
 
