@@ -116,6 +116,7 @@ class SuperAdminProductController extends Controller
         try {
             $product         = $this->products->find($productId);
             $catalog         = $this->products->featureCatalog();
+            $policyCatalog   = $this->products->policyCatalog();
             $assignedTenants = $this->products->tenants($productId);
             $freeTenants     = $this->products->assignableTenants();
         } catch (ValidationException $e) {
@@ -130,6 +131,7 @@ class SuperAdminProductController extends Controller
         return view('mmcloud.products.edit', [
             'product'         => $product,
             'catalog'         => $catalog,
+            'policyCatalog'   => $policyCatalog,
             'assignedTenants' => $assignedTenants['data'] ?? [],
             'freeTenants'     => $freeTenants['data'] ?? [],
         ]);
@@ -140,26 +142,28 @@ class SuperAdminProductController extends Controller
         $this->ensureSuperAdmin($request);
 
         $data = $request->validate([
-            'name'              => ['required', 'string', 'max:255'],
-            'slug'              => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/'],
-            'display_name'      => ['nullable', 'string', 'max:255'],
-            'tagline'           => ['nullable', 'string', 'max:500'],
-            'status'            => ['required', 'in:active,inactive'],
-            'primary_color'     => ['nullable', 'string', 'max:20'],
-            'secondary_color'   => ['nullable', 'string', 'max:20'],
-            'accent_color'      => ['nullable', 'string', 'max:20'],
-            'modality_mode'     => ['nullable', 'in:full,health'],
-            'features'          => ['nullable', 'array'],
-            'features.*'        => ['string'],
-            'logo_primary'      => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
-            'logo_icon'         => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
-            'favicon'           => ['nullable', 'file', 'mimes:png,jpg,jpeg,ico', 'max:1024'],
-            'vocab_keys'        => ['nullable', 'array'],
-            'vocab_keys.*'      => ['nullable', 'string', 'max:100'],
-            'vocab_values'      => ['nullable', 'array'],
-            'vocab_values.*'    => ['nullable', 'string', 'max:500'],
-            'customer_fields'   => ['nullable', 'array'],
-            'customer_fields.*' => ['nullable', 'boolean'],
+            'name'               => ['required', 'string', 'max:255'],
+            'slug'               => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_-]+$/'],
+            'display_name'       => ['nullable', 'string', 'max:255'],
+            'tagline'            => ['nullable', 'string', 'max:500'],
+            'status'             => ['required', 'in:active,inactive'],
+            'primary_color'      => ['nullable', 'string', 'max:20'],
+            'secondary_color'    => ['nullable', 'string', 'max:20'],
+            'accent_color'       => ['nullable', 'string', 'max:20'],
+            'modality_mode'      => ['nullable', 'in:full,health'],
+            'features'           => ['nullable', 'array'],
+            'features.*'         => ['string'],
+            'logo_primary'       => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'logo_icon'          => ['nullable', 'file', 'mimes:png,jpg,jpeg,svg,webp', 'max:2048'],
+            'favicon'            => ['nullable', 'file', 'mimes:png,jpg,jpeg,ico', 'max:1024'],
+            'vocab_keys'         => ['nullable', 'array'],
+            'vocab_keys.*'       => ['nullable', 'string', 'max:100'],
+            'vocab_values'       => ['nullable', 'array'],
+            'vocab_values.*'     => ['nullable', 'string', 'max:500'],
+            'customer_fields'    => ['nullable', 'array'],
+            'customer_fields.*'  => ['nullable', 'boolean'],
+            'visible_policies'   => ['nullable', 'array'],
+            'visible_policies.*' => ['string'],
         ]);
 
         $vocabulary = [];
@@ -171,6 +175,18 @@ class SuperAdminProductController extends Controller
         }
         $data['vocabulary'] = $vocabulary ?: null;
         unset($data['vocab_keys'], $data['vocab_values']);
+
+        // visible_policies_submitted='1' → tab foi enviada normalmente (salva o que está marcado).
+        // visible_policies_submitted='0' → reset explícito para null (usa default global).
+        // Ausente → tab não foi submetida, não altera o valor atual no MMCC.
+        $policiesSubmitted = $request->input('visible_policies_submitted');
+        if ($policiesSubmitted === '1') {
+            $data['visible_policies'] = $data['visible_policies'] ?? null;
+        } elseif ($policiesSubmitted === '0') {
+            $data['visible_policies'] = null;
+        } else {
+            unset($data['visible_policies']);
+        }
 
         try {
             $payload = collect($data)->except(['logo_primary', 'logo_icon', 'favicon'])->toArray();

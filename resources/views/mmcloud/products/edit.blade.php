@@ -2,10 +2,14 @@
 
 @section('content')
 @php
-    $enabledKeys    = $product['feature_keys']    ?? [];
-    $vocabulary     = $product['vocabulary']       ?? [];
-    $customerFields = $product['customer_fields']  ?? [];
-    $modalityMode   = $product['modality_mode']    ?? 'full';
+    $enabledKeys      = $product['feature_keys']    ?? [];
+    $vocabulary       = $product['vocabulary']       ?? [];
+    $customerFields   = $product['customer_fields']  ?? [];
+    $modalityMode     = $product['modality_mode']    ?? 'full';
+    $allPolicies      = $policyCatalog['policies']        ?? [];
+    $defaultVisible   = $policyCatalog['default_visible'] ?? [];
+    $savedPolicies    = $product['visible_policies'] ?? null; // null = usa default
+    $activePolicies   = $savedPolicies !== null ? $savedPolicies : $defaultVisible;
 
     $customerFieldGroups = [
         'identification' => ['label' => 'Identificação', 'hint' => 'CPF, data de nascimento, sexo'],
@@ -45,6 +49,7 @@
                     ['tab' => 'features',   'label' => 'Features'],
                     ['tab' => 'vocabulary', 'label' => 'Vocabulário'],
                     ['tab' => 'perfil',     'label' => 'Perfil do cliente'],
+                    ['tab' => 'politicas',  'label' => 'Políticas'],
                     ['tab' => 'tenants',    'label' => 'Tenants', 'badge' => count($assignedTenants)],
                 ] as $t)
                     <button type="button"
@@ -354,6 +359,81 @@
                     </div>
                 </div>
 
+                {{-- ══════════════════════════════════════════════════════════
+                     TAB: Políticas
+                ══════════════════════════════════════════════════════════ --}}
+                <div id="tab-politicas" class="tab-panel hidden px-6 pb-6 mt-4">
+
+                    {{-- Campo sentinela: indica que esta tab foi submetida --}}
+                    <input type="hidden" name="visible_policies_submitted" value="1">
+
+                    <p class="text-xs text-neutral-500 mb-2">
+                        Selecione quais políticas aparecem nas <strong>Perguntas Frequentes</strong> do tenant.
+                        Políticas não marcadas ainda são usadas internamente pelo agente, mas não geram Q&A visível ao cliente.
+                    </p>
+
+                    @if($savedPolicies === null)
+                        <p class="text-xs text-amber-600 dark:text-amber-400 mb-4 flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            Usando configuração padrão global. Salve para personalizar este produto.
+                        </p>
+                    @endif
+
+                    @if(empty($allPolicies))
+                        <p class="text-sm text-neutral-500 py-4">Não foi possível carregar o catálogo de políticas.</p>
+                    @else
+                        <div class="space-y-2 mb-6">
+                            @foreach($allPolicies as $policy)
+                                @php
+                                    $pKey     = $policy['key'];
+                                    $pLabel   = $policy['label'];
+                                    $checked  = in_array($pKey, old('visible_policies', $activePolicies), true);
+                                    $isDefault = in_array($pKey, $defaultVisible, true);
+                                @endphp
+                                <label class="flex items-start gap-4 p-3 rounded-xl border cursor-pointer transition-colors
+                                              {{ $checked
+                                                  ? 'border-[#ff8800] bg-[#ff8800]/5'
+                                                  : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300' }}"
+                                       id="label-pol-{{ $pKey }}">
+                                    <input type="checkbox"
+                                           name="visible_policies[]"
+                                           value="{{ $pKey }}"
+                                           {{ $checked ? 'checked' : '' }}
+                                           class="mt-0.5 accent-[#ff8800] w-4 h-4 flex-shrink-0"
+                                           onchange="toggleFieldLabel(this, 'label-pol-{{ $pKey }}')">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                                            {{ $pLabel }}
+                                        </p>
+                                        <p class="text-xs text-neutral-400 mt-0.5">
+                                            Chave: <code class="font-mono">{{ $pKey }}</code>
+                                            @if($isDefault)
+                                                · <span class="text-emerald-600 dark:text-emerald-400">padrão global</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="flex items-center gap-3 pt-2">
+                        <button type="submit" form="product-form"
+                                class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 bg-gradient-to-r from-[#feb365] to-[#ff8800] text-white font-semibold text-sm">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            Salvar políticas
+                        </button>
+                        @if($savedPolicies !== null)
+                            <button type="button" onclick="resetPolicies()"
+                                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 border border-neutral-200 dark:border-neutral-700 text-sm text-neutral-600 dark:text-neutral-400 hover:border-red-300 hover:text-red-500 transition-colors">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                Resetar para padrão global
+                            </button>
+                        @endif
+                    </div>
+
+                </div>
+
             </form>
 
             {{-- ══════════════════════════════════════════════════════════
@@ -507,6 +587,21 @@ document.getElementById('add-vocab-row')?.addEventListener('click', function() {
     document.getElementById('vocab-rows').appendChild(makeVocabRow());
     if (window.lucide) lucide.createIcons();
 });
+
+// ── Políticas: resetar para padrão global ────────────────────────────────────
+function resetPolicies() {
+    if (!confirm('Resetar para as políticas padrão do sistema? Sua configuração atual será perdida.')) return;
+
+    // Remove visible_policies[] do form e envia visible_policies_submitted=0
+    // para o controller interpretar como "não alterar" → null no banco
+    document.querySelectorAll('[name="visible_policies[]"]').forEach(function(cb) {
+        cb.checked = false;
+        toggleFieldLabel(cb, cb.closest('label')?.id);
+    });
+    var sentinela = document.querySelector('[name="visible_policies_submitted"]');
+    if (sentinela) sentinela.value = '0';
+    document.getElementById('product-form').submit();
+}
 
 // ── Perfil do cliente: toggle borda do label ──────────────────────────────────
 function toggleFieldLabel(checkbox, labelId) {

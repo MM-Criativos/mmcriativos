@@ -23,6 +23,19 @@ class MmcloudProductService
         return $response->json() ?? ['core' => [], 'features' => []];
     }
 
+    /** Catálogo de políticas (single-source). Usado para renderizar checkboxes da tab Políticas. */
+    public function policyCatalog(): array
+    {
+        try {
+            $response = $this->client()->get('/api/external/policy-catalog');
+            $response->throw();
+        } catch (RequestException $e) {
+            $this->throwValidationError($e, 'mmcloud');
+        }
+
+        return $response->json() ?? ['policies' => [], 'default_visible' => []];
+    }
+
     public function list(): array
     {
         try {
