@@ -73,6 +73,18 @@
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Plano</label>
+                            <select name="plan"
+                                class="mt-1 block w-full border border-neutral-200 rounded-xl px-4 py-2 text-sm bg-white dark:bg-neutral-800 dark:border-neutral-700 focus:border-[#ff8800] focus:ring-0">
+                                <option value="piloto"     @selected(old('plan', $tenant['plan'] ?? '') === 'piloto')>Piloto</option>
+                                <option value="start"      @selected(old('plan', $tenant['plan'] ?? '') === 'start')>Start</option>
+                                <option value="growth"     @selected(old('plan', $tenant['plan'] ?? '') === 'growth')>Growth</option>
+                                <option value="scale"      @selected(old('plan', $tenant['plan'] ?? '') === 'scale')>Scale</option>
+                                <option value="enterprise" @selected(old('plan', $tenant['plan'] ?? '') === 'enterprise')>Enterprise</option>
+                            </select>
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Produto</label>
                             <select name="product_id"
                                 class="mt-1 block w-full border border-neutral-200 rounded-xl px-4 py-2 text-sm bg-white dark:bg-neutral-800 dark:border-neutral-700 focus:border-[#ff8800] focus:ring-0">

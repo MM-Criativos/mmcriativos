@@ -51,6 +51,19 @@
                         @enderror
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Plano</label>
+                        <select name="plan"
+                            class="mt-1 block w-full border border-neutral-200 rounded-xl px-4 py-2 text-sm bg-white dark:bg-neutral-800 dark:border-neutral-700 focus:border-[#ff8800] focus:ring-0">
+                            <option value="">Padrão (start)</option>
+                            <option value="piloto"     @selected(old('plan') === 'piloto')>Piloto</option>
+                            <option value="start"      @selected(old('plan') === 'start')>Start</option>
+                            <option value="growth"     @selected(old('plan') === 'growth')>Growth</option>
+                            <option value="scale"      @selected(old('plan') === 'scale')>Scale</option>
+                            <option value="enterprise" @selected(old('plan') === 'enterprise')>Enterprise</option>
+                        </select>
+                    </div>
+
                     @if(!empty($products))
                     <div>
                         <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-200">Produto (opcional)</label>

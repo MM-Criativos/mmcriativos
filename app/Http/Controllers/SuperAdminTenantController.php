@@ -97,6 +97,7 @@ class SuperAdminTenantController extends Controller
             'name'       => ['required', 'string', 'max:255'],
             'domain'     => ['required', 'string', 'max:255'],
             'product_id' => ['nullable', 'integer'],
+            'plan'       => ['nullable', 'in:piloto,start,growth,scale,enterprise'],
         ]);
 
         try {
@@ -104,6 +105,7 @@ class SuperAdminTenantController extends Controller
                 $data['name'],
                 $data['domain'],
                 isset($data['product_id']) ? (int) $data['product_id'] : null,
+                $data['plan'] ?? null,
             );
         } catch (ValidationException $e) {
             return back()
@@ -180,6 +182,7 @@ class SuperAdminTenantController extends Controller
             'slug'       => ['required', 'string', 'max:255'],
             'status'     => ['required', 'in:active,suspended,trial'],
             'product_id' => ['nullable', 'integer'],
+            'plan'       => ['nullable', 'in:piloto,start,growth,scale,enterprise'],
         ]);
 
         // Normalizar: se product_id vier como string vazia, converter para null explicitamente

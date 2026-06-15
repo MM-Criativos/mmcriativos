@@ -30,7 +30,7 @@ class MmcloudTenantProvisioningService
         return $response->json() ?? ['data' => [], 'meta' => []];
     }
 
-    public function createTenant(string $name, string $domain, ?int $productId = null): array
+    public function createTenant(string $name, string $domain, ?int $productId = null, ?string $plan = null): array
     {
         $payload = [
             'name' => $name,
@@ -40,6 +40,10 @@ class MmcloudTenantProvisioningService
 
         if ($productId !== null) {
             $payload['product_id'] = $productId;
+        }
+
+        if ($plan !== null) {
+            $payload['plan'] = $plan;
         }
 
         try {
