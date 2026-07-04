@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use App\Events\BudgetSent;
 use App\Events\BudgetOpened;
@@ -52,6 +54,15 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+
+        /**
+         * ------------------------------------------------------------------
+         * Rate limit do cadastro público (anti-bot)
+         * ------------------------------------------------------------------
+         */
+        RateLimiter::for('register', function ($request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
 
         /**
          * ------------------------------------------------------------------

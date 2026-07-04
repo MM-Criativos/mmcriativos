@@ -32,6 +32,12 @@
                 <form method="POST" action="{{ route('register') }}" class="mm-form">
                     @csrf
 
+                    <input type="hidden" name="form_ts" value="{{ $formRenderedAt ?? time() }}">
+                    <div style="position:absolute; left:-9999px; top:-9999px;" aria-hidden="true">
+                        <label for="website">Deixe este campo em branco</label>
+                        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
                     <div class="mm-form-group">
                         <label for="name" class="mm-form-label">Nome</label>
                         <input id="name" name="name" type="text" value="{{ old('name') }}" required autofocus

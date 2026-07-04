@@ -56,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'vee.internal'   => \App\Http\Middleware\EnsureVeeInternalToken::class,
             'can.commercial' => \App\Http\Middleware\EnsureCanAccessCommercial::class,
             'can.prospeccao' => \App\Http\Middleware\EnsureCanAccessProspeccao::class,
+            'bot.protect'    => \App\Http\Middleware\PreventBotSubmission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
