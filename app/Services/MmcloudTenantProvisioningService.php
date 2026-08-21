@@ -100,10 +100,16 @@ class MmcloudTenantProvisioningService
         return $response->json() ?? [];
     }
 
-    public function listTenantPlans(string $tenantSlug): array
+    /**
+     * `/plans` e rota escopada a um tenant, e o MMCC vai passar a exigir o token
+     * do tenant nela (SDD-fechamento-da-api-externa, F3). O segredo de plataforma
+     * que o `client()` manda nao serve ali — e as irmas createTenantInstance() e
+     * listTenantInstances() ja usavam `tenantClient()` por isso.
+     */
+    public function listTenantPlans(string $tenantSlug, string $tenantToken): array
     {
         try {
-            $response = $this->client()->get("/api/external/tenants/{$tenantSlug}/plans");
+            $response = $this->tenantClient($tenantToken)->get("/api/external/tenants/{$tenantSlug}/plans");
             $response->throw();
         } catch (RequestException $exception) {
             $this->throwValidationError($exception, 'mmcloud');

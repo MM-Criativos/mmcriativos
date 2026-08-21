@@ -190,7 +190,9 @@ class RunPlatformHealthSuite extends Command
 
         $headers = [
             'Accept' => 'application/json',
-            'X-MMCloud-Header' => $tenantToken,
+            // Era 'X-MMCloud-Header', que o MMCC nunca leu — funcionava so porque
+            // booking-sessions ainda esta aberta (SDD-fechamento-da-api-externa, F4).
+            'X-MMCloud-Token' => $tenantToken,
             'X-Tenant-Id' => $tenantId,
         ];
 

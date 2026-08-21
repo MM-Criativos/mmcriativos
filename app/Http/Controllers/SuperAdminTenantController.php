@@ -158,8 +158,10 @@ class SuperAdminTenantController extends Controller
         $tenantPlans = [];
         try {
             $slug = $tenantData['slug'] ?? '';
-            if ($slug) {
-                $plansResponse = $this->tenantProvisioning->listTenantPlans($slug);
+            // O token vem do proprio showTenant() acima — nao ha ida extra ao MMCC.
+            $token = (string) ($tenantData['api_token'] ?? '');
+            if ($slug && $token !== '') {
+                $plansResponse = $this->tenantProvisioning->listTenantPlans($slug, $token);
                 $tenantPlans = $plansResponse['plans'] ?? [];
             }
         } catch (\Throwable) {

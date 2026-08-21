@@ -249,7 +249,9 @@ class VeeTestRunnerDispatchController extends Controller
             ->retry(2, 300)
             ->acceptJson()
             ->withHeaders([
-                'X-MMCloud-Header' => $tenantApiToken,
+                // Era 'X-MMCloud-Header', nome que o MMCC nunca leu — o mesmo bug
+                // do RunPlatformHealthSuite (SDD-fechamento-da-api-externa, F1).
+                'X-MMCloud-Token' => $tenantApiToken,
                 'X-Tenant-Id' => $tenantId,
             ]);
     }
