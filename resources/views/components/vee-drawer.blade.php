@@ -605,29 +605,11 @@
                                         <span class="vee-feed-card__route" x-text="item.from + ' → ' + item.to"></span>
                                         <div style="display:flex;align-items:center;gap:8px;">
                                             <span class="vee-feed-card__time" x-text="item.time"></span>
-                                            <template x-if="!item.isSkipped && activeAgentId === 'test-runner'">
-                                                <button
-                                                    @click.stop="runTestGroup(item.groupId)"
-                                                    :disabled="!!orchRunning[item.groupId]"
-                                                    :style="orchRunning[item.groupId]
-                                                        ? 'opacity:.5;cursor:not-allowed;background:rgba(255,136,0,.08);border:1px solid rgba(255,136,0,.25);color:#ff8800;'
-                                                        : 'background:rgba(255,136,0,.14);border:1px solid rgba(255,136,0,.4);color:#ff8800;cursor:pointer;'"
-                                                    style="padding:6px 16px;border-radius:4px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
-                                                    <span x-text="orchRunning[item.groupId] ? '⟳ Rodando…' : '▶ Rodar'"></span>
-                                                </button>
-                                            </template>
                                         </div>
                                     </div>
 
                                     {{-- Mensagem descritiva --}}
                                     <div class="vee-feed-card__msg" x-text="item.msg"></div>
-
-                                    {{-- Progress bar quando rodando --}}
-                                    <template x-if="orchRunning[item.groupId]">
-                                        <div class="vee-progress" style="margin-top:6px;">
-                                            <div class="vee-progress__fill" style="background:#ff8800;width:100%;animation:vee-indeterminate 1.2s linear infinite;"></div>
-                                        </div>
-                                    </template>
 
                                     {{-- Skip note --}}
                                     <template x-if="item.isSkipped">
@@ -934,95 +916,9 @@ document.addEventListener('alpine:init', () => {
         tab: 'plan',
         orchView: 'A',
         activeAgentId: 'test-runner',
-        orchRunning: {},
         orchStatusLoading: false,
         orchStatusError: null,
         orchToasts:  [],
-        testTenants: {
-            'veetest':   { remoteJid:'5511958469546@s.whatsapp.net' },
-            'veetest-b': { remoteJid:'5511958469546@s.whatsapp.net' },
-            'mmbeauty':  { remoteJid:'5511958469546@s.whatsapp.net' },
-        },
-        testCasesByGroup: {
-            'A': { route:'atendimento', tenant_slug:'veetest',   message:'Ol\u00e1, quero saber sobre voc\u00eas' },
-            'B': { route:'atendimento', tenant_slug:'veetest',   message:'Quero marcar um hor\u00e1rio' },
-            'C': { route:'atendimento', tenant_slug:'veetest',   message:'Ol\u00e1 de novo' },
-            'D': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'',          context_payload:{},                                                          message:'Quero agendar Avalia\u00e7\u00e3o Gratuita' },
-            'E': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'',          context_payload:{},                                                          message:'Quero marcar para amanh\u00e3 \u00e0s 10h com a Ana' },
-            'F': null,
-            'G': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'ask_field', context_payload:{},                                                          message:'Avalia\u00e7\u00e3o Gratuita, amanh\u00e3 \u00e0s 09h, com a Ana' },
-            'H': { route:'agendamento', tenant_slug:'veetest-b', current_flow:'reschedule',   current_step:'',          context_payload:{},                                                          message:'Quero remarcar meu hor\u00e1rio' },
-            'I': { route:'agendamento', tenant_slug:'veetest-b', current_flow:'cancellation', current_step:'',          context_payload:{},                                                          message:'Quero cancelar meu agendamento' },
-            'J': null,
-            'K': { route:'agendamento', tenant_slug:'veetest',   current_flow:'schedule',     current_step:'ask_field', context_payload:{service_name:'Avalia\u00e7\u00e3o Gratuita',professional_name:'Ana'}, message:'Quero agendar' },
-            'L': { route:'atendimento', tenant_slug:'veetest',   message:'Ol\u00e1' },
-            'M': { route:'agendamento', tenant_slug:'mmbeauty',  current_flow:'schedule',     current_step:'',          context_payload:{},                                                          message:'Quero agendar um corte' },
-        },
-
-        // ---- call state ----
-        callOpen: false,
-        callMuted: false,
-        callMode: 'listening',
-        callTranscript: [
-            { who:'user', text:'Quero refatorar o módulo de pagamento.' },
-            { who:'vee',  text:'Entendido. Já acionei o Code Analyst. Qual sua maior preocupação: performance ou escalabilidade?' },
-        ],
-        _callTimer: null,
-
-        // ---- chat / session state ----
-        currentSession: null,
-        messages: [],
-        isStreaming: false,
-        streamController: null,
-        sessions: [],
-        starredSessions: JSON.parse(localStorage.getItem('vee-starred') || '[]'),
-        editingSessionId: null,
-        editingTitle: '',
-        inputText: '',
-        editingMessageId: null,
-        editingMessageText: '',
-
-        // ---- log state ----
-        logEvents: [],
-        logEventSource: null,
-        logConnected: false,
-        logFilter: 'all',
-        logFilters: [
-            { key:'all',  label:'Todos' },
-            { key:'tool', label:'Tools' },
-            { key:'n8n',  label:'n8n'   },
-            { key:'ssh',  label:'SSH'   },
-            { key:'db',   label:'DB'    },
-        ],
-        approvals: [],
-        approvalsLoading: false,
-        approvalsError: '',
-        approvalStatusFilter: 'pending',
-        approvalFilters: [
-            { key:'pending', label:'Pendentes' },
-            { key:'all', label:'Todos' },
-            { key:'approved', label:'Aprovadas' },
-            { key:'rejected', label:'Rejeitadas' },
-            { key:'executed', label:'Executadas' },
-        ],
-        approvalRejectReasonById: {},
-        approvalBusyById: {},
-        approvalSeenIds: {},
-        pendingApprovalsTotal: 0,
-        approvalsPollTimer: null,
-
-        // ---- config ----
-        agentUrl: window.VEE_AGENT_URL   || '',
-        agentToken: window.VEE_AGENT_TOKEN || '',
-
-        // ---- static demo data ----
-        tabLabels: { plan:'Planejamento', orch:'Orquestramento', cowork:'Cowork', approvals:'Approvals', logs:'Logs' },
-
-        orchAgents: [
-            { id:'test-runner', name:'Test Runner', env:'mmcloud',  status:'active', task:'Pronto para executar' },
-            { id:'vault-agent', name:'Vault Agent', env:'vault',    status:'active', task:'Secrets validados ✓' },
-            { id:'obsidian',    name:'Obsidian',    env:'obsidian', status:'active', task:'Documentando...' },
-        ],
         orchTestGroups: [
             { id:'A', name:'Onboarding',        route:'atendimento', tenant_slug:'veetest',   daily:3,  total:4,  bugs:[],          status:'idle' },
             { id:'B', name:'Intent',            route:'atendimento', tenant_slug:'veetest',   daily:5,  total:5,  bugs:[],          status:'idle' },
@@ -1809,104 +1705,6 @@ document.addEventListener('alpine:init', () => {
                     tenant_slug:  group ? group.tenant_slug : null,
                 }),
             }).catch(function() { /* best-effort */ });
-        },
-
-        runTestGroup(groupId) {
-            if (this.orchRunning[groupId]) return;
-            const tc = this.testCasesByGroup[groupId];
-            if (!tc) return; // skip (no test case defined)
-
-            this.orchRunning = Object.assign({}, this.orchRunning, { [groupId]: true });
-
-            const self = this;
-            const startedAt = Date.now();
-
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            fetch('/vee/orch/test-runner/dispatch', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                body: (function() {
-                    const t = self.testTenants[tc.tenant_slug] || {};
-                    return JSON.stringify({
-                        group_id:         groupId,
-                        test_case:        tc.route === 'agendamento' ? 'existing_user_agendamento' : 'existing_user_atendimento',
-                        target:           tc.route,
-                        tenant_slug:      tc.tenant_slug,
-                        current_flow:     tc.current_flow    || null,
-                        current_step:     tc.current_step    !== undefined ? tc.current_step : null,
-                        context_payload:  tc.context_payload || {},
-                        user_message:     tc.message || '',
-                        remoteJid:        t.remoteJid        || '5511958469546@s.whatsapp.net',
-                        pushName:         'Tester',
-                        idMessage:        'TEST-' + startedAt,
-                    });
-                })(),
-            })
-            .then(function(r) {
-                return r.text().then(function(t) {
-                    const json = t && t.trim() ? JSON.parse(t) : {};
-                    if (!r.ok) {
-                        const msg = json && (json.message || json.error || json.status) ? (json.message || json.error || json.status) : ('HTTP ' + r.status);
-                        throw new Error(msg);
-                    }
-                    return json;
-                });
-            })
-            .then(function(data) {
-                const dispatch = data && data.dispatch ? data.dispatch : data;
-                const verdict = dispatch && dispatch.status === 'success' ? 'pass'
-                             : dispatch && dispatch.status === 'fail'    ? 'fail'
-                             : 'dispatched';
-                if (verdict === 'dispatched') {
-                    // Mark group as running; real result comes via /orch/status polling
-                    const g = self.orchTestGroups.find(function(g) { return g.id === groupId; });
-                    if (g) { g.status = 'running'; }
-                    const toastId = Date.now();
-                    self.orchToasts.push({
-                        id:      toastId,
-                        msg:     'Grupo ' + groupId + ' — disparado ✓ (aguardando resultado...)',
-                        type:    'pass',
-                        groupId: groupId,
-                    });
-                    setTimeout(function() { self.dismissToast(toastId); }, 8000);
-                    // Poll /orch/status after 30s to pick up real result
-                    setTimeout(function() { self.loadOrchStatus(); }, 30000);
-                    return;
-                }
-                const now = new Date().toTimeString().slice(0, 5);
-                const g = self.orchTestGroups.find(function(g) { return g.id === groupId; });
-                if (g) { g.status = verdict; g.lastRun = now; }
-
-                self.saveOrchRun(groupId, verdict, data && data.executionId ? data.executionId : null);
-                const toastId = Date.now();
-                self.orchToasts.push({
-                    id:      toastId,
-                    msg:     'Grupo ' + groupId + (verdict === 'pass' ? ' — ✓ Passou' : ' — ✗ Falhou'),
-                    type:    verdict,
-                    groupId: groupId,
-                });
-                setTimeout(function() { self.dismissToast(toastId); }, 6000);
-            })
-            .catch(function(err) {
-                const toastId = Date.now();
-                self.orchToasts.push({
-                    id:      toastId,
-                    msg:     'Grupo ' + groupId + ' — erro: ' + err.message,
-                    type:    'fail',
-                    groupId: groupId,
-                });
-                setTimeout(function() { self.dismissToast(toastId); }, 6000);
-            })
-            .finally(function() {
-                const updated = Object.assign({}, self.orchRunning);
-                delete updated[groupId];
-                self.orchRunning = updated;
-            });
         },
 
         dismissToast(toastId) {

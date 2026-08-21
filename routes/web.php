@@ -45,7 +45,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Site\ModalController;
 use App\Http\Controllers\Site\PublicBudgetController;
-use App\Http\Controllers\Vee\VeeTestRunnerDispatchController;
 use App\Http\Controllers\Admin\Commercial\KpiController as CommercialKpiController;
 use App\Http\Controllers\SuperAdminTenantController;
 use App\Http\Controllers\SuperAdminProductController;
@@ -175,10 +174,6 @@ Route::get('/dashboard', DashboardController::class)
 Route::get('/dashboard/day-tasks', [DashboardController::class, 'dayTasks'])
     ->middleware(['verified', 'approved', 'auth'])
     ->name('dashboard.day-tasks');
-
-Route::post('/vee/orch/test-runner/dispatch', VeeTestRunnerDispatchController::class)
-    ->middleware(['verified', 'approved', 'auth'])
-    ->name('vee.orch.test-runner.dispatch');
 
 Route::middleware(['verified', 'approved', 'auth'])->prefix('mmcloud/tenants')->name('mmcloud.tenants.')->group(function () {
     Route::get('/', [SuperAdminTenantController::class, 'index'])->name('index');
