@@ -125,8 +125,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('exchange:update')->dailyAt('06:00');
-        $schedule->command('vee:platform-health --suite=daily')->dailyAt('06:10');
-        $schedule->command('vee:platform-health --suite=weekly')->sundays()->at('06:30');
+        // vee:platform-health saiu junto com o comando: a suite dirigia workflows
+        // do n8n que nao recebem mais trafego (a ultima mensagem que chegaria ao
+        // n8n e de 2026-06-08). Rodava todo dia contra um alvo morto.
     })
     ->create();
 
